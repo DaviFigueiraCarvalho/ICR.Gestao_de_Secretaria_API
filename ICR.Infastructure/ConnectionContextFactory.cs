@@ -9,8 +9,12 @@ namespace ICRManagement.Infra
         {
             var optionsBuilder = new DbContextOptionsBuilder<ConnectionContext>();
 
-            // mesma connection string que você tem no launchSettings.json da API
-            optionsBuilder.UseNpgsql("Host=localhost;Port=5433;Database=icr_connect;Username=icradmin;Password=root");
+            var connectionString =
+                Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true"
+                ? "Host=icr_db;Port=5432;Database=icr_connect;Username=icradmin;Password=root"
+                : "Host=localhost;Port=5432;Database=icr_connect;Username=icradmin;Password=root";
+
+            optionsBuilder.UseNpgsql(connectionString);
 
             return new ConnectionContext(optionsBuilder.Options);
         }

@@ -1,30 +1,27 @@
-﻿using System;
+﻿using ICR.Domain.Model;
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ICRManagement.Domain.Model.FederationAggregate
 {
     [Table("federation")]
-    public class Federation
+    public class Federation : BasicModel
     {
         [Key]
-        public string Id { get; private set; } // Identificador único da comissão
+        public long Id { get; set; } // Identificador único da comissão
 
-        public string Name { get; private set; } // Nome da comissão federada
+        public string Name { get; set; } // Nome da comissão federada
+        [ForeignKey("PastorId")]
+        public long? PastorId { get; set; }
 
         // Construtor principal
-        public Federation(string name, string id)
+        public Federation(string name, long id, long? pastorId)
         {
-            Id= id ?? throw new ArgumentNullException(nameof(id));
+            Id = id;
             Name = name ?? throw new ArgumentNullException(nameof(name));
+            PastorId = pastorId;
         }
-        private string GenerateCustomId(int sequenceNumber)
-        {
-            // Pega ano e mês atual UTC
-            var now = DateTime.UtcNow;
-            return $"ICR{now:yyyyMM}-{sequenceNumber}";
-        }
-        // Métodos para atualizar campos
         public void SetName(string newName)
         {
             if (string.IsNullOrWhiteSpace(newName))
@@ -32,6 +29,9 @@ namespace ICRManagement.Domain.Model.FederationAggregate
 
             Name = newName;
         }
-
+        public void SetPastorId(long? pastorId)
+        {
+            PastorId = pastorId;
+        }
     }
 }

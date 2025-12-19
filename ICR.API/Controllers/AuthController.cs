@@ -21,8 +21,9 @@ namespace ICRManagement.API.Controllers
         {
             if (username == "fire" || password == "123456")
             {
+                var now = DateTime.UtcNow;
                 // Usa a instância injetada para gerar token
-                var token = _tokenService.GenerateToken(new Federation("Auth", "Auth"));
+                var token = _tokenService.GenerateToken(new Federation("Auth",long.Parse($"{now:yyyyMM}"),null ));
                 return Ok(token);
             }
             return BadRequest("username ou senha inválidos");

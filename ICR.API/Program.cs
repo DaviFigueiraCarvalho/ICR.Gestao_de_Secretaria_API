@@ -1,4 +1,5 @@
 using AutoMapper;
+using ICR.Application.Services;
 using ICRManagement.Application.Mapping;
 using ICRManagement.Application.Services;
 using ICRManagement.Domain.Repositories;
@@ -17,6 +18,8 @@ builder.Services.AddSingleton<TokenService>();
 
 // Add services to the container
 builder.Services.AddControllers();
+builder.Services.AddScoped<IdSequenceService>();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>

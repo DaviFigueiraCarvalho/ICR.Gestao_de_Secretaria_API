@@ -22,7 +22,6 @@
       "environmentVariables": {
         "ASPNETCORE_HTTPS_PORTS": "8081",
         "ASPNETCORE_HTTP_PORTS": "8080",
-        "JWT_KEY": "KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30"
       },
       "publishAllPorts": true,
       "useSSL": true

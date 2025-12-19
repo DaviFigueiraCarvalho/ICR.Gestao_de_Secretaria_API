@@ -13,9 +13,6 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["ICR.API/ICR.API.csproj", "ICR.API/"]
-COPY ["ICR.Application/ICR.Application.csproj", "ICR.Application/"]
-COPY ["ICR.Domain/ICR.Domain.csproj", "ICR.Domain/"]
-COPY ["ICR.Infastructure/ICR.Infastructure.csproj", "ICR.Infastructure/"]
 RUN dotnet restore "./ICR.API/ICR.API.csproj"
 COPY . .
 WORKDIR "/src/ICR.API"
@@ -31,8 +28,3 @@ FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "ICR.API.dll"]
-
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS dev
-WORKDIR /app/ICR.API
-COPY . /app
-ENTRYPOINT ["dotnet", "watch", "run"]

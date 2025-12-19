@@ -1,4 +1,5 @@
-﻿using ICRManagement.Domain.Model.FederationAggregate;
+﻿using ICR.Domain.Model.ChurchAggregate;
+using ICRManagement.Domain.Model.FederationAggregate;
 using Microsoft.EntityFrameworkCore;
 
 namespace ICRManagement.Infra
@@ -12,11 +13,13 @@ namespace ICRManagement.Infra
         }
 
         public DbSet<Federation> Federations { get; set; }
+        //public DbSet<Church> Churches { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            // Configurações adicionais de mapeamento, se necessário
+            //modelBuilder.Entity<Church>().OwnsOne(c => c.Address);
         }
     }
 }

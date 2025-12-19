@@ -23,12 +23,18 @@ namespace ICR.Infastructure.Migrations
 
             modelBuilder.Entity("ICRManagement.Domain.Model.FederationAggregate.Federation", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<long?>("PastorId")
+                        .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
