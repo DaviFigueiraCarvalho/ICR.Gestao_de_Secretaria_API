@@ -144,48 +144,61 @@ namespace ICR.Infra.Data.Repositories
             };
         }
 
-        public async Task<MemberResponseDTO?> UpdateAsync(long id, MemberDTO dto)
+        public async Task<MemberResponseDTO?> UpdateAsync(long id, MemberPatchDTO dto)
         {
             var member = await _context.Members
-                .Include(m => m.Family)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (member == null)
-                return new MemberResponseDTO
-                {
-                    Id = 0,
-                    ResultMessage = $"O Membro de ID:{dto.FamilyId} não existe"
-                };
-            var family = await _context.Families
-                .FirstOrDefaultAsync(f => f.Id == dto.FamilyId);
-
-            if (family == null)
             {
                 return new MemberResponseDTO
                 {
                     Id = 0,
-                    ResultMessage = $"A família de ID:{dto.FamilyId} não existe"
+                    ResultMessage = $"O membro de ID:{id} não existe"
                 };
             }
 
-            if (dto.Name != null)
+            // Atualização de família SOMENTE se vier no DTO
+            Family? family = null;
+
+            if (dto.FamilyId.HasValue)
+            {
+                family = await _context.Families
+                    .FirstOrDefaultAsync(f => f.Id == dto.FamilyId.Value);
+
+                if (family == null)
+                {
+                    return new MemberResponseDTO
+                    {
+                        Id = member.Id,
+                        ResultMessage = $"A família de ID:{dto.FamilyId.Value} não existe"
+                    };
+                }
+
+                member.SetFamily(dto.FamilyId.Value);
+            }
+            else
+            {
+                family = member.Family;
+            }
+
+            if (!string.IsNullOrWhiteSpace(dto.Name))
                 member.SetName(dto.Name);
 
-            if (dto.Gender != null)
-                member.SetGender(dto.Gender);
+            if (dto.Gender.HasValue)
+                member.SetGender(dto.Gender.Value);
 
-            if (dto.BirthDate!= null)
-                member.SetBirthDate(dto.BirthDate);
+            if (dto.BirthDate.HasValue)
+                member.SetBirthDate(dto.BirthDate.Value);
 
-            if (dto.HasBeenMarried == true)
+            if (dto.HasBeenMarried == true && member.HasBeenMarried == false)
                 member.MarkAsMarried();
 
             if (dto.Role != null)
                 member.SetRole(dto.Role);
 
             if (dto.CellPhone.HasValue)
-                member.SetCellPhone(dto.CellPhone);
-
+                member.SetCellPhone(dto.CellPhone.Value);
 
             await _context.SaveChangesAsync();
 
@@ -199,11 +212,12 @@ namespace ICR.Infra.Data.Repositories
                 Role = member.Role,
                 CellPhone = member.CellPhone,
                 Class = member.Class,
-                FamilyId = family.Id,
-                FamilyName = family.Name,
+                FamilyId = member.FamilyId,
+                FamilyName = family?.Name,
                 ResultMessage = "Membro atualizado com sucesso"
             };
         }
+
 
         public async Task<MemberResponseDTO> RemoveAsync(long id)
         {

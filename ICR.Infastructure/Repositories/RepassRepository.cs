@@ -1,8 +1,13 @@
-﻿using ICR.Domain.Model.RepassAggregate;
+﻿using ICR.Domain.DTOs;
+using ICR.Domain.Model.RepassAggregate;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
-namespace ICR.Infra.Data.Repositories
+namespace ICR.Infra.Repositories
 {
     public class RepassRepository : IRepassRepository
     {
@@ -13,49 +18,176 @@ namespace ICR.Infra.Data.Repositories
             _context = context;
         }
 
-        public void Add(Repass repass)
+        public async Task<RepassResponseDTO> AddAsync(RepassDTO dto)
         {
+            var church = await _context.Churches
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == dto.ChurchId);
+            if (church == null)
+                return new RepassResponseDTO
+                {
+                    Id=0,
+                    ResultMessage = $"A igreja de ID:{dto.ChurchId} não existe"
+                };
+
+            var repass = new Repass(
+                id: 0,
+                churchId: dto.ChurchId,
+                reference: dto.Reference,
+                amount: dto.Amount
+            );
+
             _context.Repasses.Add(repass);
+            await _context.SaveChangesAsync();
+
+            return new RepassResponseDTO
+            {
+                Id = repass.Id,
+                ChurchId = repass.ChurchId,
+                Reference = repass.Reference,
+                Amount = repass.Amount
+            };
         }
 
-        public Repass? GetById(long id)
+        public async Task<RepassResponseDTO?> GetByIdAsync(long id)
         {
-            return _context.Repasses.Find(id);
+            var repass = await _context.Repasses
+                .AsNoTracking()
+                .FirstOrDefaultAsync(r => r.Id == id);
+
+            if (repass == null)
+                return null;
+
+            return new RepassResponseDTO
+            {
+                Id = repass.Id,
+                ChurchId = repass.ChurchId,
+                Reference = repass.Reference,
+                Amount = repass.Amount
+            };
         }
 
-        public List<Repass> Get(int pageNumber, int pageQuantity)
+        public async Task<IEnumerable<RepassResponseDTO>> GetAllAsync(int pageNumber, int pageQuantity)
         {
-            return _context.Repasses
+            return await _context.Repasses
+                .AsNoTracking()
                 .OrderBy(r => r.Id)
                 .Skip((pageNumber - 1) * pageQuantity)
                 .Take(pageQuantity)
-                .ToList();
+                .Select(r => new RepassResponseDTO
+                {
+                    Id = r.Id,
+                    ChurchId = r.ChurchId,
+                    Reference = r.Reference,
+                    Amount = r.Amount
+                })
+                .ToListAsync();
         }
 
-        public List<Repass> GetByChurchId(long churchId)
+        public async Task<IEnumerable<RepassResponseDTO>> GetByChurchIdAsync(long churchId)
         {
-            return _context.Repasses
-                .Where(r => r.ChurchId == churchId)
-                .ToList();
+            return await _context.Repasses
+               .AsNoTracking()
+               .Include(r => r.Church)
+               .Where(r => r.ChurchId == churchId)
+               .Select(r => new RepassResponseDTO
+               {
+                   Id = r.Id,
+                   ChurchId = r.ChurchId,
+                   ChurchName = r.Church.Name,
+                   Reference = r.Reference,
+                   Amount = r.Amount
+               })
+               .ToListAsync();
         }
 
-        public List<Repass> GetByReference(long reference)
+        public async Task<IEnumerable<RepassResponseDTO>> GetByReferenceAsync(long reference)
         {
-            return _context.Repasses
+            return await _context.Repasses
+                .AsNoTracking()
+                .Include(r => r.Church)
                 .Where(r => r.Reference == reference)
-                .ToList();
+                .Select(r => new RepassResponseDTO
+                {
+                    Id = r.Id,
+                    ChurchId = r.ChurchId,
+                    ChurchName = r.Church.Name,
+                    Reference = r.Reference,
+                    Amount = r.Amount
+                })
+                .ToListAsync();
         }
 
-        public void Delete(long id)
+        public async Task<RepassResponseDTO> UpdateAsync(long id, RepassUpdateDTO dto)
         {
-            var repass = GetById(id);
-            if (repass != null)
-                _context.Repasses.Remove(repass);
+            var repass = await _context.Repasses
+                .FirstOrDefaultAsync(r => r.Id == id);
+
+            if (repass == null)
+            {
+                return new RepassResponseDTO
+                {
+                    Id = 0,
+                    ResultMessage = $"o repasse de ID:{id} não existe"
+                };
+            }
+
+            // ChurchId só atualiza se vier e se existir
+            if (dto.ChurchId.HasValue)
+            {
+                var churchExists = await _context.Churches
+                    .AnyAsync(c => c.Id == dto.ChurchId.Value);
+
+                if (!churchExists)
+                {
+                    return new RepassResponseDTO
+                    {
+                        Id = repass.Id,
+                        ResultMessage = $"a church de ID:{dto.ChurchId.Value} não existe"
+                    };
+                }
+
+                repass.SetChurchId(dto.ChurchId.Value);
+            }
+
+            // Reference opcional
+            if (dto.Reference.HasValue)
+                repass.SetReference(dto.Reference.Value);
+
+            // Amount opcional
+            if (dto.Amount.HasValue)
+                repass.SetAmount(dto.Amount.Value);
+
+            await _context.SaveChangesAsync();
+
+            return new RepassResponseDTO
+            {
+                Id = repass.Id,
+                ChurchId = repass.ChurchId,
+                Reference = repass.Reference,
+                Amount = repass.Amount
+            };
         }
 
-        public void Save()
+
+        public async Task<RepassResponseDTO> DeleteAsync(long id)
         {
-            _context.SaveChanges();
+            var repass = await _context.Repasses
+                .FirstOrDefaultAsync(r => r.Id == id);
+
+            if (repass == null)
+                throw new KeyNotFoundException("Repass not found");
+
+            _context.Repasses.Remove(repass);
+            await _context.SaveChangesAsync();
+
+            return new RepassResponseDTO
+            {
+                Id = repass.Id,
+                ChurchId = repass.ChurchId,
+                Reference = repass.Reference,
+                Amount = repass.Amount
+            };
         }
     }
 }

@@ -27,4 +27,11 @@
            
 
         }
-    }
+        public class CellPatchDTO
+        {
+            public string? Name { get; private set; }
+            public long? ChurchId { get; private set; }
+            public long? ResponsibleId { get; private set; }
+
+        }
+}

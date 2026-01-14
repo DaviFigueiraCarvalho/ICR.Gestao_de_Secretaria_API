@@ -26,7 +26,14 @@ namespace ICR.Domain.DTOs
         public long? MinisterId { get; set; }
         public string MinisterName { get; set; }
         public string ResultMessage { get; set; }
-
+    }
+    public class ChurchPatchDTO
+    {
+        public string? Name { get; set; }
+        public Address? Address { get; set; }
+        public long? FederationId { get; set; }
+        public long? MinisterId { get; set; }
+        public string? FailureMessage { get; set; }
 
     }
 }

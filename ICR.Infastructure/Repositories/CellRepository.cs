@@ -130,23 +130,49 @@ namespace ICR.Infra.Data.Repositories
                 .ToListAsync();
         }
 
-        public async Task<CellResponseDTO> UpdateAsync(long id, Cell updatedCell)
+        public async Task<CellResponseDTO> UpdateAsync(long id, CellPatchDTO updatedCell)
         {
             var cell = await _context.Cells
                 .FirstOrDefaultAsync(c => c.Id == id);
 
             if (cell == null)
+            {
                 return new CellResponseDTO
                 {
                     Id = 0,
                     ResultMessage = $"A célula de ID:{id} não existe"
                 };
+            }
 
+            // Name
             if (!string.IsNullOrWhiteSpace(updatedCell.Name))
                 cell.SetName(updatedCell.Name);
 
+            // ResponsibleId (PATCH de verdade)
             if (updatedCell.ResponsibleId.HasValue)
-                cell.SetResponsible(updatedCell.ResponsibleId.Value);
+            {
+                if (updatedCell.ResponsibleId.Value == 0)
+                {
+                    // remove responsável
+                    cell.SetResponsible(null);
+                }
+                else if (updatedCell.ResponsibleId.Value != cell.ResponsibleId)
+                {
+                    var responsibleExists = await _context.Members
+                        .AnyAsync(m => m.Id == updatedCell.ResponsibleId.Value);
+
+                    if (!responsibleExists)
+                    {
+                        return new CellResponseDTO
+                        {
+                            Id = cell.Id,
+                            ResultMessage = $"O membro responsável de ID:{updatedCell.ResponsibleId.Value} não existe"
+                        };
+                    }
+
+                    cell.SetResponsible(updatedCell.ResponsibleId.Value);
+                }
+            }
 
             await _context.SaveChangesAsync();
 

@@ -10,7 +10,7 @@ namespace ICR.Domain.Model.FederationAggregate
         Task<FederationResponseDTO> AddAsync(FederationDTO federation);
         Task<FederationResponseDTO?> GetByIdAsync(long id);
         Task<IEnumerable<FederationResponseDTO>> GetAllFederationsAsync();
-        Task<FederationResponseDTO> UpdateAsync(long id, FederationDTO federation);
+        Task<FederationResponseDTO> UpdateAsync(long id, FederationPatchDTO federation);
         Task<FederationResponseDTO> DeleteAsync(long id);
 
     }

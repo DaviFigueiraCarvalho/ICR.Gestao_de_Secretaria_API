@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ICR.Domain.Model.ChurchAggregate;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
@@ -11,6 +12,7 @@ namespace ICR.Domain.Model.RepassAggregate
         public long Id { get; set; }
         [ForeignKey("ChurchId")]
         public long ChurchId { get; set; }
+        public Church? Church { get; set; }
         public long Reference { get; set; }
         public decimal Amount { get; set; }
         public Repass() { }

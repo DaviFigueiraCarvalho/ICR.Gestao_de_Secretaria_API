@@ -1,10 +1,13 @@
+using ICR.Domain.DTOs;
 using ICR.Domain.Model.RepassAggregate;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
-namespace ICRManagement.API.Controllers
+namespace ICR.API.Controllers
 {
     [ApiController]
-    [Route("api/v1/repasses")]
+    [Route("api/repasses")]
     public class RepassController : ControllerBase
     {
         private readonly IRepassRepository _repository;
@@ -14,50 +17,79 @@ namespace ICRManagement.API.Controllers
             _repository = repository;
         }
 
+        // POST: api/repasses
         [HttpPost]
-        public IActionResult Create([FromBody] Repass model)
+        public async Task<ActionResult<RepassResponseDTO>> Create([FromBody] RepassDTO dto)
         {
-            if (model == null) return BadRequest();
-            _repository.Add(model);
-            _repository.Save();
-            return CreatedAtAction(nameof(GetById), new { id = model.Id }, null);
+            var result = await _repository.AddAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
         }
 
-        [HttpGet("{id}")]
-        public IActionResult GetById(long id)
+        // GET: api/repasses/{id}
+        [HttpGet("{id:long}")]
+        public async Task<ActionResult<RepassResponseDTO>> GetById(long id)
         {
-            var repass = _repository.GetById(id);
-            if (repass == null) return NotFound();
-            return Ok(repass);
+            var result = await _repository.GetByIdAsync(id);
+
+            if (result == null)
+                return NotFound();
+
+            return Ok(result);
         }
 
+        // GET: api/repasses?pageNumber=1&pageQuantity=10
         [HttpGet]
-        public IActionResult GetAll(int pageNumber = 1, int pageQuantity = 10)
+        public async Task<ActionResult<IEnumerable<RepassResponseDTO>>> GetAll(
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageQuantity = 10)
         {
-            var list = _repository.Get(pageNumber, pageQuantity);
-            return Ok(list);
+            var result = await _repository.GetAllAsync(pageNumber, pageQuantity);
+            return Ok(result);
         }
 
-        [HttpGet("by-church/{churchId}")]
-        public IActionResult GetByChurch(long churchId)
+        // GET: api/repasses/church/{churchId}
+        [HttpGet("church/{churchId:long}")]
+        public async Task<ActionResult<IEnumerable<RepassResponseDTO>>> GetByChurch(long churchId)
         {
-            var list = _repository.GetByChurchId(churchId);
-            return Ok(list);
+            var result = await _repository.GetByChurchIdAsync(churchId);
+            return Ok(result);
         }
 
-        [HttpGet("by-reference/{reference}")]
-        public IActionResult GetByReference(long reference)
+        // GET: api/repasses/reference/{reference}
+        [HttpGet("reference/{reference:long}")]
+        public async Task<ActionResult<IEnumerable<RepassResponseDTO>>> GetByReference(long reference)
         {
-            var list = _repository.GetByReference(reference);
-            return Ok(list);
+            var result = await _repository.GetByReferenceAsync(reference);
+            return Ok(result);
         }
 
-        [HttpDelete("{id}")]
-        public IActionResult Delete(long id)
+        // PATCH: api/repasses/{id}
+        [HttpPatch("{id:long}")]
+        public async Task<ActionResult<RepassResponseDTO>> Update(
+            long id,
+            [FromBody] RepassUpdateDTO dto)
         {
-            _repository.Delete(id);
-            _repository.Save();
-            return NoContent();
+            var result = await _repository.UpdateAsync(id, dto);
+
+            if (result.Id == 0)
+                return NotFound(result);
+
+            if (!string.IsNullOrEmpty(result.ResultMessage))
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+        // DELETE: api/repasses/{id}
+        [HttpDelete("{id:long}")]
+        public async Task<ActionResult<RepassResponseDTO>> Delete(long id)
+        {
+            var result = await _repository.DeleteAsync(id);
+
+            if (result.Id == 0)
+                return NotFound(result);
+
+            return Ok(result);
         }
     }
 }

@@ -13,8 +13,8 @@ namespace ICR.Domain.DTOs
         public GenderType Gender { get; set; }
         public DateTime BirthDate { get; set; }
         public bool HasBeenMarried { get; private set; }
-        public string? Role { get; set; }
-        public long? CellPhone { get; set; }
+        public string Role { get; set; }
+        public long CellPhone { get; set; }
     }
 
     public class MemberResponseDTO
@@ -32,7 +32,14 @@ namespace ICR.Domain.DTOs
         public long? CellPhone { get; set; }
         public ClassType Class { get; set; }
         public string ResultMessage { get; set; } = null!;
-
-
     }
-}
+    public class MemberPatchDTO
+    {
+        public long? FamilyId { get; set; }
+        public string? Name { get; set; } = null!;
+        public GenderType? Gender { get; set; }
+        public DateTime? BirthDate { get; set; }
+        public bool? HasBeenMarried { get; private set; }
+        public string? Role { get; set; }
+        public long? CellPhone { get; set; }
+    }

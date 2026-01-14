@@ -74,57 +74,68 @@ namespace ICR.Infra.Repositories
         }
 
         // UPDATE usando métodos da entidade
-        public async Task<FederationResponseDTO> UpdateAsync(long id, FederationDTO dto)
+        public async Task<FederationResponseDTO> UpdateAsync(long id, FederationPatchDTO dto)
         {
             var federation = await _context.Federations
-                .FirstOrDefaultAsync(c => c.Id == id); ;
+                .FirstOrDefaultAsync(f => f.Id == id);
+
             if (federation == null)
+            {
                 return new FederationResponseDTO
                 {
-                    Id=0,
+                    Id = 0,
                     ResultMessage = $"Federação de ID:{id} não encontrada."
                 };
+            }
+
             string? ministerName = null;
 
+            // PATCH de MinisterId
             if (dto.MinisterId.HasValue)
             {
                 if (dto.MinisterId.Value == 0)
                 {
-                    // remove pastor
+                    // remove ministro
                     federation.SetMinisterId(null);
                 }
                 else
                 {
                     var minister = await _context.Ministers
+                        .Include(m => m.Member)
                         .FirstOrDefaultAsync(m => m.Id == dto.MinisterId.Value);
 
                     if (minister == null)
+                    {
                         return new FederationResponseDTO
                         {
-                            Id = 0,
-                            ResultMessage = $"O pastor/presbitero de ID:{dto.MinisterId.Value} não existe"
+                            Id = federation.Id,
+                            ResultMessage = $"O pastor/presbítero de ID:{dto.MinisterId.Value} não existe"
                         };
+                    }
 
                     federation.SetMinisterId(minister.Id);
-                    ministerName = minister?.Member.Name;
+                    ministerName = minister.Member.Name;
                 }
             }
 
-
-            // Patch: só altera o que chegou
+            // PATCH de Name
             if (!string.IsNullOrWhiteSpace(dto.Name))
             {
                 federation.SetName(dto.Name);
-            }else dto.Name = federation.Name;
+            }
+
             await SaveAsync();
+
             return new FederationResponseDTO
             {
                 Id = federation.Id,
-                Name = dto.Name,
-                MinisterId = dto.MinisterId,
-                ResultMessage = $"Federação {federation.Name}, atualizada com sucesso."
+                Name = federation.Name,
+                MinisterId = federation.MinisterId,
+                MinisterName = ministerName,
+                ResultMessage = $"Federação {federation.Name} atualizada com sucesso."
             };
         }
+
 
         // DELETE
         public async Task<FederationResponseDTO> DeleteAsync(long id)

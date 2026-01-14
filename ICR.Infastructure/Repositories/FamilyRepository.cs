@@ -189,26 +189,136 @@ namespace ICR.Infra.Data.Repositories
                 .ToListAsync();
         }
 
-        public async Task<ResponseFamilyDTO> UpdateAsync(long id, Family familyUpdated)
+        public async Task<ResponseFamilyDTO> UpdateAsync(long id, FamilyPatchDTO familyUpdated)
         {
             var family = await _context.Families
                 .FirstOrDefaultAsync(f => f.Id == id);
 
             if (family == null)
+            {
                 return new ResponseFamilyDTO
                 {
                     Id = 0,
                     ResultMessage = $"A família de ID:{id} não existe"
                 };
+            }
 
+            // Name
             if (!string.IsNullOrWhiteSpace(familyUpdated.Name))
                 family.SetName(familyUpdated.Name);
 
-            family.SetChurchId(familyUpdated.ChurchId);
-            family.SetCellId(familyUpdated.CellId);
-            family.SetFatherId(familyUpdated.ManId);
-            family.SetMotherId(familyUpdated.WomanId);
-            family.SetWeddingDate(familyUpdated.WeddingDate);
+            // ChurchId
+            if (familyUpdated.ChurchId.HasValue &&
+                familyUpdated.ChurchId.Value != family.ChurchId)
+            {
+                if (familyUpdated.ChurchId.Value <= 0)
+                {
+                    return new ResponseFamilyDTO
+                    {
+                        Id = family.Id,
+                        ResultMessage = "ChurchId inválido"
+                    };
+                }
+
+                var churchExists = await _context.Churches
+                    .AnyAsync(c => c.Id == familyUpdated.ChurchId.Value);
+
+                if (!churchExists)
+                {
+                    return new ResponseFamilyDTO
+                    {
+                        Id = family.Id,
+                        ResultMessage = $"A igreja de ID:{familyUpdated.ChurchId.Value} não existe"
+                    };
+                }
+
+                family.SetChurchId(familyUpdated.ChurchId.Value);
+            }
+
+
+            // CellId
+            // CellId
+            if (familyUpdated.CellId.HasValue &&
+                familyUpdated.CellId.Value != family.CellId)
+            {
+                if (familyUpdated.CellId.Value <= 0)
+                {
+                    return new ResponseFamilyDTO
+                    {
+                        Id = family.Id,
+                        ResultMessage = "CellId inválido"
+                    };
+                }
+
+                var cellExists = await _context.Cells
+                    .AnyAsync(c => c.Id == familyUpdated.CellId.Value);
+
+                if (!cellExists)
+                {
+                    return new ResponseFamilyDTO
+                    {
+                        Id = family.Id,
+                        ResultMessage = $"A célula de ID:{familyUpdated.CellId.Value} não existe"
+                    };
+                }
+
+                family.SetCellId(familyUpdated.CellId.Value);
+            }
+
+
+            // Pai
+            if (familyUpdated.ManId.HasValue && familyUpdated.ManId != family.ManId)
+            {
+                if (familyUpdated.ManId.Value == 0)
+                {
+                    family.SetFatherId(null);
+                }
+                else
+                {
+                    var manExists = await _context.Members
+                        .AnyAsync(m => m.Id == familyUpdated.ManId.Value);
+
+                    if (!manExists)
+                    {
+                        return new ResponseFamilyDTO
+                        {
+                            Id = family.Id,
+                            ResultMessage = $"O membro (pai) de ID:{familyUpdated.ManId.Value} não existe"
+                        };
+                    }
+
+                    family.SetFatherId(familyUpdated.ManId.Value);
+                }
+            }
+
+            // Mãe
+            if (familyUpdated.WomanId.HasValue && familyUpdated.WomanId != family.WomanId)
+            {
+                if (familyUpdated.WomanId.Value == 0)
+                {
+                    family.SetMotherId(null);
+                }
+                else
+                {
+                    var womanExists = await _context.Members
+                        .AnyAsync(m => m.Id == familyUpdated.WomanId.Value);
+
+                    if (!womanExists)
+                    {
+                        return new ResponseFamilyDTO
+                        {
+                            Id = family.Id,
+                            ResultMessage = $"O membro (mãe) de ID:{familyUpdated.WomanId.Value} não existe"
+                        };
+                    }
+
+                    family.SetMotherId(familyUpdated.WomanId.Value);
+                }
+            }
+
+            // WeddingDate
+            if (familyUpdated.WeddingDate.HasValue)
+                family.SetWeddingDate(familyUpdated.WeddingDate);
 
             await _context.SaveChangesAsync();
 

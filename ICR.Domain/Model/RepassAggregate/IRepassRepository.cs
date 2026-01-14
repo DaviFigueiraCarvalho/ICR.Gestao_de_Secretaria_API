@@ -1,17 +1,18 @@
+using ICR.Domain.DTOs;
 using System.Collections.Generic;
 
 namespace ICR.Domain.Model.RepassAggregate
 {
     public interface IRepassRepository
     {
-        
-        void Add(Repass repass);
-        Repass? GetById(long id);
-        List<Repass> Get(int pageNumber, int pageQuantity);
-        void Delete(long id);
-        void Save();
+        Task<RepassResponseDTO> AddAsync(RepassDTO repass);
+        Task<RepassResponseDTO?> GetByIdAsync(long id);
+        Task<IEnumerable<RepassResponseDTO>> GetAllAsync(int pageNumber, int pageQuantity);
+        Task<IEnumerable<RepassResponseDTO>> GetByChurchIdAsync(long churchId);
+        Task<IEnumerable<RepassResponseDTO>> GetByReferenceAsync(long reference);
+        Task<RepassResponseDTO> UpdateAsync(long id, RepassUpdateDTO dto);
+        Task<RepassResponseDTO> DeleteAsync(long id);
 
-        List<Repass> GetByChurchId(long churchId);
-        List<Repass> GetByReference(long reference);
+
     }
 }

@@ -2,6 +2,7 @@
 using ICR.Domain.DTOs;
 using ICR.Domain.Model.CellAggregate;
 using ICR.Domain.Model.ChurchAggregate;
+using ICR.Domain.Model.FederationAggregate;
 using ICR.Domain.Model.MinisterAggregate;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
@@ -147,7 +148,7 @@ namespace ICR.Infra.Data.Repositories
         }
 
 
-        public async Task<ChurchResponseDto?> UpdateAsync(long id, ChurchDTO dto)
+        public async Task<ChurchResponseDto?> UpdateAsync(long id, ChurchPatchDTO dto)
         {
             var church = await _context.Churches
                 .FirstOrDefaultAsync(c => c.Id == id);
@@ -155,25 +156,38 @@ namespace ICR.Infra.Data.Repositories
             if (church == null)
                 return null;
 
-            var federation = await _context.Federations
-                .FirstOrDefaultAsync(f => f.Id == dto.FederationId);
+            Federation? federation = null;
 
-            if (federation == null)
-                return new ChurchResponseDto
+            // FederationId (só se vier)
+            if (dto.FederationId.HasValue)
+            {
+                federation = await _context.Federations
+                    .FirstOrDefaultAsync(f => f.Id == dto.FederationId.Value);
+
+                if (federation == null)
                 {
-                    Id = 0,
-                    ResultMessage = $"A federação de ID:{dto.FederationId} não existe"
-                };
+                    return new ChurchResponseDto
+                    {
+                        Id = 0,
+                        ResultMessage = $"A federação de ID:{dto.FederationId.Value} não existe"
+                    };
+                }
 
-            church.SetFederationId(federation.Id);
+                church.SetFederationId(federation.Id);
+            }
+            else
+            {
+                federation = await _context.Federations
+                    .FirstOrDefaultAsync(f => f.Id == church.FederationId);
+            }
 
             Minister? minister = null;
 
+            // MinisterId (só se vier)
             if (dto.MinisterId.HasValue)
             {
                 if (dto.MinisterId.Value == 0)
                 {
-                    // remove pastor
                     church.SetMinisterId(null);
                 }
                 else
@@ -183,19 +197,29 @@ namespace ICR.Infra.Data.Repositories
                         .FirstOrDefaultAsync(m => m.Id == dto.MinisterId.Value);
 
                     if (minister == null)
+                    {
                         return new ChurchResponseDto
                         {
-                            Id = 0,
+                            Id = church.Id,
                             ResultMessage = $"O pastor/presbítero de ID:{dto.MinisterId.Value} não existe"
                         };
+                    }
 
                     church.SetMinisterId(minister.Id);
                 }
             }
+            else if (church.MinisterId.HasValue)
+            {
+                minister = await _context.Ministers
+                    .Include(m => m.Member)
+                    .FirstOrDefaultAsync(m => m.Id == church.MinisterId.Value);
+            }
 
+            // Name
             if (!string.IsNullOrWhiteSpace(dto.Name))
                 church.SetName(dto.Name);
 
+            // Address
             if (dto.Address != null)
                 church.SetAddress(dto.Address);
 
@@ -206,11 +230,11 @@ namespace ICR.Infra.Data.Repositories
                 Id = church.Id,
                 Name = church.Name,
                 Address = church.Address,
-                FederationId = federation.Id,
-                FederationName = federation.Name,
+                FederationId = federation?.Id,
+                FederationName = federation?.Name,
                 MinisterId = church.MinisterId,
                 MinisterName = minister != null
-                    ? $"{minister?.Member.Role} {minister?.Member.Name}"
+                    ? $"{minister.Member.Role} {minister.Member.Name}"
                     : null,
                 ResultMessage = $"Igreja {church.Name} atualizada com sucesso"
             };

@@ -31,4 +31,14 @@ namespace ICR.Domain.DTOs
         public DateTime? WeddingDate { get; set; }
         public string ResultMessage { get; set; }
     }
+    public class FamilyPatchDTO
+    {
+        public string? Name { get; set; }
+        public long? ChurchId { get; set; }
+        public long? CellId { get; set; }
+        public long? ManId { get; set; }
+        public long? WomanId { get; set; }
+        public DateTime? WeddingDate { get; set; }
+
+    }
 }

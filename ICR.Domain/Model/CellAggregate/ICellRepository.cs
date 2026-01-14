@@ -16,7 +16,7 @@ namespace ICR.Domain.Model.CellAggregate
         Task<IEnumerable<CellResponseDTO>> GetByChurchIdAsync(Member leader);
 
         Task<CellResponseDTO> DeleteAsync(long id);
-        Task<CellResponseDTO> UpdateAsync(long id, Cell updatedCell);
+        Task<CellResponseDTO> UpdateAsync(long id, CellPatchDTO updatedCell);
 
         Task SaveAsync();
     }

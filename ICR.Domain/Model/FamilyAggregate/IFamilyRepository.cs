@@ -16,7 +16,7 @@ namespace ICR.Domain.Model.FamilyAggregate
         Task<List<ResponseFamilyDTO>> GetByChurchId(long churchId);
 
         Task<List<ResponseFamilyDTO>> GetByCellIdAsync(long cellId);
-        Task<ResponseFamilyDTO> UpdateAsync(long id, Family familyUpdated);
+        Task<ResponseFamilyDTO> UpdateAsync(long id, FamilyPatchDTO familyUpdated);
 
         Task<ResponseFamilyDTO> DeleteAsync(long id);
 

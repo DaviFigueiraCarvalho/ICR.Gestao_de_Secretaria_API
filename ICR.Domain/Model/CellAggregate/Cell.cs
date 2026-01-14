@@ -19,7 +19,7 @@ namespace ICR.Domain.Model.CellAggregate
         public long? ResponsibleId { get; private set; }
         public Member? Responsible { get; private set; }
         protected Cell() { }
-        public Cell(long id, string name, long churchId, long responsibleId)
+        public Cell(long id, string name, long churchId, long? responsibleId)
         {
             Id = id;
             Name = name;
@@ -32,7 +32,7 @@ namespace ICR.Domain.Model.CellAggregate
         {
             Name = name;
         }
-        public void SetResponsible(long responsibleId)
+        public void SetResponsible(long? responsibleId)
         {
             ResponsibleId = responsibleId;
         }

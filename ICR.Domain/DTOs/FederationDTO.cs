@@ -17,4 +17,11 @@ namespace ICRManagement.Domain.DTOs
         public string MinisterName { get; set; }
         public string ResultMessage { get; set; }
     }
+    public class FederationPatchDTO
+    {
+        public string? Name { get; set; }      // Nome da comissão
+        public long? MinisterId { get; set; }
+
+    }
+
 }
