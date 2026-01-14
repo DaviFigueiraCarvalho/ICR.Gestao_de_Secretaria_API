@@ -1,10 +1,13 @@
+using ICR.Domain.DTOs;
 using ICR.Domain.Model.MinisterAggregate;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
-namespace ICRManagement.API.Controllers
+namespace ICR.API.Controllers
 {
     [ApiController]
-    [Route("api/v1/ministers")]
+    [Route("api/ministers")]
     public class MinisterController : ControllerBase
     {
         private readonly IMinisterRepository _repository;
@@ -14,65 +17,76 @@ namespace ICRManagement.API.Controllers
             _repository = repository;
         }
 
+        // POST: api/ministers
         [HttpPost]
-        public IActionResult Create([FromBody] Minister model)
+        public async Task<ActionResult<MinisterResponseDTO>> Create([FromBody] Minister minister)
         {
-            if (model == null) return BadRequest();
-            _repository.Add(model);
-            _repository.Save();
-            return CreatedAtAction(nameof(GetById), new { id = model.Id }, null);
+            var result = await _repository.AddAsync(minister);
+
+            if (result.Id == 0)
+                return BadRequest(result);
+
+            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
         }
 
-        [HttpGet("{id}")]
-        public IActionResult GetById(long id)
+        // GET: api/ministers/{id}
+        [HttpGet("{id:long}")]
+        public async Task<ActionResult<MinisterResponseDTO>> GetById(long id)
         {
-            var minister = _repository.GetById(id);
-            if (minister == null) return NotFound();
+            var minister = await _repository.GetByIdAsync(id);
+
+            if (minister == null)
+                return NotFound();
+
             return Ok(minister);
         }
 
+        // GET: api/ministers
         [HttpGet]
-        public IActionResult GetAll(int pageNumber = 1, int pageQuantity = 10)
+        public async Task<ActionResult<IEnumerable<MinisterResponseDTO>>> GetAll()
         {
-            var ministers = _repository.Get(pageNumber, pageQuantity);
+            var ministers = await _repository.GetAllAsync();
             return Ok(ministers);
         }
 
-        [HttpGet("by-member/{memberId}")]
-        public IActionResult GetByMember(long memberId)
+        // GET: api/ministers/church/{churchId}
+        [HttpGet("church/{churchId:long}")]
+        public async Task<ActionResult<IEnumerable<MinisterResponseDTO>>> GetByChurch(long churchId)
         {
-            var list = _repository.GetByMemberId(memberId);
-            return Ok(list);
+            var ministers = await _repository.GetByChurchIdAsync(churchId);
+            return Ok(ministers);
         }
 
-        [HttpGet("by-family/{familyId}")]
-        public IActionResult GetByFamily(long familyId)
+        // GET: api/ministers/birthdays?month=5
+        [HttpGet("birthdays")]
+        public async Task<ActionResult<IEnumerable<MinisterBirthdayDTO>>> GetBirthdays([FromQuery] int month)
         {
-            var list = _repository.GetByFamilyId(familyId);
-            return Ok(list);
+            var result = await _repository.GetByBirthdaydatesIdAsync(month);
+            return Ok(result);
         }
 
-        [HttpGet("by-cpf/{cpf}")]
-        public IActionResult GetByCpf(long cpf)
+        // PATCH: api/ministers/{id}
+        [HttpPatch("{id:long}")]
+        public async Task<ActionResult<MinisterResponseDTO>> Patch(long id, [FromBody] MinisterPatchDTO dto)
         {
-            var m = _repository.GetByCpf(cpf);
-            if (m == null) return NotFound();
-            return Ok(m);
+            var result = await _repository.UpdateAsync(id, dto);
+
+            if (result.Id == 0)
+                return BadRequest(result);
+
+            return Ok(result);
         }
 
-        [HttpGet("by-church/{churchId}")]
-        public IActionResult GetByChurch(long churchId)
+        // DELETE: api/ministers/{id}
+        [HttpDelete("{id:long}")]
+        public async Task<ActionResult<MinisterResponseDTO>> Delete(long id)
         {
-            var list = _repository.GetByChurchId(churchId);
-            return Ok(list);
-        }
+            var result = await _repository.DeleteAsync(id);
 
-        [HttpDelete("{id}")]
-        public IActionResult Delete(long id)
-        {
-            _repository.Delete(id);
-            _repository.Save();
-            return NoContent();
+            if (result.Id == 0)
+                return NotFound(result);
+
+            return Ok(result);
         }
     }
 }

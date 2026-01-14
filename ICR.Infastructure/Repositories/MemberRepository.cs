@@ -1,4 +1,6 @@
 ﻿using ICR.Application.Services;
+using ICR.Domain.DTOs;
+using ICR.Domain.Model.FamilyAggregate;
 using ICR.Domain.Model.MemberAggregate;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
@@ -15,47 +17,73 @@ namespace ICR.Infra.Data.Repositories
         public MemberRepository(ConnectionContext context)
         {
             _context = context;
-            _idSequenceService = new IdSequenceService(_context);
+            _idSequenceService = new IdSequenceService(context);
         }
 
-        public async Task<IEnumerable<Member>> GetAllMembersAsync()
+        public async Task<IEnumerable<MemberResponseDTO>> GetAllAsync()
         {
             return await _context.Members
                 .Include(m => m.Family)
+                .OrderBy(m => m.Id)
+                .Select(m => new MemberResponseDTO
+                {
+                    Id = m.Id,
+                    Name = m.Name,
+                    Gender = m.Gender,
+                    BirthDate = m.BirthDate,
+                    HasBeenMarried = m.HasBeenMarried,
+                    Role = m.Role,
+                    CellPhone = m.CellPhone,
+                    Class = m.Class,
+                    FamilyId = m.FamilyId,
+                    FamilyName = m.Family != null ? m.Family.Name : "",
+                })
                 .ToListAsync();
         }
 
-        public async Task<Member?> GetByIdAsync(long id)
+        public async Task<MemberResponseDTO?> GetByIdAsync(long id)
         {
             return await _context.Members
                 .Include(m => m.Family)
-                .FirstOrDefaultAsync(m => m.Id == id);
+                .Where(m => m.Id == id)
+                .Select(m => new MemberResponseDTO
+                {
+                    Id = m.Id,
+                    Name = m.Name,
+                    Gender = m.Gender,
+                    BirthDate = m.BirthDate,
+                    HasBeenMarried = m.HasBeenMarried,
+                    Role = m.Role,
+                    CellPhone = m.CellPhone,
+                    Class = m.Class,
+                    FamilyId = m.FamilyId,
+                    FamilyName = m.Family != null ? m.Family.Name : "",
+                })
+                .FirstOrDefaultAsync();
         }
 
-        public async Task<IEnumerable<Member>> GetByFamilyAsync(long familyId)
+        public async Task<IEnumerable<MemberResponseDTO>> GetByFamilyAsync(long familyId)
         {
             return await _context.Members
+                .Include(m => m.Family)
                 .Where(m => m.FamilyId == familyId)
+                .Select(m => new MemberResponseDTO
+                {
+                    Id = m.Id,
+                    Name = m.Name,
+                    Gender = m.Gender,
+                    BirthDate = m.BirthDate,
+                    HasBeenMarried = m.HasBeenMarried,
+                    Role = m.Role,
+                    CellPhone = m.CellPhone,
+                    Class = m.Class,
+                    FamilyId = m.FamilyId,
+                    FamilyName = m.Family != null ? m.Family.Name : "",
+                })
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<Member>> GetByChurchAsync(long churchId)
-        {
-            return await _context.Members
-                .Include(m => m.Family)
-                .Where(m => m.Family != null && m.Family.ChurchId == churchId)
-                .ToListAsync();
-        }
-
-        public async Task<IEnumerable<Member>> GetByCellAsync(long cellId)
-        {
-            return await _context.Members
-                .Include(m => m.Family)
-                .Where(m => m.Family != null && m.Family.CellId == cellId)
-                .ToListAsync();
-        }
-
-        public async Task<IEnumerable<Member>> GetBirthdaysByMonthAsync(int month, long churchId)
+        public async Task<IEnumerable<MemberResponseDTO>> GetBirthdaysByMonthAsync(int month, long churchId)
         {
             return await _context.Members
                 .Include(m => m.Family)
@@ -64,31 +92,138 @@ namespace ICR.Infra.Data.Repositories
                     m.Family != null &&
                     m.Family.ChurchId == churchId
                 )
-                .OrderBy(m => m.BirthDate.Day)
+                .Select(m => new MemberResponseDTO
+                {
+                    Id = m.Id,
+                    Name = m.Name,
+                    Gender = m.Gender,
+                    BirthDate = m.BirthDate,
+                    HasBeenMarried = m.HasBeenMarried,
+                    Role = m.Role,
+                    CellPhone = m.CellPhone,
+                    Class = m.Class,
+                    FamilyId = m.FamilyId,
+                    FamilyName = m.Family != null ? m.Family.Name : "",
+                })
                 .ToListAsync();
         }
 
-        public async Task AddAsync(Member member)
+        public async Task<MemberResponseDTO> AddAsync(Member member)
         {
+            var family = await _context.Families
+                .FirstOrDefaultAsync(f => f.Id == member.FamilyId);
+
+            if (family == null)
+            {
+                return new MemberResponseDTO
+                {
+                    Id = 0,
+                    ResultMessage = $"A família de ID:{member.FamilyId} não existe"
+                };
+            }
+
             var newId = await _idSequenceService.GetNextIdAsync<Member>();
             member.Id = newId;
 
-            await _context.Members.AddAsync(member);
-        }
-
-        public async void UpdateAsync(Member member)
-        {
-            _context.Members.Update(member);
-        }
-
-        public async void RemoveAsync(Member member)
-        {
-            _context.Members.Remove(member);
-        }
-
-        public async Task SaveAsync()
-        {
+            _context.Members.Add(member);
             await _context.SaveChangesAsync();
+
+            return new MemberResponseDTO
+            {
+                Id = member.Id,
+                Name = member.Name,
+                Gender = member.Gender,
+                BirthDate = member.BirthDate,
+                HasBeenMarried = member.HasBeenMarried,
+                Role = member.Role,
+                CellPhone = member.CellPhone,
+                Class = member.Class,
+                FamilyId = family.Id,
+                FamilyName = family.Name,
+                ResultMessage = "Membro criado com sucesso"
+            };
+        }
+
+        public async Task<MemberResponseDTO?> UpdateAsync(long id, MemberDTO dto)
+        {
+            var member = await _context.Members
+                .Include(m => m.Family)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (member == null)
+                return new MemberResponseDTO
+                {
+                    Id = 0,
+                    ResultMessage = $"O Membro de ID:{dto.FamilyId} não existe"
+                };
+            var family = await _context.Families
+                .FirstOrDefaultAsync(f => f.Id == dto.FamilyId);
+
+            if (family == null)
+            {
+                return new MemberResponseDTO
+                {
+                    Id = 0,
+                    ResultMessage = $"A família de ID:{dto.FamilyId} não existe"
+                };
+            }
+
+            if (dto.Name != null)
+                member.SetName(dto.Name);
+
+            if (dto.Gender != null)
+                member.SetGender(dto.Gender);
+
+            if (dto.BirthDate!= null)
+                member.SetBirthDate(dto.BirthDate);
+
+            if (dto.HasBeenMarried == true)
+                member.MarkAsMarried();
+
+            if (dto.Role != null)
+                member.SetRole(dto.Role);
+
+            if (dto.CellPhone.HasValue)
+                member.SetCellPhone(dto.CellPhone);
+
+
+            await _context.SaveChangesAsync();
+
+            return new MemberResponseDTO
+            {
+                Id = member.Id,
+                Name = member.Name,
+                Gender = member.Gender,
+                BirthDate = member.BirthDate,
+                HasBeenMarried = member.HasBeenMarried,
+                Role = member.Role,
+                CellPhone = member.CellPhone,
+                Class = member.Class,
+                FamilyId = family.Id,
+                FamilyName = family.Name,
+                ResultMessage = "Membro atualizado com sucesso"
+            };
+        }
+
+        public async Task<MemberResponseDTO> RemoveAsync(long id)
+        {
+            var member = await _context.Members
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (member == null)
+                return new MemberResponseDTO
+                {
+                    Id = 0,
+                    ResultMessage = $"O Membro de ID:{id} não existe"
+                };
+
+            _context.Members.Remove(member);
+            await _context.SaveChangesAsync();
+            return new MemberResponseDTO
+            {
+                Id = id,
+                ResultMessage = $"O Membro {member.Name} Foi Excluido com Sucesso"
+            }; ;
         }
     }
 }

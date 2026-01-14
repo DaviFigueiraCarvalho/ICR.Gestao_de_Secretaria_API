@@ -12,6 +12,7 @@ namespace ICR.Domain.DTOs
         public Address Address { get; set; }
         public long FederationId { get; set; }
         public long? MinisterId { get; set; }
+        public string? FailureMessage { get; set; }
 
     }
 
@@ -20,12 +21,12 @@ namespace ICR.Domain.DTOs
         public long Id { get; set; }
         public string Name { get; set; }
         public Address Address { get; set; }
-        public long FederationId { get; set; }
+        public long? FederationId { get; set; }
         public string FederationName { get; set; }
         public long? MinisterId { get; set; }
         public string MinisterName { get; set; }
+        public string ResultMessage { get; set; }
 
 
     }
-
 }

@@ -1,6 +1,8 @@
 ﻿using ICR.Application.Services;
 using ICR.Domain.DTOs;
+using ICR.Domain.Model.CellAggregate;
 using ICR.Domain.Model.ChurchAggregate;
+using ICR.Domain.Model.MinisterAggregate;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,13 +21,70 @@ namespace ICR.Infra.Data.Repositories
             _idSequenceService = new IdSequenceService(context);
         }
 
-        public async Task AddAsync(Church church)
+        public async Task<ChurchResponseDto?> CreateAsync(ChurchDTO dto)
         {
-            var newId = await _idSequenceService.GetNextIdAsync<Church>();
-            church.Id = newId;
+            // Busca Federação
+            var federation = await _context.Federations
+                .FirstOrDefaultAsync(f => f.Id == dto.FederationId);
 
-            await _context.Churches.AddAsync(church);
+            if (federation == null)
+                return new ChurchResponseDto
+                {
+                    Id = 0,
+                    ResultMessage = $"A federação de ID:{dto.FederationId} não existe"
+                };
+
+            // Busca Ministro
+            Minister? minister = null;
+
+            if (dto.MinisterId.HasValue && dto.MinisterId.Value > 0)
+            {
+                minister = await _context.Ministers
+                    .FirstOrDefaultAsync(m => m.Id == dto.MinisterId.Value);
+
+                if (minister == null)
+                    return new ChurchResponseDto
+                    {
+                        Id = 0,
+                        ResultMessage = $"O pastor de ID:{dto.MinisterId} não existe"
+                    };
+            }
+
+            var newId = await _idSequenceService.GetNextIdAsync<Church>();
+            var newCellId = await _idSequenceService.GetNextIdAsync<Cell>();
+
+            var church = new Church(
+                newId,
+                dto.Name,
+                dto.Address,
+                federation.Id,
+                minister?.Id
+            );
+
+            var cell = new Cell(
+                newCellId,
+                $"Matriz:({dto.Name})",
+                newId,
+                0
+            );
+
+            _context.Churches.Add(church);
+            _context.Cells.Add(cell);
+
+            await _context.SaveChangesAsync();
+
+            return new ChurchResponseDto
+            {
+                Id = church.Id,
+                Name = church.Name,
+                FederationId = federation.Id,
+                FederationName = federation.Name,
+                MinisterId = minister?.Id,
+                MinisterName =$"{minister?.Member.Role} {minister?.Member.Name}",
+                ResultMessage = "Igreja criada com sucesso"
+            };
         }
+
 
         public async Task<ChurchResponseDto?> GetByIdAsync(long id)
         {
@@ -88,39 +147,101 @@ namespace ICR.Infra.Data.Repositories
         }
 
 
-        public async Task<bool> UpdateAsync(long id, Church updatedChurch)
+        public async Task<ChurchResponseDto?> UpdateAsync(long id, ChurchDTO dto)
         {
             var church = await _context.Churches
                 .FirstOrDefaultAsync(c => c.Id == id);
 
             if (church == null)
-                return false;
+                return null;
 
-            // Atualiza tudo aqui dentro, como você pediu
-            church.SetName(updatedChurch.Name);
-            church.SetFederationId(updatedChurch.FederationId);
-            church.SetAddress(updatedChurch.Address);
-            church.SetMinisterId(updatedChurch.MinisterId);
+            var federation = await _context.Federations
+                .FirstOrDefaultAsync(f => f.Id == dto.FederationId);
 
-            _context.Churches.Update(church);
+            if (federation == null)
+                return new ChurchResponseDto
+                {
+                    Id = 0,
+                    ResultMessage = $"A federação de ID:{dto.FederationId} não existe"
+                };
+
+            church.SetFederationId(federation.Id);
+
+            Minister? minister = null;
+
+            if (dto.MinisterId.HasValue)
+            {
+                if (dto.MinisterId.Value == 0)
+                {
+                    // remove pastor
+                    church.SetMinisterId(null);
+                }
+                else
+                {
+                    minister = await _context.Ministers
+                        .Include(m => m.Member)
+                        .FirstOrDefaultAsync(m => m.Id == dto.MinisterId.Value);
+
+                    if (minister == null)
+                        return new ChurchResponseDto
+                        {
+                            Id = 0,
+                            ResultMessage = $"O pastor/presbítero de ID:{dto.MinisterId.Value} não existe"
+                        };
+
+                    church.SetMinisterId(minister.Id);
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(dto.Name))
+                church.SetName(dto.Name);
+
+            if (dto.Address != null)
+                church.SetAddress(dto.Address);
+
             await _context.SaveChangesAsync();
 
-            return true;
+            return new ChurchResponseDto
+            {
+                Id = church.Id,
+                Name = church.Name,
+                Address = church.Address,
+                FederationId = federation.Id,
+                FederationName = federation.Name,
+                MinisterId = church.MinisterId,
+                MinisterName = minister != null
+                    ? $"{minister?.Member.Role} {minister?.Member.Name}"
+                    : null,
+                ResultMessage = $"Igreja {church.Name} atualizada com sucesso"
+            };
         }
 
 
-        public async Task<bool> DeleteAsync(long id)
+
+
+
+        public async Task<ChurchResponseDto?> DeleteAsync(long id)
         {
             var church = await _context.Churches
                 .FirstOrDefaultAsync(c => c.Id == id);
 
             if (church == null)
-                return false;
+                return new ChurchResponseDto
+                {
+                    Id = 0,
+                    ResultMessage = $"A igreja de ID:{id} não existe"
+                };
 
             _context.Churches.Remove(church);
             await _context.SaveChangesAsync();
 
-            return true;
+            return new ChurchResponseDto
+            {
+                Id = church.Id,
+                Name = church.Name,
+                ResultMessage = $"Igreja {church.Name} deletada com sucesso"
+
+            };
         }
 
 
@@ -128,6 +249,7 @@ namespace ICR.Infra.Data.Repositories
         {
             await _context.SaveChangesAsync();
         }
+
 
     }
 }

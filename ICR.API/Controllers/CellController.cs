@@ -1,13 +1,12 @@
-using ICR.Domain.DTOs;
+﻿using ICR.Domain.DTOs;
 using ICR.Domain.Model.CellAggregate;
-using ICR.Domain.Model.MemberAggregate;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 
 namespace ICR.API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/cells")]
     public class CellController : ControllerBase
     {
         private readonly ICellRepository _cellRepository;
@@ -17,82 +16,71 @@ namespace ICR.API.Controllers
             _cellRepository = cellRepository;
         }
 
-        // GET api/cell?pageNumber=1&pageQuantity=10
         [HttpGet]
-        public async Task<IActionResult> Get(int pageNumber = 1, int pageQuantity = 10)
+        public async Task<IActionResult> Get(
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageQuantity = 10)
         {
-            var cells = await _cellRepository.GetAsync(pageNumber, pageQuantity);
+            var cells = await _cellRepository.GetAllAsync(pageNumber, pageQuantity);
             return Ok(cells);
         }
 
-        // GET api/cell/5
         [HttpGet("{id:long}")]
         public async Task<IActionResult> GetById(long id)
         {
             var cell = await _cellRepository.GetByIdAsync(id);
 
             if (cell == null)
-                return NotFound();
+                return NotFound(new { message = "Cell not found" });
 
             return Ok(cell);
         }
 
-        // POST api/cell
         [HttpPost]
-        public async Task<IActionResult> Create([FromForm] CellDTO dto)
+        public async Task<IActionResult> Create([FromBody] CellDTO dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            var result = await _cellRepository.AddAsync(dto);
+
+            if (result.Id == 0)
+                return BadRequest(result);
+
+            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+        }
+
+        [HttpPatch("{id:long}")]
+        public async Task<IActionResult> Update(long id, [FromBody] CellDTO dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            // Mapeia DTO → entidade (porque tua interface é torta)
             var cell = new Cell(
-                0,
+                id,
                 dto.Name,
                 dto.ChurchId,
                 dto.ResponsibleId ?? 0
             );
 
-            await _cellRepository.AddAsync(cell);
-            await _cellRepository.SaveAsync();
+            var result = await _cellRepository.UpdateAsync(id, cell);
 
-            return CreatedAtAction(
-                nameof(GetById),
-                new { id = cell.Id },
-                null
-            );
+            if (result.Id == 0)
+                return NotFound(result);
+
+            return Ok(result);
         }
 
-        // PATCH api/cell/5
-        [HttpPatch("{id:long}")]
-        public async Task<IActionResult> Update(long id, [FromForm] CellDTO dto)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            var updatedCell = new Cell(
-                id,
-                dto.Name,
-                dto.ChurchId,
-                dto.ResponsibleId ?? 0 // s� pra satisfazer teu construtor torto
-            );
-
-            var updated = await _cellRepository.UpdateAsync(id, updatedCell);
-
-            if (!updated)
-                return NotFound();
-
-            return NoContent();
-        }
-
-        // DELETE api/cell/5
         [HttpDelete("{id:long}")]
         public async Task<IActionResult> Delete(long id)
         {
-            var deleted = await _cellRepository.DeleteAsync(id);
+            var result = await _cellRepository.DeleteAsync(id);
 
-            if (!deleted)
-                return NotFound();
+            if (result.Id == 0)
+                return NotFound(result);
 
-            return NoContent();
+            return Ok(result);
         }
     }
 }

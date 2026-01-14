@@ -1,8 +1,11 @@
 ﻿using ICR.Application.Services;
-using ICR.Application.ViewModel;
+using ICR.Domain.DTOs;
+using ICR.Domain.Model.ChurchAggregate;
 using ICR.Domain.Model.FederationAggregate;
+using ICRManagement.Domain.DTOs;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace ICR.Infra.Repositories
@@ -18,45 +21,134 @@ namespace ICR.Infra.Repositories
             _idSequenceService = new IdSequenceService(_context);
         }
 
-        // Adiciona uma nova federação
-        public async Task<IEnumerable<Federation>> AddAsync(Federation federation)
-        {
-            // Gerando novo ID corretamente
-            var newId = await _idSequenceService.GetNextIdAsync<Federation>();
+        
 
-            federation.Id = newId;
+        // CREATE
+        public async Task<FederationResponseDTO> AddAsync(FederationDTO dto)
+        {
+            
+            long newId = await _idSequenceService.GetNextIdAsync<Federation>();
+
+            var federation = new Federation(newId, dto.Name, dto.MinisterId);
 
             await _context.Federations.AddAsync(federation);
             await _context.SaveChangesAsync();
 
-            return await _context.Federations.ToListAsync();
+            return new FederationResponseDTO
+            {
+                Id = federation.Id,
+                Name = federation.Name,
+                MinisterId = federation.MinisterId,
+                ResultMessage = "Federação criada com sucesso."
+            };
         }
 
-        // Pega uma federação por ID
-        public async Task<Federation?> GetByIdAsync(long id)
+        // READ DTO
+        public async Task<FederationResponseDTO?> GetByIdAsync(long id)
         {
             return await _context.Federations
-                                 .FirstOrDefaultAsync(f => f.Id == id);
+                .Include(f => f.Minister)
+                .Where(f => f.Id == id)
+                .Select(f => new FederationResponseDTO
+                {
+                    Id = f.Id,
+                    Name = f.Name,
+                    MinisterId = f.MinisterId,
+                    MinisterName = f.Minister != null ? f.Minister.Member.Name : null
+                })
+                .FirstOrDefaultAsync();
         }
 
-        // Retorna todas as federações
-        public async Task<IEnumerable<Federation>> GetAllFederationsAsync()
+        public async Task<IEnumerable<FederationResponseDTO>> GetAllFederationsAsync()
         {
-            return await _context.Federations.ToListAsync();
+            return await _context.Federations
+                .Include(f => f.Minister)
+                .Select(f => new FederationResponseDTO
+                {
+                    Id = f.Id,
+                    Name = f.Name,
+                    MinisterId = f.MinisterId,
+                    MinisterName = f.Minister != null ? f.Minister.Member.Name : null
+                })
+                .ToListAsync();
         }
 
-        // Atualiza federação existente
-        
-
-        public async void UpdateAsync(Federation federation)
+        // UPDATE usando métodos da entidade
+        public async Task<FederationResponseDTO> UpdateAsync(long id, FederationDTO dto)
         {
-            _context.Federations.Update(federation);
-            await _context.SaveChangesAsync();
+            var federation = await _context.Federations
+                .FirstOrDefaultAsync(c => c.Id == id); ;
+            if (federation == null)
+                return new FederationResponseDTO
+                {
+                    Id=0,
+                    ResultMessage = $"Federação de ID:{id} não encontrada."
+                };
+            string? ministerName = null;
+
+            if (dto.MinisterId.HasValue)
+            {
+                if (dto.MinisterId.Value == 0)
+                {
+                    // remove pastor
+                    federation.SetMinisterId(null);
+                }
+                else
+                {
+                    var minister = await _context.Ministers
+                        .FirstOrDefaultAsync(m => m.Id == dto.MinisterId.Value);
+
+                    if (minister == null)
+                        return new FederationResponseDTO
+                        {
+                            Id = 0,
+                            ResultMessage = $"O pastor/presbitero de ID:{dto.MinisterId.Value} não existe"
+                        };
+
+                    federation.SetMinisterId(minister.Id);
+                    ministerName = minister?.Member.Name;
+                }
+            }
+
+
+            // Patch: só altera o que chegou
+            if (!string.IsNullOrWhiteSpace(dto.Name))
+            {
+                federation.SetName(dto.Name);
+            }else dto.Name = federation.Name;
+            await SaveAsync();
+            return new FederationResponseDTO
+            {
+                Id = federation.Id,
+                Name = dto.Name,
+                MinisterId = dto.MinisterId,
+                ResultMessage = $"Federação {federation.Name}, atualizada com sucesso."
+            };
         }
 
-        public async void DeleteAsync(Federation federation)
+        // DELETE
+        public async Task<FederationResponseDTO> DeleteAsync(long id)
         {
+            var federation = await _context.Federations
+                .FirstOrDefaultAsync(c => c.Id == id); ;
+            if (federation == null)
+                return new FederationResponseDTO
+                {
+                    Id = 0,
+                    ResultMessage = $"Federação de ID:{id} não encontrada."
+                };
+
             _context.Federations.Remove(federation);
+            await SaveAsync();
+            return new FederationResponseDTO
+            {
+                ResultMessage = $"Federação {federation.Name}, deletada com sucesso."
+            };
+        }
+
+        // Salva alterações no banco
+        public async Task SaveAsync()
+        {
             await _context.SaveChangesAsync();
         }
     }

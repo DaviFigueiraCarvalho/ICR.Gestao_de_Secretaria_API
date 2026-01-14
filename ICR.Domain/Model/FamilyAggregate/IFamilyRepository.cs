@@ -1,19 +1,25 @@
-using ICR.Domain.Model.MemberAggregate;
+using ICR.Domain.DTOs;
 using System.Collections.Generic;
-using ICR.Domain.Model.MemberAggregate;
+using System.Threading.Tasks;
 
 namespace ICR.Domain.Model.FamilyAggregate
 {
     public interface IFamilyRepository
     {
-        void Add(Family family);
-        Family? GetById(long id);
-        List<Family> Get(int pageNumber, int pageQuantity);
-        List<Family> GetFamiliesByWeddingBirthdayMonth(long memberId);
+        Task<ResponseFamilyDTO> AddAsync(Family family);
 
-        List<Family> GetbyCellId(long cellid);
-        void Delete(long id);
-        void Save();
+        Task<ResponseFamilyDTO?> GetByIdAsync(long id);
 
+        Task<List<ResponseFamilyDTO>> GetAsync(int pageNumber, int pageQuantity);
+
+        Task<List<ResponseFamilyDTO>> GetFamiliesByWeddingBirthdayMonthAsync(int monthNumber);
+        Task<List<ResponseFamilyDTO>> GetByChurchId(long churchId);
+
+        Task<List<ResponseFamilyDTO>> GetByCellIdAsync(long cellId);
+        Task<ResponseFamilyDTO> UpdateAsync(long id, Family familyUpdated);
+
+        Task<ResponseFamilyDTO> DeleteAsync(long id);
+
+        Task SaveAsync();
     }
 }

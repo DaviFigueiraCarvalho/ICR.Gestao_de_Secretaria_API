@@ -1,16 +1,15 @@
-﻿using ICR.Application.Services;
-using ICR.Application.ViewModel;
-using ICR.Domain.Model.FederationAggregate;
-using ICR.Infra.Repositories;
+﻿using ICR.Domain.Model.FederationAggregate;
+using ICR.Infra;
 using ICRManagement.Domain.DTOs;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace ICR.API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/federations")]
     public class FederationController : ControllerBase
     {
         private readonly IFederationRepository _repository;
@@ -20,60 +19,58 @@ namespace ICR.API.Controllers
             _repository = repository;
         }
 
-        // GET: api/federation
+        // POST: api/federations
+        [HttpPost]
+        public async Task<ActionResult<IEnumerable<Federation>>> Create([FromBody] FederationDTO dto)
+        {
+            var result = await _repository.AddAsync(dto);
+            return Ok(result);
+        }
+
+        // GET: api/federations
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Federation>>> GetAll()
+        public async Task<ActionResult<IEnumerable<FederationResponseDTO>>> GetAll()
         {
             var federations = await _repository.GetAllFederationsAsync();
             return Ok(federations);
         }
 
-        // GET: api/federation/{id}
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Federation>> GetById(long id)
+        // GET: api/federations/{id}
+        [HttpGet("{id:long}")]
+        public async Task<ActionResult<FederationResponseDTO>> GetById(long id)
         {
             var federation = await _repository.GetByIdAsync(id);
+
             if (federation == null)
                 return NotFound();
+
             return Ok(federation);
         }
 
-        // POST: api/federation
-        [HttpPost]
-        public async Task<ActionResult<IEnumerable<Federation>>> Create([FromForm] FederationViewModel model)
+        // PATCH: api/federations/{id}
+        [HttpPatch("{id:long}")]
+        public async Task<IActionResult> Patch(long id, [FromBody] FederationDTO dto)
         {
-            var federations = new Federation(0, model.Name, model.MinisterId);
-                
-            await _repository.AddAsync(federations);
-            return Ok(new
-            {
-                federations.Name,
-                federations.MinisterId
-            });
-        }
+            var updated = await _repository.UpdateAsync(id, dto);
 
-        // PUT: api/federation/{id}
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(long id, [FromBody] FederationDTO updatedFederation)
-        {
-            var federation = await _repository.GetByIdAsync(id);
-            if (federation == null) return NotFound();
-            federation.SetName(updatedFederation.Name);
-            federation.SetPastorId(updatedFederation.PastorId);
-            _repository.UpdateAsync(federation);
+            if (updated==null)
+                return NotFound();
 
             return NoContent();
         }
 
-        // DELETE: api/federation/{id}
-        [HttpDelete("{id}")]
+
+
+
+        // DELETE: api/federations/{id}
+        [HttpDelete("{id:long}")]
         public async Task<IActionResult> Delete(long id)
         {
-            var federation = await _repository.GetByIdAsync(id);
-            if (federation == null)
+            var deleted = await _repository.DeleteAsync(id);
+
+            if (deleted == null)
                 return NotFound();
 
-            _repository.DeleteAsync(federation);
             return NoContent();
         }
     }

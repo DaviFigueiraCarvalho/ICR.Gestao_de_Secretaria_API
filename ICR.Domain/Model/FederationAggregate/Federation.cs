@@ -30,7 +30,7 @@ namespace ICR.Domain.Model.FederationAggregate
 
             Name = newName;
         }
-        public void SetPastorId(long? ministerId)
+        public void SetMinisterId(long? ministerId)
         {
             MinisterId = ministerId;
         }

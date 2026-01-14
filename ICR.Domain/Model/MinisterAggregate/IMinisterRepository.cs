@@ -1,19 +1,17 @@
+using ICR.Domain.DTOs;
 using System.Collections.Generic;
 
 namespace ICR.Domain.Model.MinisterAggregate
 {
     public interface IMinisterRepository
     {
-        void Add(Minister minister);
-        Minister? GetById(long id);
-        List<Minister> Get(int pageNumber, int pageQuantity);
-        void Delete(long id);
-        void Save();
+        Task<MinisterResponseDTO> AddAsync(Minister minister);
+        Task<MinisterResponseDTO?> GetByIdAsync(long id);
+        Task<IEnumerable<MinisterResponseDTO>> GetAllAsync();
+        Task<IEnumerable<MinisterResponseDTO>> GetByChurchIdAsync(long churchId); 
+        Task<IEnumerable<MinisterBirthdayDTO>> GetByBirthdaydatesIdAsync(int month);
+        Task<MinisterResponseDTO> UpdateAsync(long id, MinisterPatchDTO dto);
+        Task<MinisterResponseDTO> DeleteAsync(long id);
 
-        // Domain-specific queries
-        List<Minister> GetByMemberId(long memberId);
-        List<Minister> GetByFamilyId(long familyId);
-        Minister? GetByCpf(long cpf);
-        List<Minister> GetByChurchId(long churchId);
     }
 }

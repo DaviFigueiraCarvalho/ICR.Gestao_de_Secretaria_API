@@ -1,24 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using ICR.Domain.DTOs;
+using ICR.Domain.Model.MemberAggregate;
 
-namespace ICR.Domain.Model.MemberAggregate
+public interface IMemberRepository
 {
-    public interface IMemberRepository
-    {
-        Task<IEnumerable<Member>> GetAllMembersAsync();
-        Task<Member?> GetByIdAsync(long id);
-        Task<IEnumerable<Member>> GetByFamilyAsync(long familyId);
-        Task<IEnumerable<Member>> GetByChurchAsync(long churchId);
-        Task<IEnumerable<Member>> GetByCellAsync(long cellId);
+    Task<IEnumerable<MemberResponseDTO>> GetAllAsync();
+    Task<MemberResponseDTO?> GetByIdAsync(long id);
+    Task<IEnumerable<MemberResponseDTO>> GetByFamilyAsync(long familyId);
+    Task<IEnumerable<MemberResponseDTO>> GetBirthdaysByMonthAsync(int month, long churchId);
 
-        Task<IEnumerable<Member>> GetBirthdaysByMonthAsync(int month, long churchId);
-
-        Task AddAsync(Member member);
-        void UpdateAsync(Member member);
-        void RemoveAsync(Member member);
-
-        Task SaveAsync();
-    }
+    Task<MemberResponseDTO> AddAsync(Member member);
+    Task<MemberResponseDTO> UpdateAsync(long id, MemberDTO member);
+    Task<MemberResponseDTO> RemoveAsync(long id);
 }
-

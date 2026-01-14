@@ -48,34 +48,24 @@ namespace ICR.API.Controllers
 
         // POST: api/churches
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] Church church)
+        public async Task<ActionResult<ChurchResponseDto>> Create([FromBody] ChurchDTO dto)
         {
-            await _repository.AddAsync(church);
-            await _repository.SaveAsync();
-
-            return CreatedAtAction(
-                nameof(GetById),
-                new { id = church.Id },
-                new
-                {
-                    church.Name,
-                    church.FederationId
-                }
-            );
+            var church = await _repository.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = church.Id }, church);
         }
 
-        // PUT: api/churches/{id}
-        [HttpPut("{id:long}")]
-        [HttpPut("{id:long}")]
-        public async Task<IActionResult> Update(long id, [FromBody] Church updatedChurch)
+        // PATCH: api/churches/{id}
+        [HttpPatch("{id:long}")]
+        public async Task<ActionResult<ChurchResponseDto>> Update(long id, [FromBody] ChurchDTO dto)
         {
-            var updated = await _repository.UpdateAsync(id, updatedChurch);
+            var updated = await _repository.UpdateAsync(id, dto);
 
-            if (!updated)
+            if (updated == null)
                 return NotFound();
 
-            return NoContent();
+            return Ok(updated);
         }
+
 
 
         // DELETE: api/churches/{id}
@@ -84,7 +74,7 @@ namespace ICR.API.Controllers
         {
             var deleted = await _repository.DeleteAsync(id);
 
-            if (!deleted)
+            if (deleted == null)
                 return NotFound();
 
             return NoContent();

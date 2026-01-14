@@ -1,117 +1,90 @@
-using ICR.Application.Services;
-using ICR.Application.ViewModel;
 using ICR.Domain.DTOs;
-using ICR.Domain.Model.FederationAggregate;
 using ICR.Domain.Model.MemberAggregate;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace ICRManagement.API.Controllers
+namespace ICR.API.Controllers
 {
     [ApiController]
-    [Route("api/v1/members")]
+    [Route("api/members")]
     public class MemberController : ControllerBase
     {
         private readonly IMemberRepository _repository;
-        private readonly IdSequenceService _seq;
 
-
-        public MemberController(IMemberRepository repository, IdSequenceService seq)
+        public MemberController(IMemberRepository repository)
         {
             _repository = repository;
-            _seq = seq;
-
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Create([FromForm] MemberDTO model)
+        // GET: api/members
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<MemberResponseDTO>>> GetAll()
         {
-
-            var member = new Member(
-                0,
-                model.FamilyId,
-                model.Name,
-                model.Gender,
-                model.BirthDate,
-                model.HasBeenMarried,
-                model.Role,
-                model.CellPhone
-            );
-            
-            await _repository.AddAsync(member);
-            await _repository.SaveAsync();
-
-            return Ok(new
-            {
-                member.FamilyId,
-                member.Name,
-                member.Gender,
-                member.BirthDate,
-                member.HasBeenMarried,
-                member.Role,
-                member.CellPhone
-            });
+            return Ok(await _repository.GetAllAsync());
         }
 
+        // GET: api/members/{id}
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(long id)
+        public async Task<ActionResult<MemberResponseDTO>> GetById(long id)
         {
             var member = await _repository.GetByIdAsync(id);
-            if (member == null) return NotFound();
-
-            return Ok(member);
+            return member == null ? NotFound() : Ok(member);
         }
 
+        // GET: api/members/family/{familyId}
         [HttpGet("family/{familyId}")]
-        public async Task<IActionResult> GetByFamily(long familyId)
+        public async Task<ActionResult<IEnumerable<MemberResponseDTO>>> GetByFamily(long familyId)
         {
-            var members = await _repository.GetByFamilyAsync(familyId);
-            return Ok(members);
+            return Ok(await _repository.GetByFamilyAsync(familyId));
         }
 
-        [HttpGet("church/{churchId}")]
-        public async Task<IActionResult> GetByChurch(long churchId)
+        // GET: api/members/birthdays/{month}/church/{churchId}
+        [HttpGet("birthdays/{month}/church/{churchId}")]
+        public async Task<ActionResult<IEnumerable<MemberResponseDTO>>> GetBirthdaysByMonth(
+            int month,
+            long churchId)
         {
-            var members = await _repository.GetByChurchAsync(churchId);
-            return Ok(members);
+            return Ok(await _repository.GetBirthdaysByMonthAsync(month, churchId));
         }
 
-        [HttpGet("birthdays/{month}/{churchId}")]
-        public async Task<IActionResult> GetBirthdays(int month, long churchId)
+        // POST: api/members
+        [HttpPost]
+        public async Task<ActionResult<MemberResponseDTO>> Create([FromBody] Member member)
         {
-            var members = await _repository.GetBirthdaysByMonthAsync(month, churchId);
-            return Ok(members);
+            var result = await _repository.AddAsync(member);
+
+            if (result.Id == 0)
+                return BadRequest(result);
+
+            return Ok(result);
         }
 
+        // PATCH: api/members/{id}
         [HttpPatch("{id}")]
-        public async Task<IActionResult> Update(long id, [FromForm] MemberDTO dto)
+        public async Task<ActionResult<MemberResponseDTO>> Patch(long id, [FromBody] MemberDTO member)
         {
-            var member = await _repository.GetByIdAsync(id);
-            if (member == null) return NotFound();
+            var result = await _repository.UpdateAsync(id, member);
 
-            member.SetFamily(dto.FamilyId);
-            member.SetName(dto.Name);
-            member.SetGender(dto.Gender);
-            member.SetBirthDate(dto.BirthDate);
-            member.SetRole(dto.Role);
-            member.SetCellPhone(dto.CellPhone);
+            if (result == null)
+                return NotFound();
 
-            _repository.UpdateAsync(member);
-            await _repository.SaveAsync();
+            if (result.Id == 0)
+                return BadRequest(result);
 
-            return NoContent();
+            return Ok(result);
         }
 
+        // DELETE: api/members/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(long id)
         {
-            var member = await _repository.GetByIdAsync(id);
-            if (member == null) return NotFound();
+            var result = await _repository.RemoveAsync(id);
 
-            _repository.RemoveAsync(member);
-            await _repository.SaveAsync();
+            if (result.Id == 0)
+                return NotFound(result);
 
-            return NoContent();
+            return Ok(result);
         }
     }
 }

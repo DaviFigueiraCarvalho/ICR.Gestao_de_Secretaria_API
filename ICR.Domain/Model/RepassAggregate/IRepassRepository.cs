@@ -4,6 +4,7 @@ namespace ICR.Domain.Model.RepassAggregate
 {
     public interface IRepassRepository
     {
+        
         void Add(Repass repass);
         Repass? GetById(long id);
         List<Repass> Get(int pageNumber, int pageQuantity);

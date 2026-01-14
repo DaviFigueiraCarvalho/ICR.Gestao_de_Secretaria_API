@@ -1,11 +1,12 @@
-﻿using System;
+﻿using ICR.Domain.Model.MemberAggregate;
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ICR.Domain.Model.MinisterAggregate
 {
     [Table("minister")]
-    public class Minister
+    public class Minister : BasicModel
     {
         [Key]
         public long Id { get; set; }
@@ -13,7 +14,7 @@ namespace ICR.Domain.Model.MinisterAggregate
         // FKs
         [ForeignKey("MemberId")]
         public long MemberId { get; set; }
-        public MemberAggregate.Member? Member { get; set; }
+        public Member? Member { get; set; }
 
         // CPF do ministro
         public long Cpf { get; set; }
