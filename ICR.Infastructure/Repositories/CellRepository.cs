@@ -49,6 +49,10 @@ namespace ICR.Infra.Data.Repositories
                         ResultMessage = $"O responsável de ID:{dto.ResponsibleId} não existe"
                     };
             }
+            if (dto.ResponsibleId == 0)
+            {
+                dto.ResponsibleId = null;
+            }
 
             var newId = await _idSequenceService.GetNextIdAsync<Cell>();
 
@@ -92,14 +96,12 @@ namespace ICR.Infra.Data.Repositories
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<IEnumerable<CellResponseDTO>> GetAllAsync(int pageNumber, int pageQuantity)
+        public async Task<IEnumerable<CellResponseDTO>> GetAllAsync()
         {
             return await _context.Cells
                 .Include(c => c.Church)
                 .Include(c => c.Responsible)
                 .OrderBy(c => c.Id)
-                .Skip((pageNumber - 1) * pageQuantity)
-                .Take(pageQuantity)
                 .Select(c => new CellResponseDTO
                 {
                     Id = c.Id,

@@ -15,9 +15,9 @@ namespace ICR.Domain.Model.MemberAggregate
         public string Name { get; set; } = null!;
         public bool HasBeenMarried { get; private set; }
         public GenderType Gender { get; private set; }
-        public string? Role { get; private set; }
+        public MemberRole Role { get; private set; }
         public DateTime BirthDate { get; private set; }
-        public long? CellPhone { get; private set; }
+        public string? CellPhone { get; private set; }
         public ClassType Class { get; private set; }
 
         protected Member() { } // EF
@@ -30,8 +30,8 @@ namespace ICR.Domain.Model.MemberAggregate
             GenderType gender,
             DateTime birthDate,
             bool hasBeenMarried,
-            string? role = null,
-            long? cellPhone = null
+            MemberRole role,
+            string? cellPhone = null
         )
         {
             Id = id;
@@ -43,7 +43,7 @@ namespace ICR.Domain.Model.MemberAggregate
             Role = role;
             CellPhone = cellPhone;
 
-            RecalculateClass();
+            CalculateClass();
         }
        
         
@@ -62,39 +62,38 @@ namespace ICR.Domain.Model.MemberAggregate
         public void SetGender(GenderType gender)
         {
             Gender = gender;
-            RecalculateClass();
+            CalculateClass();
         }
 
         public void SetBirthDate(DateTime date)
         {
             BirthDate = date;
-            RecalculateClass();
+            CalculateClass();
         }
 
         public void MarkAsMarried()
         {
             HasBeenMarried = true;
-            RecalculateClass();
+            CalculateClass();
         }
 
-        public void SetRole(string? role)
+        public void SetRole(MemberRole role)
         {
             Role = role;
         }
 
-        public void SetCellPhone(long? phone)
+        public void SetCellPhone(string? phone)
         {
             CellPhone = phone;
         }
 
-        // override manual pra correção administrativa
-        public void OverrideClass(ClassType manualClass)
+        public void SetClass(ClassType manualClass)
         {
             Class = manualClass;
         }
 
         // regra central de classificação
-        private void RecalculateClass()
+        private void CalculateClass()
         {
             int age = CalculateAge(BirthDate);
 
@@ -163,4 +162,21 @@ namespace ICR.Domain.Model.MemberAggregate
         HOMENS = 5,
         MULHERES = 6,
     }
+
+    public enum MemberRole
+    {
+        Pastor = 1,
+        Presbitero = 2,
+        Diacono = 3,
+        Obreiro = 4,
+        Midias = 5,
+        Louvor = 6,
+        Som_Projecao = 7,
+        Secretaria_Integracao = 8,
+        Ensino = 9,
+        Evangelizacao_Social = 10,
+        Familias = 11,
+        Outros = 12
+    }
+
 }

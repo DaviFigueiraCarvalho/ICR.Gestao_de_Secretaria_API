@@ -17,7 +17,7 @@ namespace ICR.Domain.Model.MinisterAggregate
         public Member? Member { get; set; }
 
         // CPF do ministro
-        public long Cpf { get; set; }
+        public string Cpf { get; set; }
 
         public string Email { get; set; } = null!;
 
@@ -38,8 +38,7 @@ namespace ICR.Domain.Model.MinisterAggregate
         public Minister(
             long id,
             long memberId,
-            long familyId,
-            long cpf,
+            string cpf,
             string email,
             DateTime cardValidity,
             DateTime presbiterOrdinationDate,
@@ -61,10 +60,8 @@ namespace ICR.Domain.Model.MinisterAggregate
         {
             MemberId = memberId;
         }
-        public void SetCpf(long cpf)
+        public void SetCpf(string cpf)
         {
-            if (cpf <= 0)
-                throw new ArgumentException("cpf inválido", nameof(cpf));
             Cpf = cpf;
         }
         public void SetEmail(string email)

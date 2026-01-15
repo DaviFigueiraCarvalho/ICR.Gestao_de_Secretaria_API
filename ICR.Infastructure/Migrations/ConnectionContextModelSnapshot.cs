@@ -42,6 +42,10 @@ namespace ICR.Infastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ChurchId");
+
+                    b.HasIndex("ResponsibleId");
+
                     b.ToTable("cells");
                 });
 
@@ -65,6 +69,10 @@ namespace ICR.Infastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("FederationId");
+
+                    b.HasIndex("MinisterId");
+
                     b.ToTable("church");
                 });
 
@@ -79,8 +87,15 @@ namespace ICR.Infastructure.Migrations
                     b.Property<long>("CellId")
                         .HasColumnType("bigint");
 
+                    b.Property<long>("ChurchId")
+                        .HasColumnType("bigint");
+
                     b.Property<long?>("ManId")
                         .HasColumnType("bigint");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<DateTime?>("WeddingDate")
                         .HasColumnType("timestamp with time zone");
@@ -89,6 +104,14 @@ namespace ICR.Infastructure.Migrations
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CellId");
+
+                    b.HasIndex("ChurchId");
+
+                    b.HasIndex("ManId");
+
+                    b.HasIndex("WomanId");
 
                     b.ToTable("families");
                 });
@@ -110,6 +133,8 @@ namespace ICR.Infastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("MinisterId");
+
                     b.ToTable("federation");
                 });
 
@@ -124,10 +149,7 @@ namespace ICR.Infastructure.Migrations
                     b.Property<DateTime>("BirthDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("CellPhone")
-                        .HasColumnType("text");
-
-                    b.Property<long>("ChurchId")
+                    b.Property<long?>("CellPhone")
                         .HasColumnType("bigint");
 
                     b.Property<int>("Class")
@@ -139,14 +161,19 @@ namespace ICR.Infastructure.Migrations
                     b.Property<int>("Gender")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("HasBeenMarried")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Role")
-                        .HasColumnType("text");
+                    b.Property<int>("Role")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("FamilyId");
 
                     b.ToTable("members");
                 });
@@ -180,7 +207,32 @@ namespace ICR.Infastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("MemberId");
+
                     b.ToTable("minister");
+                });
+
+            modelBuilder.Entity("ICR.Domain.Model.RepassAggregate.Reference", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CompetenceDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("reference");
                 });
 
             modelBuilder.Entity("ICR.Domain.Model.RepassAggregate.Repass", b =>
@@ -197,10 +249,14 @@ namespace ICR.Infastructure.Migrations
                     b.Property<long>("ChurchId")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("Reference")
+                    b.Property<long>("ReferenceId")
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ChurchId");
+
+                    b.HasIndex("ReferenceId");
 
                     b.ToTable("repass");
                 });
@@ -219,6 +275,9 @@ namespace ICR.Infastructure.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
+                    b.Property<int>("MinimalScope")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -236,9 +295,6 @@ namespace ICR.Infastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<long>("MemberId")
                         .HasColumnType("bigint");
 
@@ -249,14 +305,17 @@ namespace ICR.Infastructure.Migrations
                     b.Property<int>("Scope")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Username")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("MemberId")
+                        .IsUnique();
+
+                    b.HasIndex("Username")
+                        .IsUnique();
 
                     b.ToTable("users");
                 });
@@ -271,11 +330,42 @@ namespace ICR.Infastructure.Migrations
 
                     b.HasKey("UserId", "RoleId");
 
+                    b.HasIndex("RoleId");
+
                     b.ToTable("user_role");
+                });
+
+            modelBuilder.Entity("ICR.Domain.Model.CellAggregate.Cell", b =>
+                {
+                    b.HasOne("ICR.Domain.Model.ChurchAggregate.Church", "Church")
+                        .WithMany()
+                        .HasForeignKey("ChurchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ICR.Domain.Model.MemberAggregate.Member", "Responsible")
+                        .WithMany()
+                        .HasForeignKey("ResponsibleId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Church");
+
+                    b.Navigation("Responsible");
                 });
 
             modelBuilder.Entity("ICR.Domain.Model.ChurchAggregate.Church", b =>
                 {
+                    b.HasOne("ICR.Domain.Model.FederationAggregate.Federation", "Federation")
+                        .WithMany()
+                        .HasForeignKey("FederationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ICR.Domain.Model.MinisterAggregate.Minister", "Minister")
+                        .WithMany()
+                        .HasForeignKey("MinisterId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.OwnsOne("ICR.Domain.Model.Address", "Address", b1 =>
                         {
                             b1.Property<long>("ChurchId")
@@ -314,10 +404,73 @@ namespace ICR.Infastructure.Migrations
 
                     b.Navigation("Address")
                         .IsRequired();
+
+                    b.Navigation("Federation");
+
+                    b.Navigation("Minister");
+                });
+
+            modelBuilder.Entity("ICR.Domain.Model.FamilyAggregate.Family", b =>
+                {
+                    b.HasOne("ICR.Domain.Model.CellAggregate.Cell", "Cell")
+                        .WithMany()
+                        .HasForeignKey("CellId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ICR.Domain.Model.ChurchAggregate.Church", "Church")
+                        .WithMany()
+                        .HasForeignKey("ChurchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ICR.Domain.Model.MemberAggregate.Member", "Man")
+                        .WithMany()
+                        .HasForeignKey("ManId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ICR.Domain.Model.MemberAggregate.Member", "Woman")
+                        .WithMany()
+                        .HasForeignKey("WomanId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Cell");
+
+                    b.Navigation("Church");
+
+                    b.Navigation("Man");
+
+                    b.Navigation("Woman");
+                });
+
+            modelBuilder.Entity("ICR.Domain.Model.FederationAggregate.Federation", b =>
+                {
+                    b.HasOne("ICR.Domain.Model.MinisterAggregate.Minister", "Minister")
+                        .WithMany()
+                        .HasForeignKey("MinisterId");
+
+                    b.Navigation("Minister");
+                });
+
+            modelBuilder.Entity("ICR.Domain.Model.MemberAggregate.Member", b =>
+                {
+                    b.HasOne("ICR.Domain.Model.FamilyAggregate.Family", "Family")
+                        .WithMany()
+                        .HasForeignKey("FamilyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Family");
                 });
 
             modelBuilder.Entity("ICR.Domain.Model.MinisterAggregate.Minister", b =>
                 {
+                    b.HasOne("ICR.Domain.Model.MemberAggregate.Member", "Member")
+                        .WithMany()
+                        .HasForeignKey("MemberId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.OwnsOne("ICR.Domain.Model.Address", "Address", b1 =>
                         {
                             b1.Property<long>("MinisterId")
@@ -356,6 +509,57 @@ namespace ICR.Infastructure.Migrations
 
                     b.Navigation("Address")
                         .IsRequired();
+
+                    b.Navigation("Member");
+                });
+
+            modelBuilder.Entity("ICR.Domain.Model.RepassAggregate.Repass", b =>
+                {
+                    b.HasOne("ICR.Domain.Model.ChurchAggregate.Church", "Church")
+                        .WithMany()
+                        .HasForeignKey("ChurchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ICR.Domain.Model.RepassAggregate.Reference", "Reference")
+                        .WithMany()
+                        .HasForeignKey("ReferenceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Church");
+
+                    b.Navigation("Reference");
+                });
+
+            modelBuilder.Entity("ICR.Domain.Model.UserRoleAgreggate.User", b =>
+                {
+                    b.HasOne("ICR.Domain.Model.MemberAggregate.Member", "Member")
+                        .WithMany()
+                        .HasForeignKey("MemberId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Member");
+                });
+
+            modelBuilder.Entity("ICR.Domain.Model.UserRoleAgreggate.UserRole", b =>
+                {
+                    b.HasOne("ICR.Domain.Model.UserRoleAgreggate.Role", "Role")
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ICR.Domain.Model.UserRoleAgreggate.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+
+                    b.Navigation("User");
                 });
 #pragma warning restore 612, 618
         }

@@ -9,20 +9,20 @@ namespace ICR.API.Controllers
     [Route("api/families")]
     public class FamilyController : ControllerBase
     {
-        private readonly IFamilyRepository _familyRepository;
+        private readonly IFamilyRepository _repository;
 
         public FamilyController(IFamilyRepository familyRepository)
         {
-            _familyRepository = familyRepository;
+            _repository = familyRepository;
         }
 
         // GET api/families?pageNumber=1&pageQuantity=10
         [HttpGet]
         public async Task<IActionResult> Get(
-            [FromQuery] int pageNumber = 1,
-            [FromQuery] int pageQuantity = 10)
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 50)
         {
-            var families = await _familyRepository.GetAsync(pageNumber, pageQuantity);
+            var families = await _repository.GetAsync(page, pageSize);
             return Ok(families);
         }
 
@@ -30,7 +30,7 @@ namespace ICR.API.Controllers
         [HttpGet("{id:long}")]
         public async Task<IActionResult> GetById(long id)
         {
-            var family = await _familyRepository.GetByIdAsync(id);
+            var family = await _repository.GetByIdAsync(id);
 
             if (family == null)
                 return NotFound(new { message = "Family not found" });
@@ -42,7 +42,7 @@ namespace ICR.API.Controllers
         [HttpGet("church/{churchId:long}")]
         public async Task<IActionResult> GetByChurch(long churchId)
         {
-            var families = await _familyRepository.GetByChurchId(churchId);
+            var families = await _repository.GetByChurchId(churchId);
             return Ok(families);
         }
 
@@ -50,7 +50,7 @@ namespace ICR.API.Controllers
         [HttpGet("cell/{cellId:long}")]
         public async Task<IActionResult> GetByCell(long cellId)
         {
-            var families = await _familyRepository.GetByCellIdAsync(cellId);
+            var families = await _repository.GetByCellIdAsync(cellId);
             return Ok(families);
         }
 
@@ -61,7 +61,7 @@ namespace ICR.API.Controllers
             if (month < 1 || month > 12)
                 return BadRequest(new { message = "Invalid month" });
 
-            var families = await _familyRepository
+            var families = await _repository
                 .GetFamiliesByWeddingBirthdayMonthAsync(month);
 
             return Ok(families);
@@ -71,61 +71,31 @@ namespace ICR.API.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] FamilyDTO dto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            var family = new Family(
-                0,
-                dto.Name,
-                dto.churchId,
-                dto.CellId,
-                dto.ManId,
-                dto.WomanId,
-                dto.WeddingDate
-            );
-
-            var result = await _familyRepository.AddAsync(family);
+            var result = await _repository.AddAsync(dto);
 
             if (result.Id == 0)
                 return BadRequest(result);
 
-            return CreatedAtAction(
-                nameof(GetById),
-                new { id = result.Id },
-                result
-            );
+            return Ok(result);
         }
 
         // PATCH api/families/5
         [HttpPatch("{id:long}")]
-        public async Task<IActionResult> Update(long id, [FromBody] FamilyDTO dto)
+        public async Task<IActionResult> Update(long id, [FromBody] FamilyPatchDTO dto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            var updated = await _repository.UpdateAsync(id, dto);
 
-            var updatedFamily = new Family(
-                id,
-                dto.Name,
-                dto.churchId,
-                dto.CellId,
-                dto.ManId,
-                dto.WomanId,
-                dto.WeddingDate
-            );
+            if (updated == null)
+                return NotFound();
 
-            var result = await _familyRepository.UpdateAsync(id, updatedFamily);
-
-            if (result.Id == 0)
-                return NotFound(result);
-
-            return Ok(result);
+            return Ok(updated);
         }
 
         // DELETE api/families/5
         [HttpDelete("{id:long}")]
         public async Task<IActionResult> Delete(long id)
         {
-            var result = await _familyRepository.DeleteAsync(id);
+            var result = await _repository.DeleteAsync(id);
 
             if (result.Id == 0)
                 return NotFound(result);

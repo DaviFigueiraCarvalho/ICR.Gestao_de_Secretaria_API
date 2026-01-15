@@ -19,11 +19,9 @@ namespace ICR.API.Controllers
 
         // GET: api/churches?pageNumber=1&pageQuantity=10
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ChurchResponseDto>>> GetAll(
-            [FromQuery] int pageNumber = 1,
-            [FromQuery] int pageQuantity = 10)
+        public async Task<ActionResult<IEnumerable<ChurchResponseDto>>> GetAll()
         {
-            var churches = await _repository.GetAllChurchsAsync(pageNumber, pageQuantity);
+            var churches = await _repository.GetAllChurchsAsync();
             return Ok(churches);
         }
 
@@ -56,7 +54,7 @@ namespace ICR.API.Controllers
 
         // PATCH: api/churches/{id}
         [HttpPatch("{id:long}")]
-        public async Task<ActionResult<ChurchResponseDto>> Update(long id, [FromBody] ChurchDTO dto)
+        public async Task<ActionResult<ChurchResponseDto>> Update(long id, [FromBody] ChurchPatchDTO dto)
         {
             var updated = await _repository.UpdateAsync(id, dto);
 

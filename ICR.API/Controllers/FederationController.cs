@@ -49,7 +49,7 @@ namespace ICR.API.Controllers
 
         // PATCH: api/federations/{id}
         [HttpPatch("{id:long}")]
-        public async Task<IActionResult> Patch(long id, [FromBody] FederationDTO dto)
+        public async Task<IActionResult> Patch(long id, [FromBody] FederationPatchDTO dto)
         {
             var updated = await _repository.UpdateAsync(id, dto);
 

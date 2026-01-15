@@ -19,7 +19,7 @@ namespace ICR.API.Controllers
 
         // POST: api/ministers
         [HttpPost]
-        public async Task<ActionResult<MinisterResponseDTO>> Create([FromBody] Minister minister)
+        public async Task<ActionResult<MinisterResponseDTO>> Create([FromBody] MinisterDTO minister)
         {
             var result = await _repository.AddAsync(minister);
 
@@ -43,9 +43,11 @@ namespace ICR.API.Controllers
 
         // GET: api/ministers
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<MinisterResponseDTO>>> GetAll()
+        public async Task<ActionResult<IEnumerable<MinisterResponseDTO>>> GetAll(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 50)
         {
-            var ministers = await _repository.GetAllAsync();
+            var ministers = await _repository.GetAllAsync(page,pageSize);
             return Ok(ministers);
         }
 

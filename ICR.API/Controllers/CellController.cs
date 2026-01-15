@@ -9,26 +9,24 @@ namespace ICR.API.Controllers
     [Route("api/cells")]
     public class CellController : ControllerBase
     {
-        private readonly ICellRepository _cellRepository;
+        private readonly ICellRepository _repository;
 
         public CellController(ICellRepository cellRepository)
         {
-            _cellRepository = cellRepository;
+            _repository = cellRepository;
         }
 
         [HttpGet]
-        public async Task<IActionResult> Get(
-            [FromQuery] int pageNumber = 1,
-            [FromQuery] int pageQuantity = 10)
+        public async Task<IActionResult> Get()
         {
-            var cells = await _cellRepository.GetAllAsync(pageNumber, pageQuantity);
+            var cells = await _repository.GetAllAsync();
             return Ok(cells);
         }
 
         [HttpGet("{id:long}")]
         public async Task<IActionResult> GetById(long id)
         {
-            var cell = await _cellRepository.GetByIdAsync(id);
+            var cell = await _repository.GetByIdAsync(id);
 
             if (cell == null)
                 return NotFound(new { message = "Cell not found" });
@@ -42,7 +40,7 @@ namespace ICR.API.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var result = await _cellRepository.AddAsync(dto);
+            var result = await _repository.AddAsync(dto);
 
             if (result.Id == 0)
                 return BadRequest(result);
@@ -51,20 +49,12 @@ namespace ICR.API.Controllers
         }
 
         [HttpPatch("{id:long}")]
-        public async Task<IActionResult> Update(long id, [FromBody] CellDTO dto)
+        public async Task<IActionResult> Update(long id, [FromBody] CellPatchDTO dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            // Mapeia DTO → entidade (porque tua interface é torta)
-            var cell = new Cell(
-                id,
-                dto.Name,
-                dto.ChurchId,
-                dto.ResponsibleId ?? 0
-            );
-
-            var result = await _cellRepository.UpdateAsync(id, cell);
+            var result = await _repository.UpdateAsync(id, dto);
 
             if (result.Id == 0)
                 return NotFound(result);
@@ -75,7 +65,7 @@ namespace ICR.API.Controllers
         [HttpDelete("{id:long}")]
         public async Task<IActionResult> Delete(long id)
         {
-            var result = await _cellRepository.DeleteAsync(id);
+            var result = await _repository.DeleteAsync(id);
 
             if (result.Id == 0)
                 return NotFound(result);

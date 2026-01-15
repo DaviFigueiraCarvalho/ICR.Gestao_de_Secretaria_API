@@ -5,15 +5,15 @@ namespace ICR.Domain.Model
 {
     public class Address
     {
-        public long ZipCode { get; set; }    // CEP
+        public string ZipCode { get; set; }    // CEP
         public string Street { get; set; }
-        public int Number { get; set; }
+        public string Number { get; set; }
         public string City { get; set; }       // Cidade
         public string State { get; set; }      // Estado
     
 
     protected Address() { }
-        public Address(string street, int number, string city, string state, long zipCode)
+        public Address(string zipCode, string street, string number, string city, string state )
         {
             ZipCode = zipCode;
             Street = street ?? throw new ArgumentNullException(nameof(street));

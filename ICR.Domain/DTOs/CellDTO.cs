@@ -9,9 +9,9 @@
     {
         public class CellDTO
         {
-            public string Name { get; private set; }
-            public long ChurchId { get; private set; }
-            public long? ResponsibleId { get; private set; }
+            public string Name { get; set; }
+            public long ChurchId { get; set; }
+            public long? ResponsibleId { get; set; }
 
         }
 
@@ -29,9 +29,9 @@
         }
         public class CellPatchDTO
         {
-            public string? Name { get; private set; }
-            public long? ChurchId { get; private set; }
-            public long? ResponsibleId { get; private set; }
+            public string? Name { get; set; }
+            public long? ChurchId { get; set; }
+            public long? ResponsibleId { get; set; }
 
         }
 }

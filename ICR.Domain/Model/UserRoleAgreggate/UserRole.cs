@@ -10,9 +10,11 @@ namespace ICR.Domain.Model.UserRoleAgreggate
     {
         [ForeignKey("UserId")]
         public long UserId { get; set; }
+        public User User { get; set; } 
         [ForeignKey("RoleId")]
         public long RoleId { get; set; }
-    
+        public Role Role { get; set; }
+
         public UserRole() { }
         public UserRole(long id, long userId, long roleId)
         {

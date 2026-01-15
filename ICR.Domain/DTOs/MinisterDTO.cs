@@ -9,7 +9,7 @@ namespace ICR.Domain.DTOs
     public class MinisterDTO
     {
         public long MemberId { get; set; }
-        public long Cpf { get; set; }
+        public string Cpf { get; set; }
         public string Email { get; set; } = null!;
         public DateTime CardValidity { get; set; }
         public DateTime PresbiterOrdinationDate { get; set; }
@@ -27,12 +27,12 @@ namespace ICR.Domain.DTOs
         public DateTime MemberBirthday { get; set; }
         public string MemberWifeName { get; set; } = null!;
         public DateTime MemberWeddingDate { get; set; }
-        public long Cpf { get; set; }
+        public string Cpf { get; set; }
         public string Email { get; set; } = null!;
         public DateTime CardValidity { get; set; }
         public DateTime PresbiterOrdinationDate { get; set; }
         public DateTime? MinisterOrdinationDate { get; set; }
-        public Address Address { get; set; } = null!; public string ResultMessage { get; set; } = string.Empty;
+        public AdressDTO Address { get; set; } = null!; public string ResultMessage { get; set; } = string.Empty;
     }
 
     public class MinisterPatchDTO

@@ -6,7 +6,7 @@ namespace ICR.Domain.Model.FamilyAggregate
 {
     public interface IFamilyRepository
     {
-        Task<ResponseFamilyDTO> AddAsync(Family family);
+        Task<ResponseFamilyDTO> AddAsync(FamilyDTO familyDTO);
 
         Task<ResponseFamilyDTO?> GetByIdAsync(long id);
 

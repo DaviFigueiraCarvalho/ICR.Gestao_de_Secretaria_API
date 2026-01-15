@@ -37,25 +37,30 @@ namespace ICR.Infra.Data.Repositories
 
             // Busca Ministro
             Minister? minister = null;
+            long? cellResponsibleId = null;
 
             if (dto.MinisterId.HasValue && dto.MinisterId.Value > 0)
             {
                 minister = await _context.Ministers
+                    .Include(m => m.Member)
                     .FirstOrDefaultAsync(m => m.Id == dto.MinisterId.Value);
 
                 if (minister == null)
                     return new ChurchResponseDto
                     {
                         Id = 0,
-                        ResultMessage = $"O pastor de ID:{dto.MinisterId} não existe"
+                        ResultMessage = $"O pastor de ID:{dto.MinisterId.Value} não existe"
                     };
+
+                // Responsible da célula é o MEMBER do ministro
+                cellResponsibleId = minister.Member.Id;
             }
 
-            var newId = await _idSequenceService.GetNextIdAsync<Church>();
+            var newChurchId = await _idSequenceService.GetNextIdAsync<Church>();
             var newCellId = await _idSequenceService.GetNextIdAsync<Cell>();
 
             var church = new Church(
-                newId,
+                newChurchId,
                 dto.Name,
                 dto.Address,
                 federation.Id,
@@ -65,8 +70,8 @@ namespace ICR.Infra.Data.Repositories
             var cell = new Cell(
                 newCellId,
                 $"Matriz:({dto.Name})",
-                newId,
-                0
+                newChurchId,
+                cellResponsibleId
             );
 
             _context.Churches.Add(church);
@@ -81,7 +86,9 @@ namespace ICR.Infra.Data.Repositories
                 FederationId = federation.Id,
                 FederationName = federation.Name,
                 MinisterId = minister?.Id,
-                MinisterName =$"{minister?.Member.Role} {minister?.Member.Name}",
+                MinisterName = minister != null
+                    ? $"{minister.Member.Role} {minister.Member.Name}"
+                    : null,
                 ResultMessage = "Igreja criada com sucesso"
             };
         }
@@ -90,14 +97,16 @@ namespace ICR.Infra.Data.Repositories
         public async Task<ChurchResponseDto?> GetByIdAsync(long id)
         {
             return await _context.Churches
+                .AsNoTracking()
                 .Include(c => c.Federation)
                 .Include(c => c.Minister)
-                .Where(c => c.Id == id)
+                    .ThenInclude(m => m.Member)
+                .OrderBy(c => c.Id)
                 .Select(c => new ChurchResponseDto
                 {
                     Id = c.Id,
                     Name = c.Name,
-                    Address = c.Address,
+                    Address = AdressDTO.FromEntity(c.Address),
                     FederationId = c.FederationId,
                     FederationName = c.Federation != null ? c.Federation.Name : null,
                     MinisterId = c.MinisterId,
@@ -106,19 +115,19 @@ namespace ICR.Infra.Data.Repositories
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<IEnumerable<ChurchResponseDto>> GetAllChurchsAsync(int pageNumber, int pageQuantity)
+        public async Task<IEnumerable<ChurchResponseDto>> GetAllChurchsAsync()
         {
             return await _context.Churches
+                .AsNoTracking()
                 .Include(c => c.Federation)
                 .Include(c => c.Minister)
+                    .ThenInclude(m => m.Member)
                 .OrderBy(c => c.Id)
-                .Skip((pageNumber - 1) * pageQuantity)
-                .Take(pageQuantity)
                 .Select(c => new ChurchResponseDto
                 {
                     Id = c.Id,
                     Name = c.Name,
-                    Address = c.Address,
+                    Address = AdressDTO.FromEntity(c.Address),
                     FederationId = c.FederationId,
                     FederationName = c.Federation != null ? c.Federation.Name : null,
                     MinisterId = c.MinisterId,
@@ -131,14 +140,16 @@ namespace ICR.Infra.Data.Repositories
         public async Task<IEnumerable<ChurchResponseDto>> GetChurchsbyFederationId(long id)
         {
             return await _context.Churches
+                .AsNoTracking()
                 .Include(c => c.Federation)
                 .Include(c => c.Minister)
-                .Where(c => c.FederationId == id)
+                    .ThenInclude(m => m.Member)
+                .OrderBy(c => c.Id)
                 .Select(c => new ChurchResponseDto
                 {
                     Id = c.Id,
                     Name = c.Name,
-                    Address = c.Address,
+                    Address = AdressDTO.FromEntity(c.Address),
                     FederationId = c.FederationId,
                     FederationName = c.Federation != null ? c.Federation.Name : null,
                     MinisterId = c.MinisterId,
@@ -229,7 +240,7 @@ namespace ICR.Infra.Data.Repositories
             {
                 Id = church.Id,
                 Name = church.Name,
-                Address = church.Address,
+                Address = AdressDTO.FromEntity(church.Address),
                 FederationId = federation?.Id,
                 FederationName = federation?.Name,
                 MinisterId = church.MinisterId,

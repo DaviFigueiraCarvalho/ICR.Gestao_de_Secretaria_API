@@ -18,6 +18,7 @@ namespace ICR.Domain.DTOs
         public long ChurchId { get; set; }
         public string ChurchName { get; set; }
         public long Reference { get; set; }
+        public string ReferenceName { get; set; }
         public decimal Amount { get; set; }
         public string ResultMessage { get; set; }
 

@@ -1,99 +1,139 @@
+using ICR.Domain.DTOs.UserRole;
 using ICR.Domain.Model.UserRoleAgreggate;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
-namespace ICRManagement.API.Controllers
+namespace ICR.API.Controllers
 {
     [ApiController]
-    [Route("api/v1/userroles")]
+    [Route("api/user-roles")]
     public class UserRoleController : ControllerBase
     {
-        private readonly IUserRoleAggregateRepository _repository;
+        private readonly IUserRoleRepository _repository;
 
-        public UserRoleController(IUserRoleAggregateRepository repository)
+        public UserRoleController(IUserRoleRepository repository)
         {
             _repository = repository;
         }
 
-        [HttpPost("user")]
-        public IActionResult CreateUser([FromBody] User user)
+        // ===== USER =====
+
+        [HttpPost("users")]
+        public async Task<ActionResult<UserResponseDTO>> AddUser(UserDTO dto)
         {
-            _repository.AddUser(user);
-            return CreatedAtAction(nameof(GetUser), new { id = user.Id }, null);
+            var result = await _repository.AddUserAsync(dto);
+            return Ok(result);
         }
 
-        [HttpGet("user/{id}")]
-        public IActionResult GetUser(long id)
+        [HttpGet("users/{id:long}")]
+        public async Task<ActionResult<UserResponseDTO>> GetUserById(long id)
         {
-            var user = _repository.GetUserById(id);
-            if (user == null) return NotFound();
-            return Ok(user);
+            var result = await _repository.GetUserByIdAsync(id);
+            if (result == null) return NotFound();
+            return Ok(result);
+        }
+
+        [HttpGet("users/by-username/{username}")]
+        public async Task<ActionResult<UserResponseDTO>> GetUserByUsername(string username)
+        {
+            var result = await _repository.GetUserByUsernameAsync(username);
+            if (result == null) return NotFound();
+            return Ok(result);
         }
 
         [HttpGet("users")]
-        public IActionResult GetUsers()
+        public async Task<ActionResult<IEnumerable<UserResponseDTO>>> GetAllUsers()
         {
-            return Ok(_repository.GetUsers());
+            return Ok(await _repository.GetAllUsersAsync());
         }
 
-        [HttpDelete("user/{id}")]
-        public IActionResult DeleteUser(long id)
+        [HttpPatch("users/{id:long}")]
+        public async Task<ActionResult<UserResponseDTO>> UpdateUser(long id, UserPatchDTO dto)
         {
-            _repository.DeleteUser(id);
-            return NoContent();
+            var result = await _repository.UpdateUserAsync(id, dto);
+            if (result.Id == 0) return BadRequest(result);
+            return Ok(result);
         }
 
-        [HttpPost("role")]
-        public IActionResult CreateRole([FromBody] Role role)
+        [HttpDelete("users/{id:long}")]
+        public async Task<ActionResult<UserResponseDTO>> DeleteUser(long id)
         {
-            _repository.AddRole(role);
-            return CreatedAtAction(nameof(GetRole), new { id = role.Id }, null);
+            var result = await _repository.DeleteUserAsync(id);
+            if (result.Id == 0) return NotFound(result);
+            return Ok(result);
         }
 
-        [HttpGet("role/{id}")]
-        public IActionResult GetRole(long id)
+        // ===== ROLE =====
+
+        [HttpPost("roles")]
+        public async Task<ActionResult<RoleResponseDTO>> AddRole(RoleDTO dto)
         {
-            var role = _repository.GetRoleById(id);
-            if (role == null) return NotFound();
-            return Ok(role);
+            return Ok(await _repository.AddRoleAsync(dto));
+        }
+
+        [HttpGet("roles/{id:long}")]
+        public async Task<ActionResult<RoleResponseDTO>> GetRoleById(long id)
+        {
+            var result = await _repository.GetRoleByIdAsync(id);
+            if (result == null) return NotFound();
+            return Ok(result);
+        }
+
+        [HttpGet("roles/by-name/{name}")]
+        public async Task<ActionResult<RoleResponseDTO>> GetRoleByName(string name)
+        {
+            var result = await _repository.GetRoleByNameAsync(name);
+            if (result == null) return NotFound();
+            return Ok(result);
         }
 
         [HttpGet("roles")]
-        public IActionResult GetRoles()
+        public async Task<ActionResult<IEnumerable<RoleResponseDTO>>> GetAllRoles()
         {
-            return Ok(_repository.GetRoles());
+            return Ok(await _repository.GetAllRolesAsync());
         }
 
-        [HttpDelete("role/{id}")]
-        public IActionResult DeleteRole(long id)
+        [HttpPatch("roles/{id:long}")]
+        public async Task<ActionResult<RoleResponseDTO>> UpdateRole(long id, RolePatchDTO dto)
         {
-            _repository.DeleteRole(id);
-            return NoContent();
+            var result = await _repository.UpdateRoleAsync(id, dto);
+            if (result.Id == 0) return BadRequest(result);
+            return Ok(result);
         }
 
-        [HttpPost("user/{userId}/role/{roleId}")]
-        public IActionResult AddUserRole(long userId, long roleId)
+        [HttpDelete("roles/{id:long}")]
+        public async Task<ActionResult<RoleResponseDTO>> DeleteRole(long id)
         {
-            _repository.AddUserRole(userId, roleId);
-            return NoContent();
+            var result = await _repository.DeleteRoleAsync(id);
+            if (result.Id == 0) return NotFound(result);
+            return Ok(result);
         }
 
-        [HttpDelete("user/{userId}/role/{roleId}")]
-        public IActionResult RemoveUserRole(long userId, long roleId)
+        // ===== USER_ROLE =====
+
+        [HttpPost("assign")]
+        public async Task<ActionResult<UserRoleResponseDTO>> AddUserRole(long userId, long roleId)
         {
-            _repository.RemoveUserRole(userId, roleId);
-            return NoContent();
+            return Ok(await _repository.AddUserRoleAsync(userId, roleId));
         }
 
-        [HttpGet("user/{userId}/roles")]
-        public IActionResult GetRolesByUser(long userId)
+        [HttpDelete("assign")]
+        public async Task<ActionResult<UserRoleResponseDTO>> RemoveUserRole(long userId, long roleId)
         {
-            return Ok(_repository.GetRolesByUserId(userId));
+            return Ok(await _repository.RemoveUserRoleAsync(userId, roleId));
         }
 
-        [HttpGet("role/{roleId}/users")]
-        public IActionResult GetUsersByRole(long roleId)
+        [HttpGet("users/{userId:long}/roles")]
+        public async Task<ActionResult<IEnumerable<RoleResponseDTO>>> GetRolesByUser(long userId)
         {
-            return Ok(_repository.GetUsersByRoleId(roleId));
+            return Ok(await _repository.GetRolesByUserIdAsync(userId));
+        }
+
+        [HttpGet("roles/{roleId:long}/users")]
+        public async Task<ActionResult<IEnumerable<UserResponseDTO>>> GetUsersByRole(long roleId)
+        {
+            return Ok(await _repository.GetUsersByRoleIdAsync(roleId));
         }
     }
 }

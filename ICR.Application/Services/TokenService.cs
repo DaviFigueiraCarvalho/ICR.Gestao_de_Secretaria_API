@@ -1,9 +1,10 @@
-﻿using Microsoft.IdentityModel.Tokens;
-using ICR.Domain.Model.FederationAggregate;
+﻿using ICR.Domain.Model.FederationAggregate;
+using ICR.Domain.Model.UserRoleAgreggate;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.Extensions.Configuration;
 
 namespace ICR.Application.Services
 {
@@ -17,44 +18,38 @@ namespace ICR.Application.Services
             _configuration = configuration;
         }
 
-        public object GenerateToken(Federation federation)
+        public object GenerateToken(User user)
         {
-            if (federation == null) throw new ArgumentNullException(nameof(federation));
+            if (user == null) throw new ArgumentNullException(nameof(user));
 
-            // Tenta pegar a chave da variável de ambiente
-            var secret = Environment.GetEnvironmentVariable("JWT_KEY");
+            var secret = Environment.GetEnvironmentVariable("JWT_KEY")
+                         ?? _configuration["JWT_KEY"];
 
-            // Se não existir, pega do appsettings.json da API via IConfiguration
             if (string.IsNullOrEmpty(secret))
-            {
-                secret = _configuration["JWT_KEY"];
-                if (string.IsNullOrEmpty(secret))
-                    throw new InvalidOperationException("JWT secret not configured in environment variables or appsettings.json.");
-            }
+                throw new InvalidOperationException("JWT secret not configured.");
 
             var key = Encoding.ASCII.GetBytes(secret);
 
+            var claims = new[]
+            {
+        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+        new Claim(ClaimTypes.Name, user.Username),
+        new Claim("scope", user.Scope.ToString())
+    };
+
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(new Claim[]
-                {
-                    new Claim("federationId", federation.Id.ToString()),
-                    new Claim("federationName", federation.Name)
-                }),
+                Subject = new ClaimsIdentity(claims),
                 Expires = DateTime.UtcNow.AddHours(3),
                 SigningCredentials = new SigningCredentials(
                     new SymmetricSecurityKey(key),
                     SecurityAlgorithms.HmacSha256Signature)
             };
 
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            var tokenString = tokenHandler.WriteToken(token);
+            var handler = new JwtSecurityTokenHandler();
+            var token = handler.CreateToken(tokenDescriptor);
 
-            return new
-            {
-                Token = $"Bearer {tokenString}"
-            };
+            return handler.WriteToken(token);
         }
     }
 }

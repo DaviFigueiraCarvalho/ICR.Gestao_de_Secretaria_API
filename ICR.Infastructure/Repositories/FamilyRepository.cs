@@ -23,61 +23,74 @@ namespace ICR.Infra.Data.Repositories
             _idSequenceService = new IdSequenceService(context);
         }
 
-        public async Task<ResponseFamilyDTO> AddAsync(Family family)
+        public async Task<ResponseFamilyDTO> AddAsync(FamilyDTO dto)
         {
             var church = await _context.Churches
-                .FirstOrDefaultAsync(c => c.Id == family.ChurchId);
+                .FirstOrDefaultAsync(c => c.Id == dto.ChurchId);
 
             if (church == null)
                 return new ResponseFamilyDTO
                 {
                     Id = 0,
-                    ResultMessage = $"A igreja de ID:{family.ChurchId} não existe"
+                    ResultMessage = $"A igreja de ID:{dto.ChurchId} não existe"
                 };
 
             var cell = await _context.Cells
-                .FirstOrDefaultAsync(c => c.Id == family.CellId);
+                .FirstOrDefaultAsync(c => c.Id == dto.CellId);
 
             if (cell == null)
                 return new ResponseFamilyDTO
                 {
                     Id = 0,
-                    ResultMessage = $"A célula de ID:{family.CellId} não existe"
+                    ResultMessage = $"A célula de ID:{dto.CellId} não existe"
                 };
 
             Member? man = null;
             Member? woman = null;
 
-            if (family.ManId.HasValue)
+            if (dto.ManId.HasValue)
             {
-                man = await _context.Members.FirstOrDefaultAsync(m => m.Id == family.ManId);
+                man = await _context.Members.FirstOrDefaultAsync(m => m.Id == dto.ManId);
                 if (man == null)
                     return new ResponseFamilyDTO
                     {
                         Id = 0,
-                        ResultMessage = $"O membro de ID:{family.ManId} não existe"
+                        ResultMessage = $"O membro de ID:{dto.ManId} não existe"
                     };
             }
 
-            if (family.WomanId.HasValue)
+            if (dto.WomanId.HasValue)
             {
-                woman = await _context.Members.FirstOrDefaultAsync(m => m.Id == family.WomanId);
+                woman = await _context.Members.FirstOrDefaultAsync(m => m.Id == dto.WomanId);
                 if (woman == null)
                     return new ResponseFamilyDTO
                     {
                         Id = 0,
-                        ResultMessage = $"o membro de ID:{family.WomanId} não existe"
+                        ResultMessage = $"o membro de ID:{dto.WomanId} não existe"
                     };
             }
+            DateTime? weddingDateUtc = dto.WeddingDate.HasValue
+            ? DateTime.SpecifyKind(dto.WeddingDate.Value, DateTimeKind.Utc)
+            : null;
 
-            family.Id = await _idSequenceService.GetNextIdAsync<Family>();
+            var familyId = await _idSequenceService.GetNextIdAsync<Family>();
+            var family = new Family
+            (
+                familyId,
+                dto.Name,
+                church.Id,
+                cell.Id,
+                dto.ManId,
+                dto.WomanId,
+                weddingDateUtc
+            );
 
             _context.Families.Add(family);
             await _context.SaveChangesAsync();
 
             return new ResponseFamilyDTO
             {
-                Id = family.Id,
+                Id = familyId,
                 Name = family.Name,
                 churchId = church.Id,
                 ChurchName = church.Name,
@@ -91,7 +104,6 @@ namespace ICR.Infra.Data.Repositories
                 ResultMessage = "Família criada com sucesso"
             };
         }
-
         public async Task<ResponseFamilyDTO?> GetByIdAsync(long id)
         {
             return await _context.Families
@@ -116,15 +128,14 @@ namespace ICR.Infra.Data.Repositories
                 })
                 .FirstOrDefaultAsync();
         }
-
-        public async Task<List<ResponseFamilyDTO>> GetAsync(int pageNumber, int pageQuantity)
+        public async Task<List<ResponseFamilyDTO>> GetAsync(int page, int pageSize)
         {
             return await _context.Families
                 .Include(f => f.Church)
                 .Include(f => f.Cell)
                 .OrderBy(f => f.Id)
-                .Skip((pageNumber - 1) * pageQuantity)
-                .Take(pageQuantity)
+                .Skip((page- 1) * pageSize)
+                .Take(pageSize)
                 .Select(f => new ResponseFamilyDTO
                 {
                     Id = f.Id,
@@ -137,7 +148,6 @@ namespace ICR.Infra.Data.Repositories
                 })
                 .ToListAsync();
         }
-
         public async Task<List<ResponseFamilyDTO>> GetFamiliesByWeddingBirthdayMonthAsync(int monthNumber)
         {
             return await _context.Families
@@ -156,7 +166,6 @@ namespace ICR.Infra.Data.Repositories
                 })
                 .ToListAsync();
         }
-
         public async Task<List<ResponseFamilyDTO>> GetByChurchId(long churchId)
         {
             return await _context.Families
@@ -172,7 +181,6 @@ namespace ICR.Infra.Data.Repositories
                 })
                 .ToListAsync();
         }
-
         public async Task<List<ResponseFamilyDTO>> GetByCellIdAsync(long cellId)
         {
             return await _context.Families
@@ -188,11 +196,20 @@ namespace ICR.Infra.Data.Repositories
                 })
                 .ToListAsync();
         }
-
         public async Task<ResponseFamilyDTO> UpdateAsync(long id, FamilyPatchDTO familyUpdated)
         {
             var family = await _context.Families
                 .FirstOrDefaultAsync(f => f.Id == id);
+            var church = await _context.Churches
+                .FirstOrDefaultAsync(c => family.ChurchId == id);
+            var cell = await _context.Cells
+                .FirstOrDefaultAsync(c => family.CellId == id);
+            var man = family.ManId.HasValue
+                ? await _context.Members.FirstOrDefaultAsync(m => m.Id == family.ManId.Value)
+                : null;
+            var woman = family.WomanId.HasValue
+                ? await _context.Members.FirstOrDefaultAsync(m => m.Id == family.WomanId.Value)
+                : null;
 
             if (family == null)
             {
@@ -236,7 +253,6 @@ namespace ICR.Infra.Data.Repositories
             }
 
 
-            // CellId
             // CellId
             if (familyUpdated.CellId.HasValue &&
                 familyUpdated.CellId.Value != family.CellId)
@@ -317,8 +333,11 @@ namespace ICR.Infra.Data.Repositories
             }
 
             // WeddingDate
+            DateTime? weddingDateUtc = familyUpdated.WeddingDate.HasValue
+            ? DateTime.SpecifyKind(familyUpdated.WeddingDate.Value, DateTimeKind.Utc)
+            : null;
             if (familyUpdated.WeddingDate.HasValue)
-                family.SetWeddingDate(familyUpdated.WeddingDate);
+                family.SetWeddingDate(weddingDateUtc.Value);
 
             await _context.SaveChangesAsync();
 
@@ -326,10 +345,18 @@ namespace ICR.Infra.Data.Repositories
             {
                 Id = family.Id,
                 Name = family.Name,
+                churchId = church.Id,
+                ChurchName = church.Name,
+                CellId = cell.Id,
+                CellName = cell.Name,
+                ManId = man?.Id,
+                ManName = man?.Name,
+                WomanId = woman?.Id,
+                WomanName = woman?.Name,
+                WeddingDate = family.WeddingDate,
                 ResultMessage = $"Família {family.Name} atualizada com sucesso"
             };
         }
-
         public async Task<ResponseFamilyDTO> DeleteAsync(long id)
         {
             var family = await _context.Families
@@ -352,7 +379,6 @@ namespace ICR.Infra.Data.Repositories
                 ResultMessage = $"Família {family.Name} deletada com sucesso"
             };
         }
-
         public async Task SaveAsync()
         {
             await _context.SaveChangesAsync();

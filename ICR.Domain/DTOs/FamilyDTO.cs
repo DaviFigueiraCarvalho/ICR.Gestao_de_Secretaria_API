@@ -8,7 +8,7 @@ namespace ICR.Domain.DTOs
     public class FamilyDTO
     {
         public string Name { get; set; }
-        public long churchId { get; set; }
+        public long ChurchId { get; set; }
         public long CellId { get; set; }
         public long? ManId { get; set; }
         public long? WomanId { get; set; }

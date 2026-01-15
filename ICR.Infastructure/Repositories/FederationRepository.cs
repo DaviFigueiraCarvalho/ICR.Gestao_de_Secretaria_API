@@ -2,6 +2,7 @@
 using ICR.Domain.DTOs;
 using ICR.Domain.Model.ChurchAggregate;
 using ICR.Domain.Model.FederationAggregate;
+using ICR.Domain.Model.MinisterAggregate;
 using ICRManagement.Domain.DTOs;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
@@ -26,7 +27,25 @@ namespace ICR.Infra.Repositories
         // CREATE
         public async Task<FederationResponseDTO> AddAsync(FederationDTO dto)
         {
-            
+            Minister? minister = null;
+
+            if (dto.MinisterId.HasValue && dto.MinisterId.Value > 0)
+            {
+                minister = await _context.Ministers
+                    .FirstOrDefaultAsync(m => m.Id == dto.MinisterId.Value);
+
+                if (minister == null)
+                    return new FederationResponseDTO
+                    {
+                        Id = 0,
+                        ResultMessage = $"O pastor de ID:{dto.MinisterId} não existe"
+                    };
+            }
+            if(dto.MinisterId==0)
+            {
+                dto.MinisterId = null;
+            }
+
             long newId = await _idSequenceService.GetNextIdAsync<Federation>();
 
             var federation = new Federation(newId, dto.Name, dto.MinisterId);
@@ -46,6 +65,15 @@ namespace ICR.Infra.Repositories
         // READ DTO
         public async Task<FederationResponseDTO?> GetByIdAsync(long id)
         {
+            var federation = await _context.Federations
+                            .FirstOrDefaultAsync(f => f.Id == id);
+
+            if (federation == null)
+                return new FederationResponseDTO
+                {
+                    Id = 0,
+                    ResultMessage = $"A federação de ID:{id} não existe"
+                };
             return await _context.Federations
                 .Include(f => f.Minister)
                 .Where(f => f.Id == id)

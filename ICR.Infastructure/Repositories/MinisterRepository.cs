@@ -21,7 +21,7 @@ namespace ICR.Infra.Data.Repositories
             _idSequenceService = new IdSequenceService(context);
         }
 
-        public async Task<MinisterResponseDTO> AddAsync(Minister minister)
+        public async Task<MinisterResponseDTO> AddAsync(MinisterDTO dto)
         {
             var member = await _context.Members
                 .Include(m => m.Family)
@@ -29,19 +29,37 @@ namespace ICR.Infra.Data.Repositories
                         .ThenInclude(c => c.Federation)
                 .Include(m => m.Family)
                     .ThenInclude(f => f.Woman)
-                .FirstOrDefaultAsync(m => m.Id == minister.MemberId);
+                .FirstOrDefaultAsync(m => m.Id == dto.MemberId);
 
             if (member == null)
             {
                 return new MinisterResponseDTO
                 {
                     Id = 0,
-                    ResultMessage = $"O membro de ID:{minister.MemberId} não existe"
+                    ResultMessage = $"O membro de ID:{dto.MemberId} não existe"
                 };
             }
 
             var newId = await _idSequenceService.GetNextIdAsync<Minister>();
-            minister.Id = newId;
+            DateTime CardValidityUtc =
+                DateTime.SpecifyKind(dto.CardValidity, DateTimeKind.Utc);
+            DateTime PresbiterOrdinationDateUtc =
+                DateTime.SpecifyKind(dto.PresbiterOrdinationDate, DateTimeKind.Utc);
+            DateTime? MinisterOrdinationDateUtc = dto.MinisterOrdinationDate.HasValue
+                ? DateTime.SpecifyKind(dto.MinisterOrdinationDate.Value, DateTimeKind.Utc)
+                : null;
+
+
+            var minister = new Minister(
+                id: newId,
+                memberId: dto.MemberId,
+                cpf: dto.Cpf,
+                email: dto.Email,
+                cardValidity: CardValidityUtc,
+                presbiterOrdinationDate: PresbiterOrdinationDateUtc,
+                ministerOrdinationDate: MinisterOrdinationDateUtc,
+                address: dto.Address
+                );
 
             _context.Ministers.Add(minister);
             await _context.SaveChangesAsync();
@@ -61,14 +79,10 @@ namespace ICR.Infra.Data.Repositories
                 CardValidity = minister.CardValidity,
                 PresbiterOrdinationDate = minister.PresbiterOrdinationDate,
                 MinisterOrdinationDate = minister.MinisterOrdinationDate,
-                Address = minister.Address,
+                Address = AdressDTO.FromEntity(minister.Address),
                 ResultMessage = "Ministro criado com sucesso"
             };
         }
-
-
-
-
         public async Task<MinisterResponseDTO?> GetByIdAsync(long id)
         {
             return await _context.Ministers
@@ -97,15 +111,14 @@ namespace ICR.Infra.Data.Repositories
                     CardValidity = m.CardValidity,
                     PresbiterOrdinationDate = m.PresbiterOrdinationDate,
                     MinisterOrdinationDate = m.MinisterOrdinationDate,
-                    Address = m.Address
+                    Address = AdressDTO.FromEntity(m.Address),
                 })
                 .FirstOrDefaultAsync();
         }
-
-
-        public async Task<IEnumerable<MinisterResponseDTO>> GetAllAsync()
+        public async Task<IEnumerable<MinisterResponseDTO>> GetAllAsync(int page, int pageSize)
         {
             return await _context.Ministers
+                .AsNoTracking()
                 .Include(m => m.Member)
                     .ThenInclude(mem => mem.Family)
                         .ThenInclude(f => f.Church)
@@ -114,6 +127,9 @@ namespace ICR.Infra.Data.Repositories
                     .ThenInclude(mem => mem.Family)
                         .ThenInclude(f => f.Woman)
                 .OrderBy(m => m.Id)
+                .Skip((page-1)*pageSize)
+                .Take(pageSize)
+
                 .Select(m => new MinisterResponseDTO
                 {
                     Id = m.Id,
@@ -131,15 +147,14 @@ namespace ICR.Infra.Data.Repositories
                     CardValidity = m.CardValidity,
                     PresbiterOrdinationDate = m.PresbiterOrdinationDate,
                     MinisterOrdinationDate = m.MinisterOrdinationDate,
-                    Address = m.Address
+                    Address = AdressDTO.FromEntity(m.Address),
                 })
                 .ToListAsync();
         }
-
-
         public async Task<IEnumerable<MinisterResponseDTO>> GetByChurchIdAsync(long churchId)
         {
             return await _context.Ministers
+                .AsNoTracking()
                 .Include(m => m.Member)
                     .ThenInclude(mem => mem.Family)
                         .ThenInclude(f => f.Church)
@@ -169,18 +184,17 @@ namespace ICR.Infra.Data.Repositories
                     CardValidity = m.CardValidity,
                     PresbiterOrdinationDate = m.PresbiterOrdinationDate,
                     MinisterOrdinationDate = m.MinisterOrdinationDate,
-                    Address = m.Address
+                    Address = AdressDTO.FromEntity(m.Address),
                 })
                 .ToListAsync();
         }
-
-
         public async Task<IEnumerable<MinisterBirthdayDTO>> GetByBirthdaydatesIdAsync(int month)
         {
             if (month < 1 || month > 12)
                 return new List<MinisterBirthdayDTO>();
 
             var ministers = await _context.Ministers
+                .AsNoTracking()
                 .Include(m => m.Member)
                     .ThenInclude(mem => mem.Family)
                         .ThenInclude(f => f.Woman)
@@ -226,8 +240,6 @@ namespace ICR.Infra.Data.Repositories
                 .OrderBy(r => r.Birthday.Day)
                 .ToList();
         }
-
-
         public async Task<MinisterResponseDTO> UpdateAsync(long id, MinisterPatchDTO dto)
         {
             var existing = await _context.Ministers
@@ -243,6 +255,18 @@ namespace ICR.Infra.Data.Repositories
                     Id = 0,
                     ResultMessage = $"O ministro de ID:{id} não existe"
                 };
+            DateTime? CardValidityUtc = dto.MinisterOrdinationDate.HasValue
+                ? DateTime.SpecifyKind(dto.MinisterOrdinationDate.Value, DateTimeKind.Utc)
+                : null;
+
+            DateTime? PresbiterOrdinationDateUtc = dto.MinisterOrdinationDate.HasValue
+                ? DateTime.SpecifyKind(dto.MinisterOrdinationDate.Value, DateTimeKind.Utc)
+                : null;
+
+            DateTime? MinisterOrdinationDateUtc = dto.MinisterOrdinationDate.HasValue
+                ? DateTime.SpecifyKind(dto.MinisterOrdinationDate.Value, DateTimeKind.Utc)
+                : null;
+
 
             // ===== PATCH GRANULAR DE VERDADE =====
             if (dto.MemberId.HasValue)
@@ -251,13 +275,13 @@ namespace ICR.Infra.Data.Repositories
             if (dto.Cpf.HasValue)
                 existing.SetCpf(dto.Cpf.Value);
 
-            if (dto.CardValidity.HasValue)
+            if (CardValidityUtc.HasValue)
                 existing.SetCardValidity(dto.CardValidity.Value);
 
-            if (dto.PresbiterOrdinationDate.HasValue)
+            if (PresbiterOrdinationDateUtc.HasValue)
                 existing.SetPresbiterOrdinationDate(dto.PresbiterOrdinationDate.Value);
 
-            if (dto.MinisterOrdinationDate.HasValue)
+            if (MinisterOrdinationDateUtc.HasValue)
                 existing.SetMinisterOrdinationDate(dto.MinisterOrdinationDate);
 
             if (!string.IsNullOrWhiteSpace(dto.Email))
@@ -283,11 +307,10 @@ namespace ICR.Infra.Data.Repositories
                 CardValidity = existing.CardValidity,
                 PresbiterOrdinationDate = existing.PresbiterOrdinationDate,
                 MinisterOrdinationDate = existing.MinisterOrdinationDate,
-                Address = existing.Address,
+                Address = AdressDTO.FromEntity(existing.Address),
                 ResultMessage = "Ministro atualizado com sucesso"
             };
         }
-
         public async Task<MinisterResponseDTO> DeleteAsync(long id)
         {
             var minister = await _context.Ministers

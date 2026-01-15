@@ -59,7 +59,7 @@ namespace ICR.API.Controllers
         [HttpGet("reference/{reference:long}")]
         public async Task<ActionResult<IEnumerable<RepassResponseDTO>>> GetByReference(long reference)
         {
-            var result = await _repository.GetByReferenceAsync(reference);
+            var result = await _repository.GetByReferenceIdAsync(reference);
             return Ok(result);
         }
 
@@ -90,6 +90,23 @@ namespace ICR.API.Controllers
                 return NotFound(result);
 
             return Ok(result);
+        }
+        [HttpGet("refences")]
+        public async Task<ActionResult<IEnumerable<Reference>>> GetAllRefences()
+        {
+            var references = await _repository.GetAllReferencesAsync();
+            return Ok(references);
+        }
+
+        [HttpGet("references{id:long}")]
+        public async Task<ActionResult<Reference>> GetReferenceById(long id)
+        {
+            var reference = await _repository.GetReferenceByIdAsync(id);
+
+            if (reference == null)
+                return NotFound(reference);
+
+            return Ok(reference);
         }
     }
 }

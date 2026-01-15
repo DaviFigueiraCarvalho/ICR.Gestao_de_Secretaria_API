@@ -3,12 +3,12 @@ using ICR.Domain.Model.MemberAggregate;
 
 public interface IMemberRepository
 {
-    Task<IEnumerable<MemberResponseDTO>> GetAllAsync();
+    Task<IEnumerable<MemberResponseDTO>> GetAllAsync(int page, int pageSize);
     Task<MemberResponseDTO?> GetByIdAsync(long id);
     Task<IEnumerable<MemberResponseDTO>> GetByFamilyAsync(long familyId);
     Task<IEnumerable<MemberResponseDTO>> GetBirthdaysByMonthAsync(int month, long churchId);
 
-    Task<MemberResponseDTO> AddAsync(Member member);
+    Task<MemberResponseDTO> AddAsync(MemberDTO member);
     Task<MemberResponseDTO> UpdateAsync(long id, MemberPatchDTO member);
     Task<MemberResponseDTO> RemoveAsync(long id);
 }

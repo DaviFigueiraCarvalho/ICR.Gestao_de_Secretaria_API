@@ -1,32 +1,58 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using BCrypt.Net;
 using ICR.Application.Services;
-using ICR.Domain.Model.FederationAggregate;
+using ICR.Domain.DTOs;
+using ICR.Domain.Model.UserRoleAgreggate;
+using ICR.Infra.Data.Repositories;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ICR.API.Controllers
 {
     [ApiController]
     [Route("api/v1/auth")]
-    public class AuthController : Controller
+    public class AuthController : ControllerBase
     {
+        private readonly IUserRoleRepository _repository;
         private readonly TokenService _tokenService;
 
-        // Injeta TokenService via DI
-        public AuthController(TokenService tokenService)
+        public AuthController(
+            IUserRoleRepository repository,
+            TokenService tokenService)
         {
+            _repository = repository;
             _tokenService = tokenService;
         }
 
-        [HttpPost]
-        public IActionResult Auth(string username, string password)
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] AuthRequestDTO dto)
         {
-            if (username == "fire" || password == "123456")
+            if (string.IsNullOrWhiteSpace(dto.Username) || string.IsNullOrWhiteSpace(dto.Password))
+                return BadRequest("Username e senha são obrigatórios, gênio");
+
+            var user = await _repository.GetUserByUsernameAsync(dto.Username);
+
+            if (user == null)
+                return Unauthorized("Usuário ou senha inválidos");
+
+            // Confere hash direito, não inventa comparação idiota
+            var passwordOk = BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash);
+
+            if (!passwordOk)
+                return Unauthorized("Usuário ou senha inválidos");
+
+            var token = _tokenService.GenerateToken(new Domain.Model.UserRoleAgreggate.User
             {
-                var now = DateTime.UtcNow;
-                // Usa a instância injetada para gerar token
-                var token = _tokenService.GenerateToken(new Federation(long.Parse($"{now:yyyyMM}"),"auth", null ));
-                return Ok(token);
-            }
-            return BadRequest("username ou senha inválidos");
+                Id = user.Id,
+                Username = user.Username,
+                Scope = user.Scope
+            });
+
+            return Ok(new AuthResponseDTO
+            {
+                Id = user.Id,
+                Username = user.Username,
+                Scope = user.Scope,
+                Token = $"Bearer {token}"
+            });
         }
     }
 }

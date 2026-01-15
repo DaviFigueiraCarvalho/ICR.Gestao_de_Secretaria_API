@@ -5,9 +5,9 @@ namespace ICR.Domain.Model.MinisterAggregate
 {
     public interface IMinisterRepository
     {
-        Task<MinisterResponseDTO> AddAsync(Minister minister);
+        Task<MinisterResponseDTO> AddAsync(MinisterDTO minister);
         Task<MinisterResponseDTO?> GetByIdAsync(long id);
-        Task<IEnumerable<MinisterResponseDTO>> GetAllAsync();
+        Task<IEnumerable<MinisterResponseDTO>> GetAllAsync(int page, int pageNumber);
         Task<IEnumerable<MinisterResponseDTO>> GetByChurchIdAsync(long churchId); 
         Task<IEnumerable<MinisterBirthdayDTO>> GetByBirthdaydatesIdAsync(int month);
         Task<MinisterResponseDTO> UpdateAsync(long id, MinisterPatchDTO dto);

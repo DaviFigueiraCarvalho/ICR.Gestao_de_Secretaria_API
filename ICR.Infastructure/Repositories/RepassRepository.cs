@@ -23,6 +23,9 @@ namespace ICR.Infra.Repositories
             var church = await _context.Churches
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == dto.ChurchId);
+            var reference = await _context.References
+                .AsNoTracking()
+                .FirstOrDefaultAsync(r => r.Id == dto.Reference);
             if (church == null)
                 return new RepassResponseDTO
                 {
@@ -44,7 +47,8 @@ namespace ICR.Infra.Repositories
             {
                 Id = repass.Id,
                 ChurchId = repass.ChurchId,
-                Reference = repass.Reference,
+                Reference = repass.ReferenceId,
+                ReferenceName = reference.Name,
                 Amount = repass.Amount
             };
         }
@@ -52,6 +56,9 @@ namespace ICR.Infra.Repositories
         public async Task<RepassResponseDTO?> GetByIdAsync(long id)
         {
             var repass = await _context.Repasses
+                .AsNoTracking()
+                .FirstOrDefaultAsync(r => r.Id == id);
+            var reference = await _context.References
                 .AsNoTracking()
                 .FirstOrDefaultAsync(r => r.Id == id);
 
@@ -62,7 +69,7 @@ namespace ICR.Infra.Repositories
             {
                 Id = repass.Id,
                 ChurchId = repass.ChurchId,
-                Reference = repass.Reference,
+                Reference = repass.ReferenceId,
                 Amount = repass.Amount
             };
         }
@@ -78,7 +85,7 @@ namespace ICR.Infra.Repositories
                 {
                     Id = r.Id,
                     ChurchId = r.ChurchId,
-                    Reference = r.Reference,
+                    Reference = r.ReferenceId,
                     Amount = r.Amount
                 })
                 .ToListAsync();
@@ -95,24 +102,24 @@ namespace ICR.Infra.Repositories
                    Id = r.Id,
                    ChurchId = r.ChurchId,
                    ChurchName = r.Church.Name,
-                   Reference = r.Reference,
+                   Reference = r.ReferenceId,
                    Amount = r.Amount
                })
                .ToListAsync();
         }
 
-        public async Task<IEnumerable<RepassResponseDTO>> GetByReferenceAsync(long reference)
+        public async Task<IEnumerable<RepassResponseDTO>> GetByReferenceIdAsync(long reference)
         {
             return await _context.Repasses
                 .AsNoTracking()
                 .Include(r => r.Church)
-                .Where(r => r.Reference == reference)
+                .Where(r => r.ReferenceId == reference)
                 .Select(r => new RepassResponseDTO
                 {
                     Id = r.Id,
                     ChurchId = r.ChurchId,
                     ChurchName = r.Church.Name,
-                    Reference = r.Reference,
+                    Reference = r.ReferenceId,
                     Amount = r.Amount
                 })
                 .ToListAsync();
@@ -164,7 +171,7 @@ namespace ICR.Infra.Repositories
             {
                 Id = repass.Id,
                 ChurchId = repass.ChurchId,
-                Reference = repass.Reference,
+                Reference = repass.ReferenceId,
                 Amount = repass.Amount
             };
         }
@@ -185,9 +192,30 @@ namespace ICR.Infra.Repositories
             {
                 Id = repass.Id,
                 ChurchId = repass.ChurchId,
-                Reference = repass.Reference,
+                Reference = repass.ReferenceId,
                 Amount = repass.Amount
             };
         }
+
+
+        public async Task<Reference?> GetReferenceByIdAsync(long id)
+        {
+            // Busca a referência pelo ID, sem tracking porque não vamos alterar nada, óbvio
+            return await _context.References
+                .AsNoTracking()
+                .FirstOrDefaultAsync(r => r.Id == id);
+        }
+
+        public async Task<IEnumerable<Reference>> GetAllReferencesAsync()
+        {
+            // Retorna tudo, simples, direto, sem frescura
+            return await _context.References
+                .AsNoTracking()
+                .OrderBy(r => r.Id)
+                .ToListAsync();
+        }
+
+
+
     }
 }

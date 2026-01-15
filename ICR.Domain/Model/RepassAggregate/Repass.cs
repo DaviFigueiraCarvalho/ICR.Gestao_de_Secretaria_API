@@ -10,10 +10,12 @@ namespace ICR.Domain.Model.RepassAggregate
     public class Repass
     {
         public long Id { get; set; }
-        [ForeignKey("ChurchId")]
         public long ChurchId { get; set; }
+        [ForeignKey(nameof(ChurchId))] 
         public Church? Church { get; set; }
-        public long Reference { get; set; }
+        public long ReferenceId { get; set; }
+        [ForeignKey(nameof(ReferenceId))] 
+        public Reference? Reference { get; set; }
         public decimal Amount { get; set; }
         public Repass() { }
 
@@ -21,7 +23,7 @@ namespace ICR.Domain.Model.RepassAggregate
         {
             Id = id;
             ChurchId = churchId;
-            Reference = reference;
+            ReferenceId = reference;
             Amount = amount;
         }
         public void SetChurchId(long churchId)
@@ -30,7 +32,7 @@ namespace ICR.Domain.Model.RepassAggregate
         }
         public void SetReference(long reference)
         {
-            Reference = reference;
+            ReferenceId = reference;
         }
         public void SetAmount(decimal amount)
         {

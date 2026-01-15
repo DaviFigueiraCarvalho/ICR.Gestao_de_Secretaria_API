@@ -19,9 +19,11 @@ namespace ICR.API.Controllers
 
         // GET: api/members
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<MemberResponseDTO>>> GetAll()
-        {
-            return Ok(await _repository.GetAllAsync());
+        public async Task<ActionResult<IEnumerable<MemberResponseDTO>>> GetAll(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 50)
+        { 
+            return Ok(await _repository.GetAllAsync(page, pageSize));
         }
 
         // GET: api/members/{id}
@@ -50,7 +52,7 @@ namespace ICR.API.Controllers
 
         // POST: api/members
         [HttpPost]
-        public async Task<ActionResult<MemberResponseDTO>> Create([FromBody] Member member)
+        public async Task<ActionResult<MemberResponseDTO>> Create([FromBody] MemberDTO member)
         {
             var result = await _repository.AddAsync(member);
 
@@ -62,7 +64,7 @@ namespace ICR.API.Controllers
 
         // PATCH: api/members/{id}
         [HttpPatch("{id}")]
-        public async Task<ActionResult<MemberResponseDTO>> Patch(long id, [FromBody] MemberDTO member)
+        public async Task<ActionResult<MemberResponseDTO>> Patch(long id, [FromBody] MemberPatchDTO member)
         {
             var result = await _repository.UpdateAsync(id, member);
 

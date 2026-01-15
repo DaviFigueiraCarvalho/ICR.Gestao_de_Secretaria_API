@@ -10,43 +10,53 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 using ICR.Domain.Model.FederationAggregate;
+using ICR.Infra.Data.Repositories;
+using ICR.Domain.Model.MinisterAggregate;
+using ICR.Domain.Model.CellAggregate;
+using ICR.Domain.Model.FamilyAggregate;
+using ICR.Domain.Model.RepassAggregate;
+using ICR.Domain.Model.UserRoleAgreggate;
 
-var builder = WebApplication.CreateBuilder(args);
-builder.Configuration.AddEnvironmentVariables();
-builder.Services.AddSingleton<TokenService>();
-
-// Add services to the container
-builder.Services.AddControllers();
-builder.Services.AddScoped<IdSequenceService>();
-
-builder.Services.AddCors(options =>
+public partial class Program
 {
-    options.AddPolicy("AllowAll", policy =>
+    private static void Main(string[] args)
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
-    });
-});
-builder.WebHost.UseUrls("http://0.0.0.0:8080", "https://0.0.0.0:8081");
+        var builder = WebApplication.CreateBuilder(args);
+        builder.Configuration.AddEnvironmentVariables();
+        builder.Services.AddSingleton<TokenService>();
 
-// AutoMapper
-builder.Services.AddAutoMapper(cfg => cfg.AddMaps(typeof(DomainToDTOMapping)));
+        // Add services to the container
+        builder.Services.AddControllers();
+        builder.Services.AddScoped<IdSequenceService>();
 
-// Swagger
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
-{
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Name = "Authorization",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer"
-    });
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("AllowAll", policy =>
+            {
+                policy.AllowAnyOrigin()
+                      .AllowAnyMethod()
+                      .AllowAnyHeader();
+            });
+        });
+        builder.WebHost.UseUrls("http://0.0.0.0:8080", "https://0.0.0.0:8081");
 
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
+        // AutoMapper
+        builder.Services.AddAutoMapper(cfg => cfg.AddMaps(typeof(DomainToDTOMapping)));
+
+        // Swagger
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen(c =>
+        {
+            c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                Name = "Authorization",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.ApiKey,
+                Scheme = "Bearer"
+            });
+
+            c.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
         {
             new OpenApiSecurityScheme
             {
@@ -61,60 +71,77 @@ builder.Services.AddSwaggerGen(c =>
             },
             new List<string>()
         }
-    });
-});
+            });
+        });
 
-// ConnectionContext via DI com appsettings.json
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<ConnectionContext>(options =>
-    options.UseNpgsql(connectionString)
-);
+        // ConnectionContext via DI com appsettings.json
+        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+        builder.Services.AddDbContext<ConnectionContext>(options =>
+            options.UseNpgsql(connectionString)
+        );
+        builder.Services.AddHostedService<MonthlyReferenceJob>();
 
-// Repositório
-builder.Services.AddTransient<IFederationRepository, FederationRepository>();
+        // Repositório
+        builder.Services.AddTransient<IFederationRepository, FederationRepository>();
+        builder.Services.AddTransient<IChurchRepository, ChurchRepository>();
+        // register concrete repositories (interfaces differ across implementations in this solution)
+        builder.Services.AddTransient<ICellRepository, CellRepository>();
+        builder.Services.AddTransient<IFamilyRepository, FamilyRepository>();
+        builder.Services.AddTransient<IMemberRepository, MemberRepository>();
+        builder.Services.AddTransient<IMinisterRepository, MinisterRepository>();
+        builder.Services.AddTransient<IRepassRepository, RepassRepository>();
+        builder.Services.AddTransient<IUserRoleRepository, UserRoleRepository>();
 
-// JWT
-var secret = Environment.GetEnvironmentVariable("JWT_KEY"); 
-if (string.IsNullOrWhiteSpace(secret))
-    secret = builder.Configuration["JWT_KEY"];
 
-var key = Encoding.ASCII.GetBytes(secret);
-builder.Services.AddAuthentication(x =>
-{
-    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(x =>
-{
-    x.RequireHttpsMetadata = false;
-    x.SaveToken = true;
-    x.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(key),
-        ValidateIssuer = false,
-        ValidateAudience = false
-    };
-});
+        // JWT
+        var secret = Environment.GetEnvironmentVariable("JWT_KEY");
+        if (string.IsNullOrWhiteSpace(secret))
+            secret = builder.Configuration["JWT_KEY"];
 
-var app = builder.Build();
-app.UseCors("AllowAll");
+        var key = Encoding.ASCII.GetBytes(secret);
+        builder.Services.AddAuthentication(x =>
+        {
+            x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        })
+        .AddJwtBearer(x =>
+        {
+            x.RequireHttpsMetadata = false;
+            x.SaveToken = true;
+            x.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(key),
+                ValidateIssuer = false,
+                ValidateAudience = false
+            };
+        });
 
-// Pipeline
-if (app.Environment.IsDevelopment())
-{
-    app.UseExceptionHandler("/error-development");
-    app.UseSwagger();
-    app.UseSwaggerUI();
+        var app = builder.Build();
+        using (var scope = app.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ConnectionContext>();
+            db.Database.Migrate();
+        }
+        app.UseCors("AllowAll");
+
+        // Pipeline
+        if (app.Environment.IsDevelopment())
+        {
+            app.UseExceptionHandler("/error-development");
+            app.UseSwagger();
+            app.UseSwaggerUI();
+        }
+        else
+        {
+            app.UseExceptionHandler("/error");
+        }
+
+        app.UseHttpsRedirection();
+        app.UseAuthentication();
+        app.UseAuthorization();
+
+        app.MapControllers();
+        app.Run();
+    }
 }
-else
-{
-    app.UseExceptionHandler("/error");
-}
-
-app.UseHttpsRedirection();
-app.UseAuthentication();
-app.UseAuthorization();
-
-app.MapControllers();
-app.Run();
