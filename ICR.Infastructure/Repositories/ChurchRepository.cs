@@ -1,5 +1,6 @@
 ﻿using ICR.Application.Services;
 using ICR.Domain.DTOs;
+using ICR.Domain.Model;
 using ICR.Domain.Model.CellAggregate;
 using ICR.Domain.Model.ChurchAggregate;
 using ICR.Domain.Model.FederationAggregate;
@@ -54,6 +55,14 @@ namespace ICR.Infra.Data.Repositories
 
                 // Responsible da célula é o MEMBER do ministro
                 cellResponsibleId = minister.Member.Id;
+            }
+            if (dto.Address.ZipCode.Length != 8 || !dto.Address.ZipCode.All(char.IsDigit))
+            {
+                return new ChurchResponseDto
+                {
+                    Id = 0,
+                    ResultMessage = $"o CEP:{dto.Address.ZipCode} é inválido. Pois deve conter exatamente 8 dígitos numéricos"
+                };
             }
 
             var newChurchId = await _idSequenceService.GetNextIdAsync<Church>();
@@ -225,14 +234,46 @@ namespace ICR.Infra.Data.Repositories
                     .Include(m => m.Member)
                     .FirstOrDefaultAsync(m => m.Id == church.MinisterId.Value);
             }
+           
+            
 
             // Name
             if (!string.IsNullOrWhiteSpace(dto.Name))
                 church.SetName(dto.Name);
 
             // Address
+            // Address PATCH
             if (dto.Address != null)
-                church.SetAddress(dto.Address);
+            {
+                var currentAddress = church.Address;
+
+                var zipCode = dto.Address.ZipCode ?? currentAddress.ZipCode;
+                var street = dto.Address.Street ?? currentAddress.Street;
+                var number = dto.Address.Number ?? currentAddress.Number;
+                var city = dto.Address.City ?? currentAddress.City;
+                var state = dto.Address.State ?? currentAddress.State;
+
+                // valida CEP só se vier
+                if (dto.Address.ZipCode != null)
+                {
+                    if (zipCode.Length != 8 || !zipCode.All(char.IsDigit))
+                    {
+                        return new ChurchResponseDto
+                        {
+                            Id = 0,
+                            ResultMessage = $"o CEP:{zipCode} é inválido. Deve conter exatamente 8 dígitos numéricos"
+                        };
+                    }
+                }
+
+                church.SetAddress(new Address(
+                    zipCode,
+                    street,
+                    number,
+                    city,
+                    state
+                ));
+            }
 
             await _context.SaveChangesAsync();
 

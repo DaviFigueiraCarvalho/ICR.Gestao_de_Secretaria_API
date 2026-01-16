@@ -12,7 +12,7 @@ namespace ICR.Domain.DTOs
         public string Name { get; set; } = null!;
         public GenderType Gender { get; set; }
         public DateTime BirthDate { get; set; }
-        public bool HasBeenMarried { get; private set; }
+        public bool HasBeenMarried { get; set; }
         public MemberRole Role { get; set; }
         public string? CellPhone { get; set; }
     }

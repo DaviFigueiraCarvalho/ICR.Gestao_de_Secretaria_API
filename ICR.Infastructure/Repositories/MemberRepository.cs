@@ -5,6 +5,8 @@ using ICR.Domain.Model.MemberAggregate;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace ICR.Infra.Data.Repositories
@@ -22,45 +24,62 @@ namespace ICR.Infra.Data.Repositories
 
         public async Task<IEnumerable<MemberResponseDTO>> GetAllAsync(int page, int pageSize)
         {
-            return await _context.Members
-                .Include(m => m.Family).ThenInclude(f => f.Church)
-                .Include(m => m.Family).ThenInclude(f => f.Cell)
+            var members = await _context.Members
+                .Include(m => m.Family)
+                    .ThenInclude(f => f.Church)
+                .Include(m => m.Family)
+                    .ThenInclude(f => f.Cell)
+                .Include(m => m.Family)
+                    .ThenInclude(f => f.Man)
+                .Include(m => m.Family)
+                    .ThenInclude(f => f.Woman)
                 .OrderBy(m => m.Id)
-                .Skip((page-1) * pageSize)
+                .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(m => MapToResponse(m, "sucesso"))
                 .ToListAsync();
+
+            return members.Select(m => MapToResponse(m, "sucesso"));
         }
         public async Task<MemberResponseDTO?> GetByIdAsync(long id)
         {
-            return await _context.Members
+            var member = await _context.Members
                 .Include(m => m.Family).ThenInclude(f => f.Church)
                 .Include(m => m.Family).ThenInclude(f => f.Cell)
-                .Where(m => m.Id == id)
-                .Select(m => MapToResponse(m, "sucesso"))
-                .FirstOrDefaultAsync();
+                .Include(m => m.Family).ThenInclude(f => f.Man)
+                .Include(m => m.Family).ThenInclude(f => f.Woman)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            return member == null ? null : MapToResponse(member, "sucesso");
         }
         public async Task<IEnumerable<MemberResponseDTO>> GetByFamilyAsync(long familyId)
         {
-            return await _context.Members
+            var members = await _context.Members
                 .Include(m => m.Family).ThenInclude(f => f.Church)
                 .Include(m => m.Family).ThenInclude(f => f.Cell)
+                .Include(m => m.Family).ThenInclude(f => f.Man)
+                .Include(m => m.Family).ThenInclude(f => f.Woman)
                 .Where(m => m.FamilyId == familyId)
-                .Select(m => MapToResponse(m, "sucesso"))
                 .ToListAsync();
+
+            return members.Select(m => MapToResponse(m, "sucesso"));
         }
-        public async Task<IEnumerable<MemberResponseDTO>> GetBirthdaysByMonthAsync(int month, long churchId)
+        public async Task<IEnumerable<MemberResponseDTO>> GetBirthdaysByMonthAsync(int monthNumber, long churchId)
         {
-            return await _context.Members
+            var members = await _context.Members
                 .Include(m => m.Family).ThenInclude(f => f.Church)
                 .Include(m => m.Family).ThenInclude(f => f.Cell)
+                .Include(m => m.Family).ThenInclude(f => f.Man)
+                .Include(m => m.Family).ThenInclude(f => f.Woman)
                 .Where(m =>
-                    m.BirthDate.Month == month &&
-                    m.Family != null &&
-                    m.Family.ChurchId == churchId
+                    m.Family.ChurchId == churchId &&
+                    m.BirthDate.Month == monthNumber
                 )
-                .Select(m => MapToResponse(m,"sucesso"))
+                .OrderBy(m => m.BirthDate.Day)
                 .ToListAsync();
+
+            return members
+                .Select(m => MapToResponse(m, "sucesso"))
+                .ToList();
         }
         public async Task<MemberResponseDTO> AddAsync(MemberDTO dto)
         {
@@ -78,22 +97,37 @@ namespace ICR.Infra.Data.Repositories
                 };
             }
 
-            var newId = await _idSequenceService.GetNextIdAsync<Member>();
-            DateTime BirthDateUtc =
-                DateTime.SpecifyKind(dto.BirthDate, DateTimeKind.Utc);
+            if (dto.CellPhone.Length != 11 || !dto.CellPhone.All(char.IsDigit))
+            {
+                return new MemberResponseDTO
+                {
+                    Id = 0,
+                    ResultMessage = $"o numero de telefone {dto.CellPhone} é inválido"
+                };
+            }
 
+            var newId = await _idSequenceService.GetNextIdAsync<Member>();
+            var birthDateUtc = DateTime.SpecifyKind(dto.BirthDate, DateTimeKind.Utc);
+
+            // 🔥 CALCULA ANTES
+            var calculatedClass = CalculateClass(
+                dto.Gender,
+                birthDateUtc,
+                dto.HasBeenMarried
+            );
 
             var member = new Member(
                 newId,
                 dto.FamilyId,
                 dto.Name,
                 dto.Gender,
-                BirthDateUtc,
+                birthDateUtc,
                 dto.HasBeenMarried,
-                dto.Role
+                dto.Role,
+                dto.CellPhone,
+                calculatedClass
             );
 
-            member.SetCellPhone(dto.CellPhone);
 
             _context.Members.Add(member);
             await _context.SaveChangesAsync();
@@ -118,6 +152,24 @@ namespace ICR.Infra.Data.Repositories
                 };
             }
 
+            // ============================
+            // PREVISÃO DE ESTADO FINAL
+            // ============================
+            var finalGender = dto.Gender ?? member.Gender;
+            var finalBirthDate = dto.BirthDate.HasValue
+                ? DateTime.SpecifyKind(dto.BirthDate.Value, DateTimeKind.Utc)
+                : member.BirthDate;
+            var finalHasBeenMarried =
+                dto.HasBeenMarried == true || member.HasBeenMarried;
+
+            bool affectsClass =
+                dto.Gender.HasValue ||
+                dto.BirthDate.HasValue ||
+                dto.HasBeenMarried == true;
+
+            // ============================
+            // UPDATES NORMAIS
+            // ============================
             if (dto.FamilyId.HasValue && dto.FamilyId.Value != member.FamilyId)
             {
                 var family = await _context.Families
@@ -136,9 +188,6 @@ namespace ICR.Infra.Data.Repositories
 
                 member.SetFamily(dto.FamilyId.Value);
             }
-            DateTime? BirthDateUtc = dto.BirthDate.HasValue
-                        ? DateTime.SpecifyKind(dto.BirthDate.Value, DateTimeKind.Utc)
-                        : null;
 
             if (!string.IsNullOrWhiteSpace(dto.Name))
                 member.SetName(dto.Name);
@@ -147,38 +196,49 @@ namespace ICR.Infra.Data.Repositories
                 member.SetGender(dto.Gender.Value);
 
             if (dto.BirthDate.HasValue)
-                member.SetBirthDate(BirthDateUtc.Value);
+                member.SetBirthDate(finalBirthDate);
 
             if (dto.HasBeenMarried == true && !member.HasBeenMarried)
                 member.MarkAsMarried();
 
-            if (dto.Role != member.Role)
+            if (dto.Role.HasValue)
                 member.SetRole(dto.Role.Value);
 
             if (!string.IsNullOrWhiteSpace(dto.CellPhone))
-                member.SetCellPhone(dto.CellPhone);
+            {
+                if (dto.CellPhone.Length != 11 || !dto.CellPhone.All(char.IsDigit))
+                {
+                    return new MemberResponseDTO
+                    {
+                        Id = 0,
+                        ResultMessage = $"o numero de telefone {dto.CellPhone} é inválido"
+                    };
+                }
 
-            if (dto.Class != member.Class)
+                member.SetCellPhone(dto.CellPhone);
+            }
+
+            // ============================
+            // CLASSE
+            // ============================
+            if (dto.Class.HasValue)
+            {
                 member.SetClass(dto.Class.Value);
+            }
+            else if (affectsClass)
+            {
+                var recalculatedClass = CalculateClass(
+                    finalGender,
+                    finalBirthDate,
+                    finalHasBeenMarried
+                );
+
+                member.SetClass(recalculatedClass);
+            }
 
             await _context.SaveChangesAsync();
 
-            return new MemberResponseDTO
-            {
-                Id = member.Id,
-                Name = member.Name,
-                Gender = member.Gender,
-                BirthDate = member.BirthDate,
-                HasBeenMarried = member.HasBeenMarried,
-                Role = member.Role,
-                CellPhone = member.CellPhone,
-                Class = member.Class,
-                FamilyId = member.FamilyId,
-                FamilyName = member.Family?.Name ?? "",
-                FamilyChurchName = member.Family?.Church?.Name ?? "",
-                FamilyCellName = member.Family?.Cell?.Name ?? "",
-                ResultMessage = "Membro atualizado com sucesso"
-            };
+            return MapToResponse(member, "Membro atualizado com sucesso");
         }
         public async Task<MemberResponseDTO> RemoveAsync(long id)
         {
@@ -207,22 +267,88 @@ namespace ICR.Infra.Data.Repositories
         // ============================
         private static MemberResponseDTO MapToResponse(Member m, string message)
         {
-            return new MemberResponseDTO
-            {
-                Id = m.Id,
-                Name = m.Name,
-                Gender = m.Gender,
-                BirthDate = m.BirthDate,
-                HasBeenMarried = m.HasBeenMarried,
-                Role = m.Role,
-                CellPhone = m.CellPhone,
-                Class = m.Class,
-                FamilyId = m.FamilyId,
-                FamilyName = m.Family?.Name ?? "",
-                FamilyChurchName = m.Family?.Church?.Name ?? "",
-                FamilyCellName = m.Family?.Cell?.Name ?? "",
-                ResultMessage = message ?? ""
-            };
+                    string? spouseName = null;
+
+                    if (m.HasBeenMarried && m.Family != null)
+                    {
+                        if (m.Gender == GenderType.HOMEM)
+                        {
+                            spouseName = m.Family.Woman?.Name;
+                        }
+                        else if (m.Gender == GenderType.MULHER)
+                        {
+                            spouseName = m.Family.Man?.Name;
+                        }
+                    }
+                    return new MemberResponseDTO
+                        {
+                            Id = m.Id,
+                            Name = m.Name,
+
+                            Role = m.Role,
+                            // RoleName é calculado automaticamente no DTO
+
+                            FamilyId = m.FamilyId,
+                            FamilyName = m.Family?.Name ?? "",
+                            FamilyChurchName = m.Family?.Church?.Name ?? "",
+                            FamilyCellName = m.Family?.Cell?.Name ?? "",
+
+                            BirthDate = m.BirthDate,
+                            HasBeenMarried = m.HasBeenMarried,
+        
+                            SpouseName = spouseName,
+                            WeddingDate = m.Family.WeddingDate,
+
+                            Gender = m.Gender,
+                            // GenderName é calculado automaticamente no DTO
+
+                            Class = m.Class,
+                            // ClassName é calculado automaticamente no DTO
+
+                            CellPhone = m.CellPhone,
+
+                            ResultMessage = message ?? ""
+                        };
         }
+        
+        private ClassType CalculateClass(
+            GenderType gender,
+            DateTime birthDate,
+            bool hasBeenMarried
+        )
+        {
+            int age = CalculateAge(birthDate);
+
+            if (age <= 2)
+                return ClassType.BEBE;
+
+            if (age < 7)
+                return ClassType.CRIANCA;
+
+            if (age < 11)
+                return ClassType.JUNIORES;
+
+            if (age < 15)
+                return ClassType.JUVENIS;
+
+            if (hasBeenMarried)
+                return gender == GenderType.HOMEM
+                    ? ClassType.HOMENS
+                    : ClassType.MULHERES;
+
+            return ClassType.JOVENS;
+        }
+
+        private static int CalculateAge(DateTime birthDate)
+        {
+            var today = DateTime.Today;
+            var age = today.Year - birthDate.Year;
+
+            if (birthDate.Date > today.AddYears(-age))
+                age--;
+
+            return age;
+        }
+
     }
 }

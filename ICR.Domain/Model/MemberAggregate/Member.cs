@@ -31,7 +31,8 @@ namespace ICR.Domain.Model.MemberAggregate
             DateTime birthDate,
             bool hasBeenMarried,
             MemberRole role,
-            string? cellPhone = null
+            string? cellPhone,
+            ClassType classes 
         )
         {
             Id = id;
@@ -42,8 +43,8 @@ namespace ICR.Domain.Model.MemberAggregate
             HasBeenMarried = hasBeenMarried;
             Role = role;
             CellPhone = cellPhone;
+            Class = classes;
 
-            CalculateClass();
         }
        
         
@@ -62,19 +63,16 @@ namespace ICR.Domain.Model.MemberAggregate
         public void SetGender(GenderType gender)
         {
             Gender = gender;
-            CalculateClass();
         }
 
         public void SetBirthDate(DateTime date)
         {
             BirthDate = date;
-            CalculateClass();
         }
 
         public void MarkAsMarried()
         {
             HasBeenMarried = true;
-            CalculateClass();
         }
 
         public void SetRole(MemberRole role)
@@ -93,57 +91,6 @@ namespace ICR.Domain.Model.MemberAggregate
         }
 
         // regra central de classificação
-        private void CalculateClass()
-        {
-            int age = CalculateAge(BirthDate);
-
-            if (age <= 2)
-            {
-                Class = ClassType.BEBE;
-                return;
-            }
-
-            if (age >= 3 && age < 7)
-            {
-                Class = ClassType.CRIANCA;
-                return;
-            }
-
-            if (age >= 7 && age < 11)
-            {
-                Class = ClassType.JUNIORES;
-                return;
-            }
-
-            if (age >= 11 && age < 15)
-            {
-                Class = ClassType.JUVENIS;
-                return;
-            }
-
-            // >= 15
-            if (HasBeenMarried)
-            {
-                Class = Gender == GenderType.HOMEM
-                    ? ClassType.HOMENS
-                    : ClassType.MULHERES;
-            }
-            else
-            {
-                Class = ClassType.JOVENS;
-            }
-        }
-
-        private static int CalculateAge(DateTime birthDate)
-        {
-            var today = DateTime.Today;
-            var age = today.Year - birthDate.Year;
-
-            if (birthDate.Date > today.AddYears(-age))
-                age--;
-
-            return age;
-        }
     }
 
     public enum GenderType

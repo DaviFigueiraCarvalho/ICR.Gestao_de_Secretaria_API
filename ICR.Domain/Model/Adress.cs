@@ -16,10 +16,10 @@ namespace ICR.Domain.Model
         public Address(string zipCode, string street, string number, string city, string state )
         {
             ZipCode = zipCode;
-            Street = street ?? throw new ArgumentNullException(nameof(street));
+            Street = street ;
             Number = number;
-            City = city ?? throw new ArgumentNullException(nameof(city));
-            State = state ?? throw new ArgumentNullException(nameof(state));
+            City = city ;
+            State = state;
         }
     }
 }

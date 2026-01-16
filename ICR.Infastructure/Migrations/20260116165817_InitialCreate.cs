@@ -65,9 +65,9 @@ namespace ICR.Infastructure.Migrations
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Name = table.Column<string>(type: "text", nullable: false),
-                    ZipCode = table.Column<long>(type: "bigint", nullable: false),
+                    ZipCode = table.Column<string>(type: "text", nullable: false),
                     Street = table.Column<string>(type: "text", nullable: false),
-                    Number = table.Column<int>(type: "integer", nullable: false),
+                    Number = table.Column<string>(type: "text", nullable: false),
                     City = table.Column<string>(type: "text", nullable: false),
                     State = table.Column<string>(type: "text", nullable: false),
                     FederationId = table.Column<long>(type: "bigint", nullable: false),
@@ -147,7 +147,7 @@ namespace ICR.Infastructure.Migrations
                     Gender = table.Column<int>(type: "integer", nullable: false),
                     Role = table.Column<int>(type: "integer", nullable: false),
                     BirthDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    CellPhone = table.Column<long>(type: "bigint", nullable: true),
+                    CellPhone = table.Column<string>(type: "text", nullable: true),
                     Class = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
@@ -168,14 +168,14 @@ namespace ICR.Infastructure.Migrations
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     MemberId = table.Column<long>(type: "bigint", nullable: false),
-                    Cpf = table.Column<long>(type: "bigint", nullable: false),
+                    Cpf = table.Column<string>(type: "text", nullable: false),
                     Email = table.Column<string>(type: "text", nullable: false),
                     CardValidity = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     PresbiterOrdinationDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     MinisterOrdinationDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    ZipCode = table.Column<long>(type: "bigint", nullable: false),
+                    ZipCode = table.Column<string>(type: "text", nullable: false),
                     Street = table.Column<string>(type: "text", nullable: false),
-                    Number = table.Column<int>(type: "integer", nullable: false),
+                    Number = table.Column<string>(type: "text", nullable: false),
                     City = table.Column<string>(type: "text", nullable: false),
                     State = table.Column<string>(type: "text", nullable: false)
                 },

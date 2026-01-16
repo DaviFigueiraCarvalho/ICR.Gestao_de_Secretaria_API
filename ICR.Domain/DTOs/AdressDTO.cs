@@ -23,4 +23,28 @@ public class AdressDTO
             State = address.State
         };
     }
+    public class AdressPatchDTO
+    {
+        public string? ZipCode { get; set; }
+        public string? Street { get; set; }
+        public string? Number { get; set; }
+        public string? City { get; set; }
+        public string? State { get; set; }
+
+        // Conversão explícita da entidade
+        public static AdressPatchDTO FromEntity(Address address)
+        {
+            if (address == null)
+                return null;
+
+            return new AdressPatchDTO
+            {
+                ZipCode = address.ZipCode,
+                Street = address.Street,
+                Number = address.Number,
+                City = address.City,
+                State = address.State
+            };
+        }
+    }
 }

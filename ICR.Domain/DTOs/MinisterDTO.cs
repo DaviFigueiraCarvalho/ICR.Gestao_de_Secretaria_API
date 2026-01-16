@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
+using static AdressDTO;
 
 namespace ICR.Domain.DTOs
 {
@@ -38,12 +39,12 @@ namespace ICR.Domain.DTOs
     public class MinisterPatchDTO
     {
         public long? MemberId { get; set; }
-        public long? Cpf { get; set; }
+        public string? Cpf { get; set; }
         public string? Email { get; set; }
         public DateTime? CardValidity { get; set; }
         public DateTime? PresbiterOrdinationDate { get; set; }
         public DateTime? MinisterOrdinationDate { get; set; }
-        public Address? Address { get; set; }
+        public AdressPatchDTO? Address { get; set; }
     }
     public class MinisterBirthdayDTO
     {

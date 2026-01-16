@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ICR.Infastructure.Migrations
 {
     [DbContext(typeof(ConnectionContext))]
-    [Migration("20260115165739_InitialCreate")]
+    [Migration("20260116165817_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -152,8 +152,8 @@ namespace ICR.Infastructure.Migrations
                     b.Property<DateTime>("BirthDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<long?>("CellPhone")
-                        .HasColumnType("bigint");
+                    b.Property<string>("CellPhone")
+                        .HasColumnType("text");
 
                     b.Property<int>("Class")
                         .HasColumnType("integer");
@@ -192,8 +192,9 @@ namespace ICR.Infastructure.Migrations
                     b.Property<DateTime>("CardValidity")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<long>("Cpf")
-                        .HasColumnType("bigint");
+                    b.Property<string>("Cpf")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -379,8 +380,9 @@ namespace ICR.Infastructure.Migrations
                                 .HasColumnType("text")
                                 .HasColumnName("City");
 
-                            b1.Property<int>("Number")
-                                .HasColumnType("integer")
+                            b1.Property<string>("Number")
+                                .IsRequired()
+                                .HasColumnType("text")
                                 .HasColumnName("Number");
 
                             b1.Property<string>("State")
@@ -393,8 +395,9 @@ namespace ICR.Infastructure.Migrations
                                 .HasColumnType("text")
                                 .HasColumnName("Street");
 
-                            b1.Property<long>("ZipCode")
-                                .HasColumnType("bigint")
+                            b1.Property<string>("ZipCode")
+                                .IsRequired()
+                                .HasColumnType("text")
                                 .HasColumnName("ZipCode");
 
                             b1.HasKey("ChurchId");
@@ -484,8 +487,9 @@ namespace ICR.Infastructure.Migrations
                                 .HasColumnType("text")
                                 .HasColumnName("City");
 
-                            b1.Property<int>("Number")
-                                .HasColumnType("integer")
+                            b1.Property<string>("Number")
+                                .IsRequired()
+                                .HasColumnType("text")
                                 .HasColumnName("Number");
 
                             b1.Property<string>("State")
@@ -498,8 +502,9 @@ namespace ICR.Infastructure.Migrations
                                 .HasColumnType("text")
                                 .HasColumnName("Street");
 
-                            b1.Property<long>("ZipCode")
-                                .HasColumnType("bigint")
+                            b1.Property<string>("ZipCode")
+                                .IsRequired()
+                                .HasColumnType("text")
                                 .HasColumnName("ZipCode");
 
                             b1.HasKey("MinisterId");
