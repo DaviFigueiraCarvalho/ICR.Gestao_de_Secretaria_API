@@ -92,7 +92,6 @@ namespace ICR.Infra.Data.Repositories
                 };
 
             var minister = new Minister(
-                0,
                 dto.MemberId,
                 dto.Cpf,
                 dto.Email,

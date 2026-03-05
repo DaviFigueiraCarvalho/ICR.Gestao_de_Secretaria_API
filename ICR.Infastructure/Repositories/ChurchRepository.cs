@@ -51,7 +51,6 @@ namespace ICR.Infra.Data.Repositories
                 throw new ArgumentException($"o CEP:{dto.Address.ZipCode} é inválido. Deve conter exatamente 8 dígitos numéricos");
 
             var church = new Church(
-                0,
                 dto.Name,
                 dto.Address,
                 federation.Id,

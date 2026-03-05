@@ -34,7 +34,6 @@ namespace ICR.Infra.Repositories
                 };
 
             var repass = new Repass(
-                id: 0,
                 churchId: dto.ChurchId,
                 reference: dto.Reference,
                 amount: dto.Amount

@@ -18,9 +18,8 @@ namespace ICR.Domain.Model.UserRoleAgreggate
 
     public Role() { }
 
-        public Role(long id, string name,UserScope minimalScope, string? description, bool active)
+        public Role( string name,UserScope minimalScope, string? description, bool active)
         {
-            Id = id;
             Name = name ?? throw new ArgumentNullException(nameof(name));
             MinimalScope = minimalScope;
             Description = description;

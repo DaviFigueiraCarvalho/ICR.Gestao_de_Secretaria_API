@@ -21,33 +21,6 @@ namespace ICR.Domain.Model.MemberAggregate
         public ClassType Class { get; private set; }
 
         protected Member() { } // EF
-
-        // criação: classe automática
-        public Member(
-            long id,
-            long familyId,
-            string name,
-            GenderType gender,
-            DateTime birthDate,
-            bool hasBeenMarried,
-            MemberRole role,
-            string? cellPhone,
-            ClassType classes 
-        )
-        {
-            Id = id;
-            FamilyId = familyId;
-            SetName(name);
-            Gender = gender;
-            BirthDate = birthDate;
-            HasBeenMarried = hasBeenMarried;
-            Role = role;
-            CellPhone = cellPhone;
-            Class = classes;
-
-        }
-
-        // ctor usado quando a base de dados gera o id automaticamente
         public Member(
             long familyId,
             string name,

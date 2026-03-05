@@ -26,9 +26,8 @@ namespace ICR.Domain.Model.ChurchAggregate
         //adicionei agora
         protected Church() { }
 
-        public Church(long id,string name, Address address, long federationId, long? ministerId = null)
+        public Church(string name, Address address, long federationId, long? ministerId = null)
         {
-            Id = id;
             Name = name ?? throw new ArgumentNullException(nameof(name));
             Address = address ?? throw new ArgumentNullException(nameof(address));
             FederationId = federationId;

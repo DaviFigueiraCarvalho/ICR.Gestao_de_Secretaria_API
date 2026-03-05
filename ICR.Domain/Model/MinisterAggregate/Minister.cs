@@ -36,7 +36,6 @@ namespace ICR.Domain.Model.MinisterAggregate
 
         // Construtor principal
         public Minister(
-            long id,
             long memberId,
             string cpf,
             string email,
@@ -45,7 +44,6 @@ namespace ICR.Domain.Model.MinisterAggregate
             DateTime? ministerOrdinationDate,
             Address address)
         {
-            Id = id;
             MemberId = memberId;
             Cpf = cpf;
             Email = email ?? throw new ArgumentNullException(nameof(email));

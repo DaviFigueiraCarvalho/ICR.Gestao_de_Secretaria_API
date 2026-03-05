@@ -19,9 +19,8 @@ namespace ICR.Domain.Model.RepassAggregate
         public decimal Amount { get; set; }
         public Repass() { }
 
-        public Repass(long id, long churchId, long reference, decimal amount)
+        public Repass(long churchId, long reference, decimal amount)
         {
-            Id = id;
             ChurchId = churchId;
             ReferenceId = reference;
             Amount = amount;
