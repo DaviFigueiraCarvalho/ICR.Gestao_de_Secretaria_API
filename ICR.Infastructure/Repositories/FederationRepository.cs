@@ -14,12 +14,10 @@ namespace ICR.Infra.Repositories
     public class FederationRepository : IFederationRepository
     {
         private readonly ConnectionContext _context;
-        private readonly IdSequenceService _idSequenceService;
 
         public FederationRepository(ConnectionContext context)
         {
             _context = context;
-            _idSequenceService = new IdSequenceService(_context);
         }
 
         
@@ -46,9 +44,8 @@ namespace ICR.Infra.Repositories
                 dto.MinisterId = null;
             }
 
-            long newId = await _idSequenceService.GetNextIdAsync<Federation>();
 
-            var federation = new Federation(newId, dto.Name, dto.MinisterId);
+            var federation = new Federation(dto.Name, dto.MinisterId);
 
             await _context.Federations.AddAsync(federation);
             await _context.SaveChangesAsync();

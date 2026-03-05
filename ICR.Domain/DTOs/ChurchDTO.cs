@@ -24,7 +24,7 @@ namespace ICR.Domain.DTOs
         public string FederationName { get; set; }
         public long? MinisterId { get; set; }
         public string MinisterName { get; set; }
-        public string ResultMessage { get; set; }
+        // ResultMessage removed: use HTTP ProblemDetails or exceptions for failures
     }
     public class ChurchPatchDTO
     {

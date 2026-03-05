@@ -67,7 +67,6 @@ namespace ICR.Domain.DTOs
         };
 
         public string? CellPhone { get; set; }
-        public string ResultMessage { get; set; } = null!;
     }
     public class MemberPatchDTO
     {

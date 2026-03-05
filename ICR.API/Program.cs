@@ -29,7 +29,6 @@ public partial class Program
 
         // Add services to the container
         builder.Services.AddControllers();
-        builder.Services.AddScoped<IdSequenceService>();
 
         builder.Services.AddCors(options =>
         {

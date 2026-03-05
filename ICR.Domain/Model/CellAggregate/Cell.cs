@@ -20,9 +20,8 @@ namespace ICR.Domain.Model.CellAggregate
         public long? ResponsibleId { get; private set; }
         public Member? Responsible { get; private set; }
         protected Cell() { }
-        public Cell(long id, string name, CellType type, long churchId, long? responsibleId )
+        public Cell(string name, CellType type, long churchId, long? responsibleId )
         {
-            Id = id;
             Name = name;
             Type = type;
             ChurchId = churchId;

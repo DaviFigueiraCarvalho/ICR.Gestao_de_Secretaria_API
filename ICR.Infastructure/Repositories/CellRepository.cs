@@ -13,12 +13,10 @@ namespace ICR.Infra.Data.Repositories
     public class CellRepository : ICellRepository
     {
         private readonly ConnectionContext _context;
-        private readonly IdSequenceService _idSequenceService;
 
         public CellRepository(ConnectionContext context)
         {
             _context = context;
-            _idSequenceService = new IdSequenceService(context);
         }
 
         public async Task<CellResponseDTO> AddAsync(CellDTO dto)
@@ -31,7 +29,6 @@ namespace ICR.Infra.Data.Repositories
                 return new CellResponseDTO
                 {
                     Id = 0,
-                    ResultMessage = $"A igreja de ID:{dto.ChurchId} não existe"
                 };
 
             // Busca responsável
@@ -46,7 +43,6 @@ namespace ICR.Infra.Data.Repositories
                     return new CellResponseDTO
                     {
                         Id = 0,
-                        ResultMessage = $"O responsável de ID:{dto.ResponsibleId} não existe"
                     };
             }
             if (dto.ResponsibleId == 0)
@@ -54,10 +50,8 @@ namespace ICR.Infra.Data.Repositories
                 dto.ResponsibleId = null;
             }
 
-            var newId = await _idSequenceService.GetNextIdAsync<Cell>();
 
             var cell = new Cell(
-                newId,
                 dto.Name,
                 dto.Type,
                 church.Id,
@@ -75,7 +69,6 @@ namespace ICR.Infra.Data.Repositories
                 ChurchName = church.Name,
                 ResponsibleId = responsible?.Id,
                 ResponsibleName = responsible?.Name,
-                ResultMessage = "Célula criada com sucesso"
             };
         }
 
@@ -143,7 +136,6 @@ namespace ICR.Infra.Data.Repositories
                 return new CellResponseDTO
                 {
                     Id = 0,
-                    ResultMessage = $"A célula de ID:{id} não existe"
                 };
             }
 
@@ -169,7 +161,6 @@ namespace ICR.Infra.Data.Repositories
                         return new CellResponseDTO
                         {
                             Id = cell.Id,
-                            ResultMessage = $"O membro responsável de ID:{updatedCell.ResponsibleId.Value} não existe"
                         };
                     }
 
@@ -184,7 +175,6 @@ namespace ICR.Infra.Data.Repositories
                 Id = cell.Id,
                 Name = cell.Name,
                 ChurchId = cell.ChurchId,
-                ResultMessage = $"Célula {cell.Name} atualizada com sucesso"
             };
         }
 
@@ -197,7 +187,6 @@ namespace ICR.Infra.Data.Repositories
                 return new CellResponseDTO
                 {
                     Id = 0,
-                    ResultMessage = $"A célula de ID:{id} não existe"
                 };
 
             _context.Cells.Remove(cell);
@@ -207,7 +196,6 @@ namespace ICR.Infra.Data.Repositories
             {
                 Id = cell.Id,
                 Name = cell.Name,
-                ResultMessage = $"Célula {cell.Name} deletada com sucesso"
             };
         }
 

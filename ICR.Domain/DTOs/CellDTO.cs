@@ -32,7 +32,7 @@ using static ICR.Domain.Model.CellAggregate.Cell;
             public string ChurchName { get; set; }
             public long? ResponsibleId { get; set; }
             public string? ResponsibleName { get; set; }
-            public string? ResultMessage { get; set; }
+            // ResultMessage removed: use HTTP ProblemDetails or exceptions for failures
            
 
         }

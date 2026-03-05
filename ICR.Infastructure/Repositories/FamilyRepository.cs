@@ -13,12 +13,10 @@ namespace ICR.Infra.Data.Repositories
     public class FamilyRepository : IFamilyRepository
     {
         private readonly ConnectionContext _context;
-        private readonly IdSequenceService _idSequenceService;
 
         public FamilyRepository(ConnectionContext context)
         {
             _context = context;
-            _idSequenceService = new IdSequenceService(context);
         }
 
         // =========================
@@ -68,10 +66,8 @@ namespace ICR.Infra.Data.Repositories
                 ? DateTime.SpecifyKind(dto.WeddingDate.Value, DateTimeKind.Utc)
                 : null;
 
-            var familyId = await _idSequenceService.GetNextIdAsync<Family>();
 
             var family = new Family(
-                familyId,
                 dto.Name,
                 dto.ChurchId,
                 dto.CellId,
@@ -83,8 +79,7 @@ namespace ICR.Infra.Data.Repositories
             _context.Families.Add(family);
             await _context.SaveChangesAsync();
 
-            var saved = await LoadFamilyAsync(familyId);
-            return MapToResponse(saved, "Família criada com sucesso");
+            return MapToResponse(family);
         }
 
         // =========================

@@ -17,9 +17,8 @@ namespace ICR.Domain.Model.FederationAggregate
         public long? MinisterId { get; set; } //Id do pastor responsável pela comissão federada
         public Minister? Minister { get; set; } // Pastor responsável pela comissão federada
         // Construtor principal
-        public Federation( long id, string name, long? ministerId)
+        public Federation(string name, long? ministerId)
         {
-            Id = id;
             Name = name ?? throw new ArgumentNullException(nameof(name));
             MinisterId= ministerId;
         }

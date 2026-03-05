@@ -46,6 +46,28 @@ namespace ICR.Domain.Model.MemberAggregate
             Class = classes;
 
         }
+
+        // ctor usado quando a base de dados gera o id automaticamente
+        public Member(
+            long familyId,
+            string name,
+            GenderType gender,
+            DateTime birthDate,
+            bool hasBeenMarried,
+            MemberRole role,
+            string? cellPhone,
+            ClassType classes
+        )
+        {
+            FamilyId = familyId;
+            SetName(name);
+            Gender = gender;
+            BirthDate = birthDate;
+            HasBeenMarried = hasBeenMarried;
+            Role = role;
+            CellPhone = cellPhone;
+            Class = classes;
+        }
        
         
         public void SetName(string name)
@@ -91,6 +113,40 @@ namespace ICR.Domain.Model.MemberAggregate
         }
 
         // regra central de classificação
+        public static ClassType ComputeClass(GenderType gender, DateTime birthDate, bool hasBeenMarried)
+        {
+            int age = CalculateAge(birthDate);
+
+            if (age <= 2)
+                return ClassType.BEBE;
+
+            if (age < 7)
+                return ClassType.CRIANCA;
+
+            if (age < 11)
+                return ClassType.JUNIORES;
+
+            if (age < 15)
+                return ClassType.JUVENIS;
+
+            if (hasBeenMarried)
+                return gender == GenderType.HOMEM
+                    ? ClassType.HOMENS
+                    : ClassType.MULHERES;
+
+            return ClassType.JOVENS;
+        }
+
+        private static int CalculateAge(DateTime birthDate)
+        {
+            var today = DateTime.Today;
+            var age = today.Year - birthDate.Year;
+
+            if (birthDate.Date > today.AddYears(-age))
+                age--;
+
+            return age;
+        }
     }
 
     public enum GenderType

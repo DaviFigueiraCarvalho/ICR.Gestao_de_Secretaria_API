@@ -31,10 +31,9 @@ namespace ICR.Domain.Model.FamilyAggregate
 
 
         public Family(){ }
-        public Family(long id,string name, long churchId, long cellId, long? manId, long? womanId, DateTime? weddingDate)
+        public Family(string name, long churchId, long cellId, long? manId, long? womanId, DateTime? weddingDate)
         {
             Name = name;
-            Id = id;
             ChurchId = churchId;
             CellId = cellId;
             ManId = manId;

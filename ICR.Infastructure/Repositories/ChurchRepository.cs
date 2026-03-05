@@ -16,12 +16,10 @@ namespace ICR.Infra.Data.Repositories
     public class ChurchRepository : IChurchRepository
     {
         private readonly ConnectionContext _context;
-        private readonly IdSequenceService _idSequenceService;
 
         public ChurchRepository(ConnectionContext context)
         {
             _context = context;
-            _idSequenceService = new IdSequenceService(context);
         }
 
         public async Task<ChurchResponseDto?> CreateAsync(ChurchDTO dto)
@@ -31,11 +29,7 @@ namespace ICR.Infra.Data.Repositories
                 .FirstOrDefaultAsync(f => f.Id == dto.FederationId);
 
             if (federation == null)
-                return new ChurchResponseDto
-                {
-                    Id = 0,
-                    ResultMessage = $"A federação de ID:{dto.FederationId} não existe"
-                };
+                throw new KeyNotFoundException($"A federação de ID:{dto.FederationId} não existe");
 
             // Busca Ministro
             Minister? minister = null;
@@ -48,29 +42,16 @@ namespace ICR.Infra.Data.Repositories
                     .FirstOrDefaultAsync(m => m.Id == dto.MinisterId.Value);
 
                 if (minister == null)
-                    return new ChurchResponseDto
-                    {
-                        Id = 0,
-                        ResultMessage = $"O pastor de ID:{dto.MinisterId.Value} não existe"
-                    };
+                    throw new KeyNotFoundException($"O pastor de ID:{dto.MinisterId.Value} não existe");
 
                 // Responsible da célula é o MEMBER do ministro
                 cellResponsibleId = minister.Member.Id;
             }
             if (dto.Address.ZipCode.Length != 8 || !dto.Address.ZipCode.All(char.IsDigit))
-            {
-                return new ChurchResponseDto
-                {
-                    Id = 0,
-                    ResultMessage = $"o CEP:{dto.Address.ZipCode} é inválido. Pois deve conter exatamente 8 dígitos numéricos"
-                };
-            }
-
-            var newChurchId = await _idSequenceService.GetNextIdAsync<Church>();
-            var newCellId = await _idSequenceService.GetNextIdAsync<Cell>();
+                throw new ArgumentException($"o CEP:{dto.Address.ZipCode} é inválido. Deve conter exatamente 8 dígitos numéricos");
 
             var church = new Church(
-                newChurchId,
+                0,
                 dto.Name,
                 dto.Address,
                 federation.Id,
@@ -78,10 +59,9 @@ namespace ICR.Infra.Data.Repositories
             );
 
             var cell = new Cell(
-                newCellId,
                 $"Matriz:({dto.Name})",
                 CellType.Celula,
-                newChurchId,
+                0,
                 cellResponsibleId
             );
 
@@ -100,7 +80,6 @@ namespace ICR.Infra.Data.Repositories
                 MinisterName = minister != null
                     ? $"{minister.Member.Role} {minister.Member.Name}"
                     : null,
-                ResultMessage = "Igreja criada com sucesso"
             };
         }
 
@@ -187,13 +166,7 @@ namespace ICR.Infra.Data.Repositories
                     .FirstOrDefaultAsync(f => f.Id == dto.FederationId.Value);
 
                 if (federation == null)
-                {
-                    return new ChurchResponseDto
-                    {
-                        Id = 0,
-                        ResultMessage = $"A federação de ID:{dto.FederationId.Value} não existe"
-                    };
-                }
+                    throw new KeyNotFoundException($"A federação de ID:{dto.FederationId.Value} não existe");
 
                 church.SetFederationId(federation.Id);
             }
@@ -219,13 +192,7 @@ namespace ICR.Infra.Data.Repositories
                         .FirstOrDefaultAsync(m => m.Id == dto.MinisterId.Value);
 
                     if (minister == null)
-                    {
-                        return new ChurchResponseDto
-                        {
-                            Id = church.Id,
-                            ResultMessage = $"O pastor/presbítero de ID:{dto.MinisterId.Value} não existe"
-                        };
-                    }
+                        throw new KeyNotFoundException($"O pastor/presbítero de ID:{dto.MinisterId.Value} não existe");
 
                     church.SetMinisterId(minister.Id);
                 }
@@ -259,13 +226,7 @@ namespace ICR.Infra.Data.Repositories
                 if (dto.Address.ZipCode != null)
                 {
                     if (zipCode.Length != 8 || !zipCode.All(char.IsDigit))
-                    {
-                        return new ChurchResponseDto
-                        {
-                            Id = 0,
-                            ResultMessage = $"o CEP:{zipCode} é inválido. Deve conter exatamente 8 dígitos numéricos"
-                        };
-                    }
+                        throw new ArgumentException($"o CEP:{zipCode} é inválido. Deve conter exatamente 8 dígitos numéricos");
                 }
 
                 church.SetAddress(new Address(
@@ -290,7 +251,6 @@ namespace ICR.Infra.Data.Repositories
                 MinisterName = minister != null
                     ? $"{minister.Member.Role} {minister.Member.Name}"
                     : null,
-                ResultMessage = $"Igreja {church.Name} atualizada com sucesso"
             };
         }
 
@@ -304,11 +264,7 @@ namespace ICR.Infra.Data.Repositories
                 .FirstOrDefaultAsync(c => c.Id == id);
 
             if (church == null)
-                return new ChurchResponseDto
-                {
-                    Id = 0,
-                    ResultMessage = $"A igreja de ID:{id} não existe"
-                };
+                throw new KeyNotFoundException($"A igreja de ID:{id} não existe");
 
             _context.Churches.Remove(church);
             await _context.SaveChangesAsync();
@@ -317,8 +273,6 @@ namespace ICR.Infra.Data.Repositories
             {
                 Id = church.Id,
                 Name = church.Name,
-                ResultMessage = $"Igreja {church.Name} deletada com sucesso"
-
             };
         }
 

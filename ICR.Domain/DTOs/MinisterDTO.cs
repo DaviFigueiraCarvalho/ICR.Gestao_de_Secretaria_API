@@ -33,7 +33,7 @@ namespace ICR.Domain.DTOs
         public DateTime CardValidity { get; set; }
         public DateTime PresbiterOrdinationDate { get; set; }
         public DateTime? MinisterOrdinationDate { get; set; }
-        public AdressDTO Address { get; set; } = null!; public string ResultMessage { get; set; } = string.Empty;
+        public AdressDTO Address { get; set; } = null!;
     }
 
     public class MinisterPatchDTO

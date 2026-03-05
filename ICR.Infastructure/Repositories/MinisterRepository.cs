@@ -1,5 +1,4 @@
-﻿using ICR.Application.Services;
-using ICR.Domain.DTOs;
+﻿using ICR.Domain.DTOs;
 using ICR.Domain.Model;
 using ICR.Domain.Model.MinisterAggregate;
 using Microsoft.EntityFrameworkCore;
@@ -13,12 +12,10 @@ namespace ICR.Infra.Data.Repositories
     public class MinisterRepository : IMinisterRepository
     {
         private readonly ConnectionContext _context;
-        private readonly IdSequenceService _idSequenceService;
 
         public MinisterRepository(ConnectionContext context)
         {
             _context = context;
-            _idSequenceService = new IdSequenceService(context);
         }
 
         // ============================
@@ -39,7 +36,7 @@ namespace ICR.Infra.Data.Repositories
         // ============================
         // MAPPER CENTRAL
         // ============================
-        private static MinisterResponseDTO MapToResponse(Minister m, string message = "")
+        private static MinisterResponseDTO MapToResponse(Minister m)
         {
             var member = m.Member;
             var family = member?.Family;
@@ -59,8 +56,7 @@ namespace ICR.Infra.Data.Repositories
                 CardValidity = m.CardValidity,
                 PresbiterOrdinationDate = m.PresbiterOrdinationDate,
                 MinisterOrdinationDate = m.MinisterOrdinationDate,
-                Address = AdressDTO.FromEntity(m.Address),
-                ResultMessage = message
+                Address = AdressDTO.FromEntity(m.Address)
             };
         }
 
@@ -81,25 +77,22 @@ namespace ICR.Infra.Data.Repositories
                 return new MinisterResponseDTO
                 {
                     Id = 0,
-                    ResultMessage = $"O membro de ID:{dto.MemberId} não existe"
                 };
 
             if (dto.Cpf.Length != 11 || !dto.Cpf.All(char.IsDigit))
                 return new MinisterResponseDTO
                 {
                     Id = 0,
-                    ResultMessage = $"CPF inválido: {dto.Cpf}"
                 };
 
             if (dto.Address.ZipCode.Length != 8 || !dto.Address.ZipCode.All(char.IsDigit))
                 return new MinisterResponseDTO
                 {
                     Id = 0,
-                    ResultMessage = $"CEP inválido: {dto.Address.ZipCode}"
                 };
 
             var minister = new Minister(
-                await _idSequenceService.GetNextIdAsync<Minister>(),
+                0,
                 dto.MemberId,
                 dto.Cpf,
                 dto.Email,
@@ -114,7 +107,7 @@ namespace ICR.Infra.Data.Repositories
             _context.Ministers.Add(minister);
             await _context.SaveChangesAsync();
 
-            return MapToResponse(minister, "Ministro criado com sucesso");
+            return MapToResponse(minister);
         }
 
         // ============================
@@ -226,7 +219,6 @@ namespace ICR.Infra.Data.Repositories
                 return new MinisterResponseDTO
                 {
                     Id = 0,
-                    ResultMessage = $"O ministro de ID:{id} não existe"
                 };
 
             if (!string.IsNullOrWhiteSpace(dto.Cpf))
@@ -262,7 +254,6 @@ namespace ICR.Infra.Data.Repositories
                     return new MinisterResponseDTO
                     {
                         Id = minister.Id,
-                        ResultMessage = $"CEP inválido: {zipCode}"
                     };
 
                 var updatedAddress = new Address(
@@ -277,7 +268,7 @@ namespace ICR.Infra.Data.Repositories
             }
             await _context.SaveChangesAsync();
 
-            return MapToResponse(minister, "Ministro atualizado com sucesso");
+            return MapToResponse(minister);
         }
 
         // ============================
@@ -291,7 +282,6 @@ namespace ICR.Infra.Data.Repositories
                 return new MinisterResponseDTO
                 {
                     Id = 0,
-                    ResultMessage = $"O ministro de ID:{id} não existe"
                 };
 
             _context.Ministers.Remove(minister);
@@ -300,7 +290,6 @@ namespace ICR.Infra.Data.Repositories
             return new MinisterResponseDTO
             {
                 Id = minister.Id,
-                ResultMessage = "Ministro removido com sucesso"
             };
         }
     }

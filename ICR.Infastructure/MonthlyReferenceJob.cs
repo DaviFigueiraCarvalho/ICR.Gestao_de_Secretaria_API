@@ -32,7 +32,6 @@ public class MonthlyReferenceJob : BackgroundService
         using var scope = _scopeFactory.CreateScope();
 
         var context = scope.ServiceProvider.GetRequiredService<ConnectionContext>();
-        var idSequenceService = scope.ServiceProvider.GetRequiredService<IdSequenceService>();
 
         var now = DateTime.UtcNow;
 
@@ -55,11 +54,9 @@ public class MonthlyReferenceJob : BackgroundService
 
         if (!exists)
         {
-            var newId = await idSequenceService.GetNextIdAsync<Reference>();
 
             var reference = new Reference(currentCompetence)
             {
-                Id = newId
             };
 
             context.References.Add(reference);

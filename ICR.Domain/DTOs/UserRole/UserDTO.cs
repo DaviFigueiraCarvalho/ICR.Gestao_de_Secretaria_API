@@ -22,7 +22,7 @@ namespace ICR.Domain.DTOs.UserRole
         public string Username { get; set; } = null!;
         public string PasswordHash { get; set; } = null!;
         public UserScope Scope { get; set; }
-        public string ResultMessage { get; set; } = null!;
+        // ResultMessage removed — use exceptions / ProblemDetails for errors
 
     }
     public class UserPatchDTO

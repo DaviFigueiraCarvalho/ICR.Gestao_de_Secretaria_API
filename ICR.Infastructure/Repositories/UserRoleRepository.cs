@@ -11,12 +11,10 @@ namespace ICR.Infra.Data.Repositories
     public class UserRoleRepository : IUserRoleRepository
     {
         private readonly ConnectionContext _context;
-        private readonly IdSequenceService _idSequenceService;
 
         public UserRoleRepository(ConnectionContext context)
         {
             _context = context;
-            _idSequenceService = new IdSequenceService(context);
         }
 
         // ===== USER =====
@@ -26,11 +24,7 @@ namespace ICR.Infra.Data.Repositories
                 .FirstOrDefaultAsync(m => m.Id == dto.MemberId);
 
             if (member == null)
-                return new UserResponseDTO
-                {
-                    Id = 0,
-                    ResultMessage = $"Membro de ID:{dto.MemberId} não existe"
-                };
+                throw new KeyNotFoundException($"Membro de ID:{dto.MemberId} não existe");
 
             var normalizedUsername = dto.Username.Trim().ToLower();
 
@@ -43,17 +37,14 @@ namespace ICR.Infra.Data.Repositories
                 return new UserResponseDTO
                 {
                     Id = 0,
-                    ResultMessage = "Já existe usuário com esse username ou esse membro já possui usuário"
                 };
 
-            var newId = await _idSequenceService.GetNextIdAsync<User>();
 
             // AQUI SEU ANIMAL — HASH DA SENHA
             var passwordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
 
             var user = new User
             {
-                Id = newId,
                 MemberId = dto.MemberId,
                 Username = normalizedUsername,
                 PasswordHash = passwordHash, // nunca a senha pura
@@ -69,7 +60,6 @@ namespace ICR.Infra.Data.Repositories
                 MemberId = user.MemberId,
                 Username = user.Username,
                 Scope = user.Scope,
-                ResultMessage = $"Usuário {user.Username} criado com sucesso"
             };
         }
 
@@ -89,7 +79,6 @@ namespace ICR.Infra.Data.Repositories
                 Username = user.Username,
                 PasswordHash = user.PasswordHash,
                 Scope = user.Scope,
-                ResultMessage = "Sucesso"
             };
         }
 
@@ -109,7 +98,6 @@ namespace ICR.Infra.Data.Repositories
                 Username = user.Username,
                 PasswordHash = user.PasswordHash,
                 Scope = user.Scope,
-                ResultMessage = "Sucesso"
             };
         }
 
@@ -125,7 +113,6 @@ namespace ICR.Infra.Data.Repositories
                     Username = u.Username,
                     PasswordHash = u.PasswordHash,
                     Scope = u.Scope,
-                    ResultMessage = "Sucesso"
                 })
                 .ToListAsync();
         }
@@ -140,7 +127,6 @@ namespace ICR.Infra.Data.Repositories
                 return new UserResponseDTO
                 {
                     Id = 0,
-                    ResultMessage = $"Usuário de ID:{userId} não existe"
                 };
 
             // FK: Member
@@ -153,7 +139,6 @@ namespace ICR.Infra.Data.Repositories
                     return new UserResponseDTO
                     {
                         Id = user.Id,
-                        ResultMessage = $"Member de ID:{dto.MemberId.Value} não existe"
                     };
 
                 user.MemberId = dto.MemberId.Value;
@@ -178,7 +163,6 @@ namespace ICR.Infra.Data.Repositories
                 Username = user.Username,
                 PasswordHash = user.PasswordHash,
                 Scope = user.Scope,
-                ResultMessage = $"Usuário {user.Username} atualizado com sucesso"
             };
         }
 
@@ -192,7 +176,6 @@ namespace ICR.Infra.Data.Repositories
                 return new UserResponseDTO
                 {
                     Id = 0,
-                    ResultMessage = $"Usuário de ID:{userId} não existe"
                 };
 
             _context.Users.Remove(user);
@@ -202,19 +185,16 @@ namespace ICR.Infra.Data.Repositories
             {
                 Id = user.Id,
                 Username = user.Username,
-                ResultMessage = $"Usuário {user.Username} deletado com sucesso"
             };
         }
 
         // ===== ROLE =====
         public async Task<RoleResponseDTO> AddRoleAsync(RoleDTO dto)
         {
-            var newId = await _idSequenceService.GetNextIdAsync<Role>();
             
 
             var role = new Role
             {
-                Id = newId,
                 Name = dto.Name,
                 MinimalScope = dto.MinimalScope,
                 Description = dto.Description,
@@ -231,7 +211,6 @@ namespace ICR.Infra.Data.Repositories
                 MinimalScope = role.MinimalScope,
                 Description = role.Description,
                 Active = role.Active,
-                ResultMessage = $"Role {role.Name} criada com sucesso"
             };
         }
 
@@ -247,7 +226,6 @@ namespace ICR.Infra.Data.Repositories
                 MinimalScope = role.MinimalScope,
                 Description = role.Description,
                 Active = role.Active,
-                ResultMessage = "Sucesso"
             };
         }
 
@@ -263,7 +241,6 @@ namespace ICR.Infra.Data.Repositories
                 MinimalScope = role.MinimalScope,
                 Description = role.Description,
                 Active = role.Active,
-                ResultMessage = "Sucesso"
             };
         }
 
@@ -277,7 +254,6 @@ namespace ICR.Infra.Data.Repositories
                     MinimalScope = r.MinimalScope,
                     Description = r.Description,
                     Active = r.Active,
-                    ResultMessage = "Sucesso"
                 })
                 .ToListAsync();
         }
@@ -291,7 +267,6 @@ namespace ICR.Infra.Data.Repositories
                 return new RoleResponseDTO
                 {
                     Id = 0,
-                    ResultMessage = $"Role de ID:{roleId} não existe"
                 };
 
             if (!string.IsNullOrWhiteSpace(dto.Name))
@@ -315,7 +290,6 @@ namespace ICR.Infra.Data.Repositories
                 MinimalScope = role.MinimalScope,
                 Description = role.Description,
                 Active = role.Active,
-                ResultMessage = $"Role {role.Name} atualizada com sucesso"
             };
         }
 
@@ -327,7 +301,6 @@ namespace ICR.Infra.Data.Repositories
                 return new RoleResponseDTO
                 {
                     Id = 0,
-                    ResultMessage = $"Role de ID:{roleId} não existe"
                 };
 
             _context.Roles.Remove(role);
@@ -337,7 +310,6 @@ namespace ICR.Infra.Data.Repositories
             {
                 Id = role.Id,
                 Name = role.Name,
-                ResultMessage = $"Role {role.Name} deletada com sucesso"
             };
         }
 
@@ -351,13 +323,11 @@ namespace ICR.Infra.Data.Repositories
                 return new UserRoleResponseDTO
                 {
                     UserId = 0,
-                    ResultMessage = $"Usuário de ID:{userId} não existe"
                 };
             if(role == null)
                 return new UserRoleResponseDTO
                 {
                     RoleId = 0,
-                    ResultMessage = $"Role de ID:{roleId} não existe"
                 };
 
             var exists = await _context.UserRoles
@@ -373,10 +343,7 @@ namespace ICR.Infra.Data.Repositories
                 await _context.SaveChangesAsync();
             }
 
-            return new UserRoleResponseDTO
-            {
-                ResultMessage = $"o usuario{user.Username} recebeu o cargo de {role.Name} com sucesso",
-            };
+            return new UserRoleResponseDTO { };
         }
 
         public async Task<UserRoleResponseDTO> RemoveUserRoleAsync(long userId, long roleId)
