@@ -40,6 +40,9 @@ namespace ICR.Infastructure.Migrations
                     b.Property<long?>("ResponsibleId")
                         .HasColumnType("bigint");
 
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ChurchId");

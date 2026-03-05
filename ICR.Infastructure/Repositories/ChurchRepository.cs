@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using static ICR.Domain.Model.CellAggregate.Cell;
 
 namespace ICR.Infra.Data.Repositories
 {
@@ -79,6 +80,7 @@ namespace ICR.Infra.Data.Repositories
             var cell = new Cell(
                 newCellId,
                 $"Matriz:({dto.Name})",
+                CellType.Celula,
                 newChurchId,
                 cellResponsibleId
             );

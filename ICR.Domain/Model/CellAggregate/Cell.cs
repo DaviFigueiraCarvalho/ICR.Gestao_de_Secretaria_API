@@ -12,6 +12,7 @@ namespace ICR.Domain.Model.CellAggregate
     {
         public long Id { get; set; }
         public string Name { get; set; }
+        public CellType Type { get; set; }
         [ForeignKey("ChurchId")]
         public long ChurchId { get; private set; }
         public Church? Church { get; private set; }
@@ -19,15 +20,20 @@ namespace ICR.Domain.Model.CellAggregate
         public long? ResponsibleId { get; private set; }
         public Member? Responsible { get; private set; }
         protected Cell() { }
-        public Cell(long id, string name, long churchId, long? responsibleId)
+        public Cell(long id, string name, CellType type, long churchId, long? responsibleId )
         {
             Id = id;
             Name = name;
+            Type = type;
             ChurchId = churchId;
             ResponsibleId = responsibleId;
-
         }
 
+        public enum CellType 
+        {
+            Celula = 0,
+            ComunidadeMissionaria = 1
+        }
         public void SetName(string name)
         {
             Name = name;

@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ICR.Infastructure.Migrations
 {
     [DbContext(typeof(ConnectionContext))]
-    [Migration("20260116165817_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260305164411_InitialMigration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -42,6 +42,9 @@ namespace ICR.Infastructure.Migrations
 
                     b.Property<long?>("ResponsibleId")
                         .HasColumnType("bigint");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 

@@ -91,14 +91,14 @@ namespace ICR.API.Controllers
 
             return Ok(result);
         }
-        [HttpGet("refences")]
+        [HttpGet("references")]
         public async Task<ActionResult<IEnumerable<Reference>>> GetAllRefences()
         {
             var references = await _repository.GetAllReferencesAsync();
             return Ok(references);
         }
 
-        [HttpGet("references{id:long}")]
+        [HttpGet("references/{id:long}")]
         public async Task<ActionResult<Reference>> GetReferenceById(long id)
         {
             var reference = await _repository.GetReferenceByIdAsync(id);

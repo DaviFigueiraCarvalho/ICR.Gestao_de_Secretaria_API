@@ -1,38 +1,25 @@
-# See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
-
-# This stage is used when running from VS in fast mode (Default for Debug configuration)
+# Estágio de Runtime (Final)
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
+# Precisamos ser root para instalar a lib
+USER root 
+RUN apt-get update && apt-get install -y --no-install-recommends libgssapi-krb5-2 && rm -rf /var/lib/apt/lists/*
+# Voltamos para o usuário seguro
 USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
 
+# ... (estágios build e publish permanecem iguais) ...
 
-# This stage is used to build the service project
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
-ARG BUILD_CONFIGURATION=Release
-WORKDIR /src
-COPY ["ICR.API/ICR.API.csproj", "ICR.API/"]
-COPY ["ICR.Application/ICR.Application.csproj", "ICR.Application/"]
-COPY ["ICR.Domain/ICR.Domain.csproj", "ICR.Domain/"]
-COPY ["ICR.Infastructure/ICR.Infastructure.csproj", "ICR.Infastructure/"]
-RUN dotnet restore "./ICR.API/ICR.API.csproj"
-COPY . .
-WORKDIR "/src/ICR.API"
-RUN dotnet build "./ICR.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
-
-# This stage is used to publish the service project to be copied to the final stage
-FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./ICR.API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
-
-# This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
+# Estágio de Desenvolvimento (O que você usa no Compose)
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS dev
+# Também instalamos aqui para o log do 'dotnet watch' ficar limpo
+RUN apt-get update && apt-get install -y --no-install-recommends libgssapi-krb5-2 && rm -rf /var/lib/apt/lists/*
+WORKDIR /app/ICR.API
+COPY . /app
+ENTRYPOINT ["dotnet", "watch", "run", "--urls", "http://0.0.0.0:8080"]
+# Estágio Final de Produção
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "ICR.API.dll"]
-
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS dev
-WORKDIR /app/ICR.API
-COPY . /app
-ENTRYPOINT ["dotnet", "watch", "run"]

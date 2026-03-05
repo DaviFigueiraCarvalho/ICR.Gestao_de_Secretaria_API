@@ -38,7 +38,6 @@ public partial class Program
                       .AllowAnyHeader();
             });
         });
-        builder.WebHost.UseUrls("http://0.0.0.0:8080", "https://0.0.0.0:8081");
 
         // AutoMapper
         builder.Services.AddAutoMapper(cfg => cfg.AddMaps(typeof(DomainToDTOMapping)));
@@ -118,24 +117,47 @@ public partial class Program
         });
 
         var app = builder.Build();
+        // BLOCO DE PROTEÇÃO: Roda antes de qualquer coisa
+        using (var scope = app.Services.CreateScope())
+        {
+            var services = scope.ServiceProvider;
+            try
+            {
+                var context = services.GetRequiredService<ConnectionContext>();
+
+                // Se houver migrations pendentes, ele aplica. 
+                // Se o banco estiver vazio, ele cria a estrutura.
+                context.Database.Migrate();
+            }
+            catch (Exception ex)
+            {
+                var logger = services.GetRequiredService<ILogger<Program>>();
+                logger.LogCritical(ex, "O banco de dados não está pronto. Abortando inicialização.");
+                return; // Mata a aplicação antes do MonthlyReferenceJob quebrar tudo
+            }
+        }
         app.UseCors("AllowAll");
 
         // Pipeline
-        if (app.Environment.IsDevelopment())
+        if (!app.Environment.IsDevelopment())
+        {
+            app.UseExceptionHandler("/error");
+        }
+        else
         {
             app.UseExceptionHandler("/error-development");
             app.UseSwagger();
             app.UseSwaggerUI();
         }
-        else
+        if (app.Environment.IsDevelopment())
         {
-            app.UseExceptionHandler("/error");
+            app.UseHttpsRedirection();
         }
-
         app.UseHttpsRedirection();
         app.UseAuthentication();
         app.UseAuthorization();
 
+    
         app.MapControllers();
         app.Run();
     }

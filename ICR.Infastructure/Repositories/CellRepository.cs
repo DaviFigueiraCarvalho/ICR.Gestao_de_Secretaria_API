@@ -59,6 +59,7 @@ namespace ICR.Infra.Data.Repositories
             var cell = new Cell(
                 newId,
                 dto.Name,
+                dto.Type,
                 church.Id,
                 responsible?.Id ?? 0
             );
