@@ -26,6 +26,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\ICR.Application\ICR.Application.csproj" />
+		<ProjectReference Include="..\ICR.Domain\ICR.Domain.csproj" />
 	</ItemGroup>
 
 </Project>

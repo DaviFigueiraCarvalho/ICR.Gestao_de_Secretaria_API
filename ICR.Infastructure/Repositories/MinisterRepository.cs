@@ -56,7 +56,7 @@ namespace ICR.Infra.Data.Repositories
                 CardValidity = m.CardValidity,
                 PresbiterOrdinationDate = m.PresbiterOrdinationDate,
                 MinisterOrdinationDate = m.MinisterOrdinationDate,
-                Address = AdressDTO.FromEntity(m.Address)
+                Address = AddressDTO.FromEntity(m.Address)
             };
         }
 

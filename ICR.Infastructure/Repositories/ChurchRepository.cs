@@ -56,18 +56,20 @@ namespace ICR.Infra.Data.Repositories
                 federation.Id,
                 minister?.Id
             );
+            _context.Churches.Add(church);
+            await _context.SaveChangesAsync();
 
             var cell = new Cell(
                 $"Matriz:({dto.Name})",
                 CellType.Celula,
-                0,
+                church.Id,
                 cellResponsibleId
             );
 
-            _context.Churches.Add(church);
-            _context.Cells.Add(cell);
 
+            _context.Cells.Add(cell);
             await _context.SaveChangesAsync();
+
 
             return new ChurchResponseDto
             {
@@ -95,7 +97,7 @@ namespace ICR.Infra.Data.Repositories
                 {
                     Id = c.Id,
                     Name = c.Name,
-                    Address = AdressDTO.FromEntity(c.Address),
+                    Address = AddressDTO.FromEntity(c.Address),
                     FederationId = c.FederationId,
                     FederationName = c.Federation != null ? c.Federation.Name : null,
                     MinisterId = c.MinisterId,
@@ -116,7 +118,7 @@ namespace ICR.Infra.Data.Repositories
                 {
                     Id = c.Id,
                     Name = c.Name,
-                    Address = AdressDTO.FromEntity(c.Address),
+                    Address = AddressDTO.FromEntity(c.Address),
                     FederationId = c.FederationId,
                     FederationName = c.Federation != null ? c.Federation.Name : null,
                     MinisterId = c.MinisterId,
@@ -138,7 +140,7 @@ namespace ICR.Infra.Data.Repositories
                 {
                     Id = c.Id,
                     Name = c.Name,
-                    Address = AdressDTO.FromEntity(c.Address),
+                    Address = AddressDTO.FromEntity(c.Address),
                     FederationId = c.FederationId,
                     FederationName = c.Federation != null ? c.Federation.Name : null,
                     MinisterId = c.MinisterId,
@@ -243,7 +245,7 @@ namespace ICR.Infra.Data.Repositories
             {
                 Id = church.Id,
                 Name = church.Name,
-                Address = AdressDTO.FromEntity(church.Address),
+                Address = AddressDTO.FromEntity(church.Address),
                 FederationId = federation?.Id,
                 FederationName = federation?.Name,
                 MinisterId = church.MinisterId,

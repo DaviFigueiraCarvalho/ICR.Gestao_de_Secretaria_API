@@ -126,9 +126,13 @@ namespace ICR.Infra.Data.Repositories
             _context.Members.Add(member);
             await _context.SaveChangesAsync();
 
-            member.SetFamily(family.Id);
 
-            return MapToResponse(member);
+            var completeMember = await _context.Members
+                    .Include(m => m.Family).ThenInclude(f => f.Church)
+                    .Include(m => m.Family).ThenInclude(f => f.Cell)
+                    .FirstOrDefaultAsync(m => m.Id == member.Id);
+
+            return MapToResponse(completeMember!);
         }
         public async Task<MemberResponseDTO?> UpdateAsync(long id, MemberPatchDTO dto)
         {

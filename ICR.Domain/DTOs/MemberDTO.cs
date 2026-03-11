@@ -51,7 +51,8 @@ namespace ICR.Domain.DTOs
         public string GenderName => Gender switch
         {
             GenderType.HOMEM => "Homem",
-            GenderType.MULHER => "Mulher"
+            GenderType.MULHER => "Mulher",
+            _ => "Não Informado ou Invalido"
         };
         public ClassType Class { get; set; }
         public string ClassName => Class switch
