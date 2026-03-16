@@ -21,6 +21,11 @@ namespace ICR.Domain.Model
             City = city ;
             State = state;
         }
+        public void SetZipCode(string zipCode) => ZipCode = zipCode;
+        public void SetStreet(string street) => Street = street;
+        public void SetNumber(string number) => Number = number;
+        public void SetCity(string city) => City = city;
+        public void SetState(string state) => State = state;
     }
 }
 

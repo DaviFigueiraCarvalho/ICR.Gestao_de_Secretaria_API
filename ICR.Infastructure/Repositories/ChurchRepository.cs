@@ -106,7 +106,7 @@ namespace ICR.Infra.Data.Repositories
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<IEnumerable<ChurchResponseDto>> GetAllChurchsAsync()
+        public async Task<IEnumerable<ChurchResponseDto>> GetAllChurchesAsync()
         {
             return await _context.Churches
                 .AsNoTracking()
@@ -128,7 +128,7 @@ namespace ICR.Infra.Data.Repositories
         }
 
 
-        public async Task<IEnumerable<ChurchResponseDto>> GetChurchsbyFederationId(long id)
+        public async Task<IEnumerable<ChurchResponseDto>> GetChurchesbyFederationId(long id)
         {
             return await _context.Churches
                 .AsNoTracking()
@@ -215,28 +215,27 @@ namespace ICR.Infra.Data.Repositories
             // Address PATCH
             if (dto.Address != null)
             {
-                var currentAddress = church.Address;
+                var address = church.Address;
 
-                var zipCode = dto.Address.ZipCode ?? currentAddress.ZipCode;
-                var street = dto.Address.Street ?? currentAddress.Street;
-                var number = dto.Address.Number ?? currentAddress.Number;
-                var city = dto.Address.City ?? currentAddress.City;
-                var state = dto.Address.State ?? currentAddress.State;
-
-                // valida CEP só se vier
                 if (dto.Address.ZipCode != null)
                 {
-                    if (zipCode.Length != 8 || !zipCode.All(char.IsDigit))
-                        throw new ArgumentException($"o CEP:{zipCode} é inválido. Deve conter exatamente 8 dígitos numéricos");
+                    if (dto.Address.ZipCode.Length != 8 || !dto.Address.ZipCode.All(char.IsDigit))
+                        throw new ArgumentException($"o CEP:{dto.Address.ZipCode} é inválido. Deve conter exatamente 8 dígitos numéricos");
+
+                    address.SetZipCode(dto.Address.ZipCode);
                 }
 
-                church.SetAddress(new Address(
-                    zipCode,
-                    street,
-                    number,
-                    city,
-                    state
-                ));
+                if (dto.Address.Street != null)
+                    address.SetStreet(dto.Address.Street);
+
+                if (dto.Address.Number != null)
+                    address.SetNumber(dto.Address.Number);
+
+                if (dto.Address.City != null)
+                    address.SetCity(dto.Address.City);
+
+                if (dto.Address.State != null)
+                    address.SetState(dto.Address.State);
             }
 
             await _context.SaveChangesAsync();

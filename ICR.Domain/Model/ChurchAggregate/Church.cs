@@ -51,6 +51,7 @@ namespace ICR.Domain.Model.ChurchAggregate
                     throw new ArgumentException($"Address property {prop.Name} cannot be null or empty");
                 }
             }
+            Address = address;
         }
 
         public void SetFederationId(long federationId)

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
+using static AddressDTO;
 
 namespace ICR.Domain.DTOs
 {
@@ -28,7 +29,7 @@ namespace ICR.Domain.DTOs
     public class ChurchPatchDTO
     {
         public string? Name { get; set; }
-        public AddressDTO? Address { get; set; }
+        public AddressPatchDTO? Address { get; set; }
         public long? FederationId { get; set; }
         public long? MinisterId { get; set; }
         public string? FailureMessage { get; set; }

@@ -40,7 +40,6 @@ namespace ICR.Infra.Data.Repositories
                 };
 
 
-            // AQUI SEU ANIMAL — HASH DA SENHA
             var passwordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
 
             var user = new User
@@ -148,7 +147,8 @@ namespace ICR.Infra.Data.Repositories
                 user.Username = dto.Username;
 
             if (!string.IsNullOrWhiteSpace(dto.PasswordHash))
-                user.PasswordHash = dto.PasswordHash;
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.PasswordHash);
+            ;
 
             if (dto.Scope.HasValue)
                 user.Scope = dto.Scope.Value;

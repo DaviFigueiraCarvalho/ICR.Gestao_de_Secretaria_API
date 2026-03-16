@@ -21,7 +21,7 @@ namespace ICR.API.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ChurchResponseDto>>> GetAll()
         {
-            var churches = await _repository.GetAllChurchsAsync();
+            var churches = await _repository.GetAllChurchesAsync();
             return Ok(churches);
         }
 
@@ -40,7 +40,7 @@ namespace ICR.API.Controllers
         [HttpGet("federation/{federationId:long}")]
         public async Task<ActionResult<IEnumerable<ChurchResponseDto>>> GetByFederation(long federationId)
         {
-            var churches = await _repository.GetChurchsbyFederationId(federationId);
+            var churches = await _repository.GetChurchesbyFederationId(federationId);
             return Ok(churches);
         }
 

@@ -6,7 +6,7 @@ public interface IChurchRepository
     Task<ChurchResponseDto?> UpdateAsync(long id, ChurchPatchDTO dto);
     Task<ChurchResponseDto> DeleteAsync(long id);
 
-    Task<IEnumerable<ChurchResponseDto>> GetAllChurchsAsync();
+    Task<IEnumerable<ChurchResponseDto>> GetAllChurchesAsync();
     Task<ChurchResponseDto?> GetByIdAsync(long id);
-    Task<IEnumerable<ChurchResponseDto>> GetChurchsbyFederationId(long federationId);
+    Task<IEnumerable<ChurchResponseDto>> GetChurchesbyFederationId(long federationId);
 }
