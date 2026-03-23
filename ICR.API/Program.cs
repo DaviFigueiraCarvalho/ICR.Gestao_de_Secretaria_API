@@ -34,6 +34,7 @@ public partial class Program
         {
             options.AddPolicy("AllowAll", policy =>
             {
+                // TODO: Para produção, troque AllowAnyOrigin pelo domínio específico (ex: WithOrigins("https://meudominio.com"))
                 policy.AllowAnyOrigin()
                       .AllowAnyMethod()
                       .AllowAnyHeader();
@@ -107,7 +108,7 @@ public partial class Program
         })
         .AddJwtBearer(x =>
         {
-            x.RequireHttpsMetadata = false;
+            x.RequireHttpsMetadata = builder.Environment.IsProduction();
             x.SaveToken = true;
             x.TokenValidationParameters = new TokenValidationParameters
             {
@@ -129,13 +130,20 @@ public partial class Program
 
                 // Se houver migrations pendentes, ele aplica. 
                 // Se o banco estiver vazio, ele cria a estrutura.
-                context.Database.Migrate();
+                if (context.Database.IsRelational())
+                {
+                    context.Database.Migrate();
+                }
+                else
+                {
+                    context.Database.EnsureCreated();
+                }
             }
             catch (Exception ex)
             {
                 var logger = services.GetRequiredService<ILogger<Program>>();
                 logger.LogCritical(ex, "O banco de dados não está pronto. Abortando inicialização.");
-                return; // Mata a aplicação antes do MonthlyReferenceJob quebrar tudo
+                throw; // Mata a aplicação antes do MonthlyReferenceJob quebrar tudo
             }
         }
         app.UseCors("AllowAll");
@@ -144,6 +152,8 @@ public partial class Program
         if (!app.Environment.IsDevelopment())
         {
             app.UseExceptionHandler("/error");
+            // Adicionado HSTS para aumentar a segurança em produção
+            app.UseHsts();
         }
         else
         {
@@ -151,10 +161,7 @@ public partial class Program
             app.UseSwagger();
             app.UseSwaggerUI();
         }
-        if (app.Environment.IsDevelopment())
-        {
-            app.UseHttpsRedirection();
-        }
+
         app.UseHttpsRedirection();
         app.UseAuthentication();
         app.UseAuthorization();
