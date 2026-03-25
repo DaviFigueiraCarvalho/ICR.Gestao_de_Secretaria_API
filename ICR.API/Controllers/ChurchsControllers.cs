@@ -1,4 +1,5 @@
-﻿using ICR.Domain.DTOs;
+using Microsoft.AspNetCore.Authorization;
+using ICR.Domain.DTOs;
 using ICR.Domain.Model.ChurchAggregate;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
@@ -8,6 +9,7 @@ namespace ICR.API.Controllers
 {
     [ApiController]
     [Route("api/churches")]
+    [Authorize]
     public class ChurchController : ControllerBase
     {
         private readonly IChurchRepository _repository;

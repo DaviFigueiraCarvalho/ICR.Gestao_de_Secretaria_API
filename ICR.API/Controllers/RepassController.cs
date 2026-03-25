@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using ICR.Domain.DTOs;
 using ICR.Domain.Model.RepassAggregate;
 using Microsoft.AspNetCore.Mvc;
@@ -8,6 +9,7 @@ namespace ICR.API.Controllers
 {
     [ApiController]
     [Route("api/repasses")]
+    [Authorize]
     public class RepassController : ControllerBase
     {
         private readonly IRepassRepository _repository;

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using ICR.Domain.DTOs;
 using ICR.Domain.Model.FamilyAggregate;
 using Microsoft.AspNetCore.Mvc;
@@ -7,6 +8,7 @@ namespace ICR.API.Controllers
 {
     [ApiController]
     [Route("api/families")]
+    [Authorize]
     public class FamilyController : ControllerBase
     {
         private readonly IFamilyRepository _repository;

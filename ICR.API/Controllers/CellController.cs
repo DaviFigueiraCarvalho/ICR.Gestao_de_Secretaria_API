@@ -1,4 +1,5 @@
-﻿using ICR.Domain.DTOs;
+using Microsoft.AspNetCore.Authorization;
+using ICR.Domain.DTOs;
 using ICR.Domain.Model.CellAggregate;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
@@ -7,6 +8,7 @@ namespace ICR.API.Controllers
 {
     [ApiController]
     [Route("api/cells")]
+    [Authorize]
     public class CellController : ControllerBase
     {
         private readonly ICellRepository _repository;

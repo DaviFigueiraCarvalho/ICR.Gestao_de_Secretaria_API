@@ -20,7 +20,6 @@ namespace ICR.Domain.DTOs.UserRole
         public long? MemberId { get; set; }
         public string MemberName { get; set; } = null!;
         public string Username { get; set; } = null!;
-        public string PasswordHash { get; set; } = null!;
         public UserScope Scope { get; set; }
         // ResultMessage removed — use exceptions / ProblemDetails for errors
 

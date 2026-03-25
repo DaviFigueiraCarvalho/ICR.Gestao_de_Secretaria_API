@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using ICR.Domain.DTOs;
 using ICR.Domain.Model.MinisterAggregate;
 using Microsoft.AspNetCore.Mvc;
@@ -8,6 +9,7 @@ namespace ICR.API.Controllers
 {
     [ApiController]
     [Route("api/ministers")]
+    [Authorize]
     public class MinisterController : ControllerBase
     {
         private readonly IMinisterRepository _repository;

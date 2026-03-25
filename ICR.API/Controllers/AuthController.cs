@@ -30,7 +30,7 @@ namespace ICR.API.Controllers
             if (string.IsNullOrWhiteSpace(dto.Username) || string.IsNullOrWhiteSpace(dto.Password))
                 return BadRequest("Username e senha são obrigatórios, gênio");
 
-            var user = await _repository.GetUserByUsernameAsync(dto.Username);
+            var user = await _repository.GetUserEntityByUsernameAsync(dto.Username);
 
             if (user == null)
                 return Unauthorized("Usuário ou senha inválidos");

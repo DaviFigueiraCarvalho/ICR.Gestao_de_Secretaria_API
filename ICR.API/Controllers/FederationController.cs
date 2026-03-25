@@ -1,4 +1,5 @@
-﻿using ICR.Domain.Model.FederationAggregate;
+using Microsoft.AspNetCore.Authorization;
+using ICR.Domain.Model.FederationAggregate;
 using ICR.Infra;
 using ICRManagement.Domain.DTOs;
 using Microsoft.AspNetCore.Mvc;
@@ -11,6 +12,7 @@ namespace ICR.API.Controllers
 {
     [ApiController]
     [Route("api/federations")]
+    [Authorize]
     [Authorize(Roles = "NATIONAL")]
     public class FederationController : ControllerBase
     {

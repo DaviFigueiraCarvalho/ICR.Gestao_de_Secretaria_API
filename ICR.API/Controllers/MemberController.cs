@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using ICR.Domain.DTOs;
 using ICR.Domain.Model.MemberAggregate;
 using Microsoft.AspNetCore.Mvc;
@@ -8,6 +9,7 @@ namespace ICR.API.Controllers
 {
     [ApiController]
     [Route("api/members")]
+    [Authorize]
     public class MemberController : ControllerBase
     {
         private readonly IMemberRepository _repository;

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using ICR.Domain.DTOs.UserRole;
 using ICR.Domain.Model.UserRoleAgreggate;
 using Microsoft.AspNetCore.Mvc;
@@ -8,6 +9,7 @@ namespace ICR.API.Controllers
 {
     [ApiController]
     [Route("api/user-roles")]
+    [Authorize]
     public class UserRoleController : ControllerBase
     {
         private readonly IUserRoleRepository _repository;

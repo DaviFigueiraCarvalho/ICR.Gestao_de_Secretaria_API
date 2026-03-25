@@ -8,6 +8,7 @@ namespace ICR.Domain.Model.UserRoleAgreggate
     {
         // ===== USER =====
         Task<UserResponseDTO> AddUserAsync(UserDTO user);
+        Task<User?> GetUserEntityByUsernameAsync(string username);
         Task<UserResponseDTO?> GetUserByIdAsync(long userId);
         Task<UserResponseDTO?> GetUserByUsernameAsync(string username);
         Task<IEnumerable<UserResponseDTO>> GetAllUsersAsync();

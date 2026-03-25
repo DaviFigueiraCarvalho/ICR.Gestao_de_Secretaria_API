@@ -87,9 +87,14 @@ namespace ICR.Infra.Data.Repositories
                 MemberId = user.MemberId,
                 MemberName = user.Member?.Name ?? "",
                 Username = user.Username,
-                PasswordHash = user.PasswordHash,
                 Scope = user.Scope,
             };
+        }
+
+        public async Task<User?> GetUserEntityByUsernameAsync(string username)
+        {
+            return await _context.Users
+                .FirstOrDefaultAsync(u => u.Username == username);
         }
 
         public async Task<UserResponseDTO?> GetUserByUsernameAsync(string username)
@@ -106,7 +111,6 @@ namespace ICR.Infra.Data.Repositories
                 MemberId = user.MemberId,
                 MemberName = user.Member?.Name ?? "",
                 Username = user.Username,
-                PasswordHash = user.PasswordHash,
                 Scope = user.Scope,
             };
         }
@@ -121,7 +125,6 @@ namespace ICR.Infra.Data.Repositories
                     MemberId = u.MemberId,
                     MemberName = u.Member.Name ?? "",
                     Username = u.Username,
-                    PasswordHash = u.PasswordHash,
                     Scope = u.Scope,
                 })
                 .ToListAsync();
@@ -179,7 +182,6 @@ namespace ICR.Infra.Data.Repositories
                 MemberId = user.MemberId,
                 MemberName = user.Member?.Name ?? "",
                 Username = user.Username,
-                PasswordHash = user.PasswordHash,
                 Scope = user.Scope,
             };
         }
@@ -415,7 +417,6 @@ namespace ICR.Infra.Data.Repositories
                     MemberId = ur.User.MemberId,
                     MemberName = ur.User.Member.Name ?? "",
                     Username = ur.User.Username,
-                    PasswordHash = ur.User.PasswordHash,
                     Scope = ur.User.Scope,
                 })
                 .ToListAsync();
