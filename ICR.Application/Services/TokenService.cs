@@ -40,7 +40,7 @@ namespace ICR.Application.Services
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddHours(3),
+                Expires = DateTime.UtcNow.AddMinutes(30),
                 SigningCredentials = new SigningCredentials(
                     new SymmetricSecurityKey(key),
                     SecurityAlgorithms.HmacSha256Signature)

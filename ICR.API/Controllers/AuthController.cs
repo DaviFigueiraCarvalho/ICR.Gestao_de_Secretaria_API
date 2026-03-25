@@ -4,6 +4,7 @@ using ICR.Domain.DTOs;
 using ICR.Domain.Model.UserRoleAgreggate;
 using ICR.Infra.Data.Repositories;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace ICR.API.Controllers
 {
@@ -23,6 +24,7 @@ namespace ICR.API.Controllers
         }
 
         [HttpPost("login")]
+        [EnableRateLimiting("Login")]
         public async Task<IActionResult> Login([FromBody] AuthRequestDTO dto)
         {
             if (string.IsNullOrWhiteSpace(dto.Username) || string.IsNullOrWhiteSpace(dto.Password))

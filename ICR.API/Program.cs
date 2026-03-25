@@ -30,12 +30,48 @@ public partial class Program
         // Add services to the container
         builder.Services.AddControllers();
 
+        builder.Services.Configure<Microsoft.AspNetCore.Builder.ForwardedHeadersOptions>(options =>
+        {
+            options.ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto;
+        });
+
+        builder.Services.AddRateLimiter(options =>
+        {
+            options.RejectionStatusCode = 429;
+            options.GlobalLimiter = System.Threading.RateLimiting.PartitionedRateLimiter.Create<HttpContext, string>(context =>
+            {
+                var ip = context.Request.Headers["X-Forwarded-For"].FirstOrDefault() ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+                return System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
+                    partitionKey: ip,
+                    factory: partition => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
+                    {
+                        AutoReplenishment = true,
+                        PermitLimit = 100, // Ajustado para ser mais amigável globalmente
+                        QueueLimit = 0,
+                        Window = TimeSpan.FromSeconds(10)
+                    });
+            });
+
+            options.AddPolicy("Login", context =>
+            {
+                var ip = context.Request.Headers["X-Forwarded-For"].FirstOrDefault() ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+                return System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
+                    ip,
+                    partition => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
+                    {
+                        AutoReplenishment = true,
+                        PermitLimit = 5, // Limite estrito de 5 tentativas
+                        QueueLimit = 0,
+                        Window = TimeSpan.FromMinutes(1) // Por cada 1 minuto
+                    });
+            });
+        });
+
         builder.Services.AddCors(options =>
         {
             options.AddPolicy("AllowAll", policy =>
             {
-                // TODO: Para produção, troque AllowAnyOrigin pelo domínio específico (ex: WithOrigins("https://meudominio.com"))
-                policy.AllowAnyOrigin()
+                policy.WithOrigins("https://meudominio.com")
                       .AllowAnyMethod()
                       .AllowAnyHeader();
             });
@@ -138,6 +174,21 @@ public partial class Program
                 {
                     context.Database.EnsureCreated();
                 }
+
+                if (!context.Set<User>().Any())
+                {
+                    var rootUser = new User(
+                        null,
+                        "admin",
+                        BCrypt.Net.BCrypt.HashPassword("admin123"),
+                        User.UserScope.NATIONAL
+                    );
+                    context.Add(rootUser);
+                    context.SaveChanges();
+
+                    var loggerSeed = services.GetRequiredService<ILogger<Program>>();
+                    loggerSeed.LogInformation("Usuário root criado com sucesso! Login: admin | Senha: admin123");
+                }
             }
             catch (Exception ex)
             {
@@ -147,6 +198,18 @@ public partial class Program
             }
         }
         app.UseCors("AllowAll");
+
+        app.UseForwardedHeaders();
+
+        app.Use(async (context, next) =>
+        {
+            context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+            context.Response.Headers.Append("X-Frame-Options", "DENY");
+            context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
+            context.Response.Headers.Append("Content-Security-Policy", "default-src 'self'");
+            context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+            await next();
+        });
 
         // Pipeline
         if (!app.Environment.IsDevelopment())
@@ -163,6 +226,7 @@ public partial class Program
         }
 
         app.UseHttpsRedirection();
+        app.UseRateLimiter();
         app.UseAuthentication();
         app.UseAuthorization();
 

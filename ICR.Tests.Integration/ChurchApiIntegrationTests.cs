@@ -27,7 +27,7 @@ namespace ICR.Tests.Integration
         public async Task Get_AllChurches_ShouldReturnOk()
         {
             // Act: Realiza a chamada GET no endpoint de igrejas
-            var response = await _client.GetAsync("/api/v1/churches");
+            var response = await _client.GetAsync("/api/churches");
 
             // Assert: Espera-se que a listagem retorne status 200 OK
             // Como pode exigir autenticação, aceitamos Unauthorized no teste genérico caso não haja token configurado.
@@ -42,7 +42,7 @@ namespace ICR.Tests.Integration
             var invalidId = 999999;
 
             // Act: Tenta buscar essa igreja específica
-            var response = await _client.GetAsync($"/api/v1/churches/{invalidId}");
+            var response = await _client.GetAsync($"/api/churches/{invalidId}");
 
             // Assert: A API deve retornar 404 Not Found (ou 401 se estiver sem token)
             Assert.True(response.StatusCode == HttpStatusCode.NotFound || response.StatusCode == HttpStatusCode.Unauthorized);
@@ -53,7 +53,7 @@ namespace ICR.Tests.Integration
         public async Task Get_ChurchesWithPagination_ShouldReturnPagedResult()
         {
             // Arrange: Parâmetros de paginação na QueryString (ex: limit=10&offset=0)
-            var url = "/api/v1/churches?limit=10&offset=0";
+            var url = "/api/churches?limit=10&offset=0";
 
             // Act
             var response = await _client.GetAsync(url);
@@ -80,7 +80,7 @@ namespace ICR.Tests.Integration
             };
 
             // Act: Dispara o POST
-            var response = await _client.PostAsJsonAsync("/api/v1/churches", invalidPayload);
+            var response = await _client.PostAsJsonAsync("/api/churches", invalidPayload);
 
             // Assert: As validações do Controller ou Model Binding devem barrar e retornar 400
             Assert.True(response.StatusCode == HttpStatusCode.BadRequest || response.StatusCode == HttpStatusCode.Unauthorized);
@@ -99,10 +99,10 @@ namespace ICR.Tests.Integration
             var targetId = 999998;
 
             // Act: Primeira chamada
-            await _client.DeleteAsync($"/api/v1/churches/{targetId}");
-            
+            await _client.DeleteAsync($"/api/churches/{targetId}");
+
             // Act: Segunda chamada (idempotência - o recurso já foi removido)
-            var secondResponse = await _client.DeleteAsync($"/api/v1/churches/{targetId}");
+            var secondResponse = await _client.DeleteAsync($"/api/churches/{targetId}");
 
             // Assert: A segunda chamada OBRIGATORIAMENTE deve retornar 404 Not Found (já que não existe mais)
             Assert.True(secondResponse.StatusCode == HttpStatusCode.NotFound || secondResponse.StatusCode == HttpStatusCode.Unauthorized);
@@ -117,8 +117,8 @@ namespace ICR.Tests.Integration
             var payload = new { Name = "Igreja Matriz Atualizada" };
 
             // Act: Duas chamadas idênticas em sequência
-            var response1 = await _client.PutAsJsonAsync($"/api/v1/churches/{targetId}", payload);
-            var response2 = await _client.PutAsJsonAsync($"/api/v1/churches/{targetId}", payload);
+            var response1 = await _client.PutAsJsonAsync($"/api/churches/{targetId}", payload);
+            var response2 = await _client.PutAsJsonAsync($"/api/churches/{targetId}", payload);
 
             // Assert: Ambas devem ter o mesmo comportamento (ex: 200, 404 ou 401), comprovando idempotência
             Assert.Equal(response1.StatusCode, response2.StatusCode);

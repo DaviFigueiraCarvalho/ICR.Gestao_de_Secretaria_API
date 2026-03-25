@@ -5,11 +5,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ICR.API.Controllers
 {
     [ApiController]
     [Route("api/federations")]
+    [Authorize(Roles = "NATIONAL")]
     public class FederationController : ControllerBase
     {
         private readonly IFederationRepository _repository;

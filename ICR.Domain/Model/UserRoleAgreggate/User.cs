@@ -11,7 +11,7 @@ namespace ICR.Domain.Model.UserRoleAgreggate
     {
         public long Id { get; set; }
         // FK para Member
-        public long MemberId { get; set; }
+        public long? MemberId { get; set; }
         [ForeignKey(nameof(MemberId))]
         public Member? Member { get; set; }
         public string Username { get; set; } = null!;
@@ -23,7 +23,7 @@ namespace ICR.Domain.Model.UserRoleAgreggate
 
         public User() { }
 
-        public User(long memberId, string username, string passwordHash, UserScope scope)
+        public User(long? memberId, string username, string passwordHash, UserScope scope)
         {
             MemberId = memberId;
             Username = username;

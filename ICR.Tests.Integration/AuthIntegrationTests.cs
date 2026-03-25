@@ -77,7 +77,7 @@ namespace ICR.Tests.Integration
             _client.DefaultRequestHeaders.Authorization = null;
 
             // Act: Tenta acessar uma rota que exige [Authorize]
-            var response = await _client.GetAsync("/api/v1/dashboard"); // Exemplo de endpoint protegido
+            var response = await _client.GetAsync("/api/v1/dashboard/national"); // Exemplo de endpoint protegido
 
             // Assert: O acesso deve ser bloqueado com erro 401
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
@@ -90,7 +90,7 @@ namespace ICR.Tests.Integration
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.invalid_payload.invalid_signature");
 
             // Act: Tenta acessar uma rota protegida
-            var response = await _client.GetAsync("/api/v1/dashboard");
+            var response = await _client.GetAsync("/api/v1/dashboard/national");
 
             // Assert: O middleware JWT vai rejeitar e retornar 401
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
@@ -104,7 +104,7 @@ namespace ICR.Tests.Integration
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenExpirado);
 
             // Act: Tenta realizar a validação
-            var response = await _client.GetAsync("/api/v1/dashboard");
+            var response = await _client.GetAsync("/api/v1/dashboard/national");
 
             // Assert: O middleware validação do Token detecta a expiração pela claim 'exp' e nega o acesso
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
@@ -122,7 +122,7 @@ namespace ICR.Tests.Integration
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenUsuarioComum);
 
             // Act: Tenta acessar endpoint restrito a administradores
-            var response = await _client.GetAsync("/api/v1/federation/admin-only-action");
+            var response = await _client.GetAsync("/api/federations");
 
             // Assert: O status deve ser 403 (Forbidden), indicando que tem conta, mas não tem permissão
             Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
@@ -132,11 +132,11 @@ namespace ICR.Tests.Integration
         public async Task AcessoEndpointAdmin_ComUsuarioAdmin_DeveRetornarSucesso()
         {
             // Arrange: Pega um token de um super usuário / admin real
-            var tokenAdmin = await ObterTokenParaPerfilAsync("admin", "AdminPass123!");
+            var tokenAdmin = await ObterTokenParaPerfilAsync("admin", "Password123!");
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenAdmin);
 
             // Act: Tenta acessar a mesma URL exclusiva de admin
-            var response = await _client.GetAsync("/api/v1/federation"); 
+            var response = await _client.GetAsync("/api/federations"); 
 
             // Assert: Acesso concedido
             Assert.True(response.IsSuccessStatusCode);

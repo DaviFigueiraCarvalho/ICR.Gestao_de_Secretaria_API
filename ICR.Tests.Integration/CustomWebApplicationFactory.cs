@@ -7,6 +7,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
+using ICR.Domain.Model.UserRoleAgreggate;
+using BCrypt.Net;
+using ICR.Domain.Model.MemberAggregate;
+
 namespace ICR.Tests.Integration
 {
     // A Fábrica customizada é responsável por subir a API de testes substituindo dependências reais 
@@ -57,7 +61,43 @@ namespace ICR.Tests.Integration
 
                 // A inicialização (EnsureCreated) já é feita no Program.cs na proteção de escopo ao subir a aplicação, 
                 // então não precisamos forçar o BuildServiceProvider aqui (o que também causa exceções no EF).
+
+                // Seed test data
+                services.AddHostedService<TestDatabaseSeeder>();
             });
         }
+    }
+
+    public class TestDatabaseSeeder : IHostedService
+    {
+        private readonly IServiceProvider _serviceProvider;
+
+        public TestDatabaseSeeder(IServiceProvider serviceProvider)
+        {
+            _serviceProvider = serviceProvider;
+        }
+
+        public async Task StartAsync(CancellationToken cancellationToken)
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<ConnectionContext>();
+            await context.Database.EnsureCreatedAsync(cancellationToken);
+
+            if (!context.Users.Any())
+            {
+                var adminMember = new Member(0, "Admin Member", GenderType.HOMEM, DateTime.Now, true, MemberRole.Outros, "123456789", ClassType.HOMENS);
+                var userMember = new Member(0, "User Member", GenderType.MULHER, DateTime.Now, true, MemberRole.Outros, "0987654321", ClassType.MULHERES);
+
+                context.Members.AddRange(adminMember, userMember);
+                await context.SaveChangesAsync(cancellationToken);
+
+                context.Users.Add(new User(adminMember.Id, "admin", BCrypt.Net.BCrypt.HashPassword("Password123!"), User.UserScope.NATIONAL));
+                context.Users.Add(new User(userMember.Id, "user", BCrypt.Net.BCrypt.HashPassword("UserPass123!"), User.UserScope.CHURCH));
+
+                await context.SaveChangesAsync(cancellationToken);
+            }
+        }
+
+        public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     }
 }

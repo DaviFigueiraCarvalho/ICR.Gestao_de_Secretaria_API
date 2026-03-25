@@ -1,11 +1,13 @@
 ﻿using ICR.Domain.DTOs;
 using ICR.Domain.Model.DashboardAggregate;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ICR.API.Controllers
 {
     [ApiController]
     [Route("api/v1/dashboard")]
+    [Authorize]
     public class DashboardController : ControllerBase
     {
         private readonly IDashboardRepository _repository;

@@ -20,17 +20,29 @@ namespace ICR.Infra.Data.Repositories
         // ===== USER =====
         public async Task<UserResponseDTO> AddUserAsync(UserDTO dto)
         {
-            var member = await _context.Members
-                .FirstOrDefaultAsync(m => m.Id == dto.MemberId);
+            if (dto.MemberId.HasValue)
+            {
+                var member = await _context.Members
+                    .FirstOrDefaultAsync(m => m.Id == dto.MemberId);
 
-            if (member == null)
-                throw new KeyNotFoundException($"Membro de ID:{dto.MemberId} não existe");
+                if (member == null)
+                    throw new KeyNotFoundException($"Membro de ID:{dto.MemberId} não existe");
+            }
+            else
+            {
+                // Se MemberId for nulo, garantir que o usuário está sendo criado com Username "admin"
+                // Apenas o root (admin) pode não ter um Member vinculado.
+                if (dto.Username.Trim().ToLower() != "admin")
+                {
+                    throw new ArgumentException("Somente o usuário root ('admin') pode ser criado sem um MemberId vinculado.");
+                }
+            }
 
             var normalizedUsername = dto.Username.Trim().ToLower();
 
             var userExists = await _context.Users.AnyAsync(u =>
                 u.Username.ToLower() == normalizedUsername ||
-                u.MemberId == dto.MemberId
+                (dto.MemberId.HasValue && u.MemberId == dto.MemberId.Value)
             );
 
             if (userExists)
@@ -38,7 +50,6 @@ namespace ICR.Infra.Data.Repositories
                 {
                     Id = 0,
                 };
-
 
             var passwordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
 
@@ -141,6 +152,13 @@ namespace ICR.Infra.Data.Repositories
                     };
 
                 user.MemberId = dto.MemberId.Value;
+            }
+            else if (user.Username.Trim().ToLower() != "admin")
+            {
+                // Apenas o usuário root ('admin') pode ter e manter o MemberId como null. Os demais não podem remover a associação.
+                // Se a requisição enviar MemberId explicitamente como null para um usuário não-admin (via JSON partial patch, por exemplo), impedimos.
+                // Obs: Dependendo de como o DTO é construído no frontend, o MemberId vir nulo no Patch significa "não alterar".
+                // Então só faremos algo se a intenção fosse desvincular o membro.
             }
 
             if (!string.IsNullOrWhiteSpace(dto.Username))
