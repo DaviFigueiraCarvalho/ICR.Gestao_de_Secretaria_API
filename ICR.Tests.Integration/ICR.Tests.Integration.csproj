@@ -24,7 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ICR.API\ICR.API.csproj" />
-    <ProjectReference Include="..\ICR.Infastructure\ICR.Infastructure.csproj" />
+    <ProjectReference Include="..\ICR.Infrastructure\ICR.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

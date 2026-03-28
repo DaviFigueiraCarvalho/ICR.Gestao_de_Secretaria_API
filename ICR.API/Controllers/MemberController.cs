@@ -52,6 +52,16 @@ namespace ICR.API.Controllers
             return Ok(await _repository.GetBirthdaysByMonthAsync(month, churchId));
         }
 
+        // GET: api/members/filter
+        [HttpGet("filter")]
+        public async Task<ActionResult<IEnumerable<MemberResponseDTO>>> GetFiltered(
+            [FromQuery] long? federationId,
+            [FromQuery] long? churchId,
+            [FromQuery] long? cellId)
+        {
+            return Ok(await _repository.GetFilteredAsync(federationId, churchId, cellId));
+        }
+
         // POST: api/members
         [HttpPost]
         public async Task<ActionResult<MemberResponseDTO>> Create([FromBody] MemberDTO member)
@@ -92,3 +102,4 @@ namespace ICR.API.Controllers
         }
     }
 }
+

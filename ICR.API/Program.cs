@@ -46,7 +46,7 @@ public partial class Program
                     factory: partition => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
                     {
                         AutoReplenishment = true,
-                        PermitLimit = 100, // Ajustado para ser mais amigável globalmente
+                        PermitLimit = 100, // Ajustado para ser mais amigï¿½vel globalmente
                         QueueLimit = 0,
                         Window = TimeSpan.FromSeconds(10)
                     });
@@ -71,7 +71,7 @@ public partial class Program
         {
             options.AddPolicy("AllowAll", policy =>
             {
-                policy.WithOrigins("https://meudominio.com")
+                policy.WithOrigins("https://meudominio.com", "https://localhost")
                       .AllowAnyMethod()
                       .AllowAnyHeader();
             });
@@ -118,7 +118,7 @@ public partial class Program
         );
         builder.Services.AddHostedService<MonthlyReferenceJob>();
 
-        // Repositório
+        // Repositï¿½rio
         builder.Services.AddTransient<IFederationRepository, FederationRepository>();
         builder.Services.AddTransient<IChurchRepository, ChurchRepository>();
         // register concrete repositories (interfaces differ across implementations in this solution)
@@ -156,7 +156,9 @@ public partial class Program
         });
 
         var app = builder.Build();
-        // BLOCO DE PROTEÇÃO: Roda antes de qualquer coisa
+        // BLOCO DE PROTEï¿½ï¿½O: Roda antes de qualquer coisa
+        var userroot = Environment.GetEnvironmentVariable("ROOTUSERNAME");
+        var rootpass = Environment.GetEnvironmentVariable("ROOTPASSWORD");
         using (var scope = app.Services.CreateScope())
         {
             var services = scope.ServiceProvider;
@@ -179,22 +181,22 @@ public partial class Program
                 {
                     var rootUser = new User(
                         null,
-                        "admin",
-                        BCrypt.Net.BCrypt.HashPassword("admin123"),
+                        userroot,
+                        BCrypt.Net.BCrypt.HashPassword(rootpass),
                         User.UserScope.NATIONAL
                     );
                     context.Add(rootUser);
                     context.SaveChanges();
 
                     var loggerSeed = services.GetRequiredService<ILogger<Program>>();
-                    loggerSeed.LogInformation("Usuário root criado com sucesso! Login: admin | Senha: admin123");
+                    loggerSeed.LogInformation($"UsuÃ¡rio root criado com sucesso! Login: {userroot} | Senha: {rootpass}");
                 }
             }
             catch (Exception ex)
             {
                 var logger = services.GetRequiredService<ILogger<Program>>();
-                logger.LogCritical(ex, "O banco de dados não está pronto. Abortando inicialização.");
-                throw; // Mata a aplicação antes do MonthlyReferenceJob quebrar tudo
+                logger.LogCritical(ex, "O banco de dados nï¿½o estï¿½ pronto. Abortando inicializaï¿½ï¿½o.");
+                throw; // Mata a aplicaï¿½ï¿½o antes do MonthlyReferenceJob quebrar tudo
             }
         }
         app.UseCors("AllowAll");
@@ -206,7 +208,16 @@ public partial class Program
             context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
             context.Response.Headers.Append("X-Frame-Options", "DENY");
             context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
-            context.Response.Headers.Append("Content-Security-Policy", "default-src 'self'");
+
+            if (app.Environment.IsDevelopment())
+            {
+                context.Response.Headers.Append("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;");
+            }
+            else
+            {
+                context.Response.Headers.Append("Content-Security-Policy", "default-src 'self'");
+            }
+
             context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
             await next();
         });
@@ -215,7 +226,7 @@ public partial class Program
         if (!app.Environment.IsDevelopment())
         {
             app.UseExceptionHandler("/error");
-            // Adicionado HSTS para aumentar a segurança em produção
+            // Adicionado HSTS para aumentar a seguranï¿½a em produï¿½ï¿½o
             app.UseHsts();
         }
         else

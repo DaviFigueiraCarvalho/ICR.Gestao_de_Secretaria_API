@@ -1,0 +1,341 @@
+﻿using ICR.Application.Services;
+using ICR.Domain.DTOs;
+using ICR.Domain.Model;
+using ICR.Domain.Model.CellAggregate;
+using ICR.Domain.Model.ChurchAggregate;
+using ICR.Domain.Model.FederationAggregate;
+using ICR.Domain.Model.MinisterAggregate;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using static ICR.Domain.Model.CellAggregate.Cell;
+
+namespace ICR.Infra.Data.Repositories
+{
+    public class ChurchRepository : IChurchRepository
+    {
+        private readonly ConnectionContext _context;
+
+        public ChurchRepository(ConnectionContext context)
+        {
+            _context = context;
+        }
+
+        public async Task<ChurchResponseDto?> CreateAsync(ChurchDTO dto)
+        {
+            // Busca Federação
+            var federation = await _context.Federations
+                .FirstOrDefaultAsync(f => f.Id == dto.FederationId);
+
+            if (federation == null)
+                throw new KeyNotFoundException($"A federação de ID:{dto.FederationId} não existe");
+
+            // Busca Ministro
+            Minister? minister = null;
+            long? cellResponsibleId = null;
+
+            if (dto.MinisterId.HasValue && dto.MinisterId.Value > 0)
+            {
+                minister = await _context.Ministers
+                    .Include(m => m.Member)
+                    .FirstOrDefaultAsync(m => m.Id == dto.MinisterId.Value);
+
+                if (minister == null)
+                    throw new KeyNotFoundException($"O pastor de ID:{dto.MinisterId.Value} não existe");
+
+                // Responsible da célula é o MEMBER do ministro
+                cellResponsibleId = minister.Member.Id;
+            }
+            if (dto.Address.ZipCode.Length != 8 || !dto.Address.ZipCode.All(char.IsDigit))
+                throw new ArgumentException($"o CEP:{dto.Address.ZipCode} é inválido. Deve conter exatamente 8 dígitos numéricos");
+
+            var church = new Church(
+                dto.Name,
+                dto.Address,
+                federation.Id,
+                minister?.Id
+            );
+            _context.Churches.Add(church);
+            await _context.SaveChangesAsync();
+
+            var cell = new Cell(
+                $"Matriz:({dto.Name})",
+                CellType.Celula,
+                church.Id,
+                cellResponsibleId
+            );
+
+
+            _context.Cells.Add(cell);
+            await _context.SaveChangesAsync();
+
+
+            return new ChurchResponseDto
+            {
+                Id = church.Id,
+                Name = church.Name,
+                FederationId = federation.Id,
+                FederationName = federation.Name,
+                MinisterId = minister?.Id,
+                MinisterName = minister != null
+                    ? $"{minister.Member.Role} {minister.Member.Name}"
+                    : null,
+            };
+        }
+
+
+        public async Task<ChurchResponseDto?> GetByIdAsync(long id)
+        {
+            return await _context.Churches
+                .AsNoTracking()
+                .Include(c => c.Federation)
+                .Include(c => c.Minister)
+                    .ThenInclude(m => m.Member)
+                .OrderBy(c => c.Id)
+                .Select(c => new ChurchResponseDto
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    Address = AddressDTO.FromEntity(c.Address),
+                    FederationId = c.FederationId,
+                    FederationName = c.Federation != null ? c.Federation.Name : null,
+                    MinisterId = c.MinisterId,
+                    MinisterName = c.Minister != null ? c.Minister.Member.Name : null
+                })
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<IEnumerable<ChurchResponseDto>> GetAllChurchesAsync()
+        {
+            return await _context.Churches
+                .AsNoTracking()
+                .Include(c => c.Federation)
+                .Include(c => c.Minister)
+                    .ThenInclude(m => m.Member)
+                .OrderBy(c => c.Id)
+                .Select(c => new ChurchResponseDto
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    Address = AddressDTO.FromEntity(c.Address),
+                    FederationId = c.FederationId,
+                    FederationName = c.Federation != null ? c.Federation.Name : null,
+                    MinisterId = c.MinisterId,
+                    MinisterName = c.Minister != null ? c.Minister.Member.Name : null
+                })
+                .ToListAsync();
+        }
+
+
+        public async Task<IEnumerable<ChurchResponseDto>> GetChurchesbyFederationId(long id)
+        {
+            return await _context.Churches
+                .AsNoTracking()
+                .Include(c => c.Federation)
+                .Include(c => c.Minister)
+                    .ThenInclude(m => m.Member)
+                .OrderBy(c => c.Id)
+                .Select(c => new ChurchResponseDto
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    Address = AddressDTO.FromEntity(c.Address),
+                    FederationId = c.FederationId,
+                    FederationName = c.Federation != null ? c.Federation.Name : null,
+                    MinisterId = c.MinisterId,
+                    MinisterName = c.Minister != null ? c.Minister.Member.Name : null
+                })
+                .ToListAsync();
+        }
+
+
+        public async Task<ChurchResponseDto?> UpdateAsync(long id, ChurchPatchDTO dto)
+        {
+            var church = await _context.Churches
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (church == null)
+                return null;
+
+            Federation? federation = null;
+
+            // FederationId (só se vier)
+            if (dto.FederationId.HasValue)
+            {
+                federation = await _context.Federations
+                    .FirstOrDefaultAsync(f => f.Id == dto.FederationId.Value);
+
+                if (federation == null)
+                    throw new KeyNotFoundException($"A federação de ID:{dto.FederationId.Value} não existe");
+
+                church.SetFederationId(federation.Id);
+            }
+            else
+            {
+                federation = await _context.Federations
+                    .FirstOrDefaultAsync(f => f.Id == church.FederationId);
+            }
+
+            Minister? minister = null;
+
+            // MinisterId (só se vier)
+            if (dto.MinisterId.HasValue)
+            {
+                if (dto.MinisterId.Value == 0)
+                {
+                    church.SetMinisterId(null);
+                }
+                else
+                {
+                    minister = await _context.Ministers
+                        .Include(m => m.Member)
+                        .FirstOrDefaultAsync(m => m.Id == dto.MinisterId.Value);
+
+                    if (minister == null)
+                        throw new KeyNotFoundException($"O pastor/presbítero de ID:{dto.MinisterId.Value} não existe");
+
+                    church.SetMinisterId(minister.Id);
+                }
+            }
+            else if (church.MinisterId.HasValue)
+            {
+                minister = await _context.Ministers
+                    .Include(m => m.Member)
+                    .FirstOrDefaultAsync(m => m.Id == church.MinisterId.Value);
+            }
+           
+            
+
+            // Name
+            if (!string.IsNullOrWhiteSpace(dto.Name))
+                church.SetName(dto.Name);
+
+            // Address
+            // Address PATCH
+            if (dto.Address != null)
+            {
+                var address = church.Address;
+
+                if (dto.Address.ZipCode != null)
+                {
+                    if (dto.Address.ZipCode.Length != 8 || !dto.Address.ZipCode.All(char.IsDigit))
+                        throw new ArgumentException($"o CEP:{dto.Address.ZipCode} é inválido. Deve conter exatamente 8 dígitos numéricos");
+
+                    address.SetZipCode(dto.Address.ZipCode);
+                }
+
+                if (dto.Address.Street != null)
+                    address.SetStreet(dto.Address.Street);
+
+                if (dto.Address.Number != null)
+                    address.SetNumber(dto.Address.Number);
+
+                if (dto.Address.City != null)
+                    address.SetCity(dto.Address.City);
+
+                if (dto.Address.State != null)
+                    address.SetState(dto.Address.State);
+            }
+
+            await _context.SaveChangesAsync();
+
+            return new ChurchResponseDto
+            {
+                Id = church.Id,
+                Name = church.Name,
+                Address = AddressDTO.FromEntity(church.Address),
+                FederationId = federation?.Id,
+                FederationName = federation?.Name,
+                MinisterId = church.MinisterId,
+                MinisterName = minister != null
+                    ? $"{minister.Member.Role} {minister.Member.Name}"
+                    : null,
+            };
+        }
+
+
+
+
+
+        public async Task<ChurchResponseDto?> DeleteWithRelationsAsync(long id, long? targetChurchId = null, long? targetCellId = null)
+        {
+            var church = await _context.Churches.FirstOrDefaultAsync(c => c.Id == id);
+            if (church == null) return null;
+
+            // Find all cells of this church
+            var cells = await _context.Cells.Where(c => c.ChurchId == id).ToListAsync();
+            var cellIds = cells.Select(c => c.Id).ToList();
+
+            // Find all families
+            var families = await _context.Families.Where(f => f.ChurchId == id || cellIds.Contains(f.CellId)).ToListAsync();
+
+            if (targetChurchId.HasValue && targetCellId.HasValue)
+            {
+                // Move families
+                foreach (var family in families)
+                {
+                    family.SetChurchId(targetChurchId.Value);
+                    family.SetCellId(targetCellId.Value);
+                }
+            }
+            else
+            {
+                // Clear restrictions before cascade delete
+                foreach (var c in cells) c.SetResponsible(null);
+                church.SetMinisterId(null);
+
+                var familyIds = families.Select(f => f.Id).ToList();
+                var members = await _context.Members.Where(m => familyIds.Contains(m.FamilyId)).ToListAsync();
+                var memberIds = members.Select(m => m.Id).ToList();
+
+                var users = await _context.Users.Where(u => u.MemberId != null && memberIds.Contains((long)u.MemberId)).ToListAsync();
+                var userIds = users.Select(u => u.Id).ToList();
+                var userRoles = await _context.UserRoles.Where(ur => userIds.Contains(ur.UserId)).ToListAsync();
+
+                var ministers = await _context.Ministers.Where(m => memberIds.Contains(m.MemberId)).ToListAsync();
+
+                var repasses = await _context.Repasses.Where(r => r.ChurchId == id).ToListAsync();
+
+                _context.UserRoles.RemoveRange(userRoles);
+                _context.Users.RemoveRange(users);
+                _context.Ministers.RemoveRange(ministers);
+                _context.Members.RemoveRange(members);
+                _context.Families.RemoveRange(families);
+                _context.Repasses.RemoveRange(repasses);
+            }
+
+            _context.Cells.RemoveRange(cells);
+            _context.Churches.Remove(church);
+            await _context.SaveChangesAsync();
+
+            return new ChurchResponseDto { Id = church.Id, Name = church.Name };
+        }
+
+        public async Task<ChurchResponseDto?> DeleteAsync(long id)
+        {
+            var church = await _context.Churches
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (church == null)
+                throw new KeyNotFoundException($"A igreja de ID:{id} não existe");
+
+            _context.Churches.Remove(church);
+            await _context.SaveChangesAsync();
+
+            return new ChurchResponseDto
+            {
+                Id = church.Id,
+                Name = church.Name,
+            };
+        }
+
+
+        public async Task SaveAsync()
+        {
+            await _context.SaveChangesAsync();
+        }
+
+
+    }
+}

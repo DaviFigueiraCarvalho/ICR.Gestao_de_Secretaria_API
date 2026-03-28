@@ -9,7 +9,7 @@ namespace ICR.API.Controllers
 {
     [ApiController]
     [Route("api/churches")]
-    [Authorize]
+    [Authorize(Roles = "FEDERATION, NATIONAL")]
     public class ChurchController : ControllerBase
     {
         private readonly IChurchRepository _repository;
@@ -78,6 +78,18 @@ namespace ICR.API.Controllers
                 return NotFound();
 
             return NoContent();
+        }
+
+        // DELETE: api/churches/bulk/{id}
+        [HttpDelete("bulk/{id:long}")]
+        public async Task<IActionResult> DeleteBulk(long id, [FromQuery] long? targetChurchId, [FromQuery] long? targetCellId)
+        {
+            var deleted = await _repository.DeleteWithRelationsAsync(id, targetChurchId, targetCellId);
+
+            if (deleted == null)
+                return NotFound(new { message = "Church not found" });
+
+            return Ok(new { message = targetChurchId.HasValue ? "Church deleted and relations moved successfully." : "Church and relations deleted successfully.", data = deleted });
         }
 
     }

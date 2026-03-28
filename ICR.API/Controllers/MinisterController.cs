@@ -61,11 +61,19 @@ namespace ICR.API.Controllers
             return Ok(ministers);
         }
 
-        // GET: api/ministers/birthdays?month=5
-        [HttpGet("birthdays")]
-        public async Task<ActionResult<IEnumerable<MinisterBirthdayDTO>>> GetBirthdays([FromQuery] int month)
+        // GET: api/ministers/birthdays/month/5
+        [HttpGet("birthdays/month/{month:int}")]
+        public async Task<ActionResult<IEnumerable<MinisterBirthdayDTO>>> GetBirthdays(int month)
         {
-            var result = await _repository.GetByBirthdaydatesIdAsync(month);
+            var result = await _repository.GetBirthdaysByMonthAsync(month);
+            return Ok(result);
+        }
+
+        // GET: api/ministers/weddings/month/5
+        [HttpGet("weddings/month/{month:int}")]
+        public async Task<ActionResult<IEnumerable<MinisterBirthdayDTO>>> GetWeddings(int month)
+        {
+            var result = await _repository.GetWeddingAnniversariesByMonthAsync(month);
             return Ok(result);
         }
 

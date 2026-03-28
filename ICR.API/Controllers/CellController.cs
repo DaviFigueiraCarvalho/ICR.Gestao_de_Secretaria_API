@@ -25,6 +25,13 @@ namespace ICR.API.Controllers
             return Ok(cells);
         }
 
+        [HttpGet("filter")]
+        public async Task<IActionResult> GetFiltered([FromQuery] long? federationId, [FromQuery] long? churchId)
+        {
+            var cells = await _repository.GetFilteredAsync(federationId, churchId);
+            return Ok(cells);
+        }
+
         [HttpGet("{id:long}")]
         public async Task<IActionResult> GetById(long id)
         {
@@ -73,6 +80,17 @@ namespace ICR.API.Controllers
                 return NotFound(result);
 
             return Ok(result);
+        }
+
+        [HttpDelete("bulk/{id:long}")]
+        public async Task<IActionResult> DeleteBulk(long id, [FromQuery] long? targetCellId)
+        {
+            var result = await _repository.DeleteWithRelationsAsync(id, targetCellId);
+
+            if (result == null || result.Id == 0)
+                return NotFound(new { message = "Cell not found" });
+
+            return Ok(new { message = targetCellId.HasValue ? "Cell deleted and relations moved successfully." : "Cell and relations deleted successfully.", data = result });
         }
     }
 }

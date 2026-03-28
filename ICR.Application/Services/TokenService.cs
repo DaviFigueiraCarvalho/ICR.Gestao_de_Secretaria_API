@@ -32,10 +32,11 @@ namespace ICR.Application.Services
 
             var claims = new[]
             {
-        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-        new Claim(ClaimTypes.Name, user.Username),
-        new Claim("scope", user.Scope.ToString())
-    };
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.Username),
+                new Claim(ClaimTypes.Role, user.Scope.ToString()),
+                new Claim("scope", user.Scope.ToString())
+            };
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {

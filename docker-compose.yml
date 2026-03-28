@@ -38,6 +38,8 @@ services:
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: Host=icr_db;Port=5432;Database=icr_connect;Username=icradmin;Password=root
       JWT_KEY: KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30
+      ROOTUSERNAME: federacao_root
+      ROOTPASSWORD: Federação@25
     depends_on:
       icr_db:
         condition: service_healthy
