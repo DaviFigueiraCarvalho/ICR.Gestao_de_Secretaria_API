@@ -1,4 +1,5 @@
 using AutoMapper;
+using ICR.API.Authorization;
 using ICR.Application.Mapping;
 using ICR.Application.Services;
 using ICR.Domain.Model;
@@ -13,6 +14,7 @@ using ICR.Infra;
 using ICR.Infra.Data.Repositories;
 using ICR.Infra.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -153,6 +155,19 @@ public partial class Program
                 ValidateIssuer = false,
                 ValidateAudience = false
             };
+        });
+
+        builder.Services.AddSingleton<IAuthorizationHandler, ScopeAuthorizationHandler>();
+        builder.Services.AddAuthorization(options =>
+        {
+            foreach (User.UserScope scope in Enum.GetValues<User.UserScope>())
+            {
+                options.AddPolicy(
+                    AuthorizeScopeAttribute.BuildPolicyName(scope),
+                    policy => policy
+                        .RequireAuthenticatedUser()
+                        .AddRequirements(new MinimumScopeRequirement(scope)));
+            }
         });
 
         var app = builder.Build();

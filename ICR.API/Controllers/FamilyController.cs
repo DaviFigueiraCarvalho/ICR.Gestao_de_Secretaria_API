@@ -1,8 +1,11 @@
+using ICR.API.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using ICR.Domain.DTOs;
 using ICR.Domain.Model.FamilyAggregate;
+using ICR.Domain.Model.UserRoleAgreggate;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
+using UserModel = ICR.Domain.Model.UserRoleAgreggate.User;
 
 namespace ICR.API.Controllers
 {
@@ -42,6 +45,7 @@ namespace ICR.API.Controllers
 
         // GET api/families/church/10
         [HttpGet("church/{churchId:long}")]
+        [AuthorizeScope(UserModel.UserScope.FEDERATION)]
         public async Task<IActionResult> GetByChurch(long churchId)
         {
             var families = await _repository.GetByChurchId(churchId);

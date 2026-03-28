@@ -1,19 +1,21 @@
-using Microsoft.AspNetCore.Authorization;
+using ICR.API.Authorization;
 using ICR.Domain.Model.FederationAggregate;
+using ICR.Domain.Model.UserRoleAgreggate;
 using ICR.Infra;
 using ICRManagement.Domain.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
+using UserModel = ICR.Domain.Model.UserRoleAgreggate.User;
 
 namespace ICR.API.Controllers
 {
     [ApiController]
     [Route("api/federations")]
     [Authorize]
-    [Authorize(Roles = "NATIONAL")]
+    [AuthorizeScope(UserModel.UserScope.NATIONAL)]
     public class FederationController : ControllerBase
     {
         private readonly IFederationRepository _repository;
