@@ -1,15 +1,19 @@
+using ICR.API.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using ICR.Domain.DTOs;
 using ICR.Domain.Model.RepassAggregate;
+using ICR.Domain.Model.UserRoleAgreggate;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using UserModel = ICR.Domain.Model.UserRoleAgreggate.User;
 
 namespace ICR.API.Controllers
 {
     [ApiController]
     [Route("api/repasses")]
     [Authorize]
+    [AuthorizeScope(UserModel.UserScope.FEDERATION)]
     public class RepassController : ControllerBase
     {
         private readonly IRepassRepository _repository;

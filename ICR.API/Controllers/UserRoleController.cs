@@ -1,15 +1,18 @@
-using Microsoft.AspNetCore.Authorization;
+using ICR.API.Authorization;
 using ICR.Domain.DTOs.UserRole;
 using ICR.Domain.Model.UserRoleAgreggate;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using UserModel = ICR.Domain.Model.UserRoleAgreggate.User;
 
 namespace ICR.API.Controllers
 {
     [ApiController]
     [Route("api/user-roles")]
     [Authorize]
+    [AuthorizeScope(UserModel.UserScope.NATIONAL)]
     public class UserRoleController : ControllerBase
     {
         private readonly IUserRoleRepository _repository;

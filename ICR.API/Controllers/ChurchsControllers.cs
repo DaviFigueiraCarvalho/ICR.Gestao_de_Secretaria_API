@@ -1,15 +1,19 @@
-using Microsoft.AspNetCore.Authorization;
+using ICR.API.Authorization;
 using ICR.Domain.DTOs;
 using ICR.Domain.Model.ChurchAggregate;
+using ICR.Domain.Model.UserRoleAgreggate;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using UserModel = ICR.Domain.Model.UserRoleAgreggate.User;
 
 namespace ICR.API.Controllers
 {
     [ApiController]
     [Route("api/churches")]
-    [Authorize(Roles = "FEDERATION, NATIONAL")]
+    [Authorize]
+    [AuthorizeScope(UserModel.UserScope.FEDERATION)]
     public class ChurchController : ControllerBase
     {
         private readonly IChurchRepository _repository;
