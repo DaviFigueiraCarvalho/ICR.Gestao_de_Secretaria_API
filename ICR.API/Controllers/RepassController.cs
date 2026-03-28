@@ -13,7 +13,7 @@ namespace ICR.API.Controllers
     [ApiController]
     [Route("api/repasses")]
     [Authorize]
-    [AuthorizeScope(UserModel.UserScope.FEDERATION)]
+    [AuthorizeScope(UserModel.UserScope.NATIONAL)]
     public class RepassController : ControllerBase
     {
         private readonly IRepassRepository _repository;

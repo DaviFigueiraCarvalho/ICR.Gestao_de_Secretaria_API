@@ -9,6 +9,7 @@ namespace ICR.API.Controllers
     [ApiController]
     [Route("api/cells")]
     [Authorize]
+    
     public class CellController : ControllerBase
     {
         private readonly ICellRepository _repository;
