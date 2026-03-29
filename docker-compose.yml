@@ -39,6 +39,8 @@ services:
   icr.frontend:
     image: icr-gestao-secretaria-fe
     container_name: icr_frontend
+    ports:
+      - "3000:80"
     depends_on:
       - icr.api
     networks:
