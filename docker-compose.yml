@@ -36,6 +36,16 @@ services:
     networks:
       - icr-net
 
+  icr.frontend:
+    image: icr-gestao-secretaria-fe:latest
+    container_name: icr_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - icr.api
+    networks:
+      - icr-net
+
 networks:
   icr-net:
     driver: bridge
