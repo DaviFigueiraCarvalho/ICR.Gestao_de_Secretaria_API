@@ -361,3 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# PostgreSQL local data volume (do not commit database files)
+postgres_data/
