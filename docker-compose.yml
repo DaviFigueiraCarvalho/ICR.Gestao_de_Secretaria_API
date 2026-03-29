@@ -37,7 +37,7 @@ services:
       - icr-net
 
   icr.frontend:
-    image: icr-gestao-secretaria-fe
+    image: icr-gestao-secretaria-fe:latest
     container_name: icr_frontend
     ports:
       - "3000:80"
