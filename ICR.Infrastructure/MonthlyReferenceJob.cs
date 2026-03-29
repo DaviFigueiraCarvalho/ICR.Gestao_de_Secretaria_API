@@ -4,6 +4,7 @@ using ICR.Application.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
 using System.Threading;
@@ -12,17 +13,27 @@ using System.Threading.Tasks;
 public class MonthlyReferenceJob : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly ILogger<MonthlyReferenceJob> _logger;
 
-    public MonthlyReferenceJob(IServiceScopeFactory scopeFactory)
+    public MonthlyReferenceJob(IServiceScopeFactory scopeFactory, ILogger<MonthlyReferenceJob> logger)
     {
         _scopeFactory = scopeFactory;
+        _logger = logger;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            await Run(stoppingToken);
+            try
+            {
+                await Run(stoppingToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao executar MonthlyReferenceJob. O serviço continuará ativo.");
+            }
+
             await Task.Delay(TimeSpan.FromMinutes(10), stoppingToken);
         }
     }
@@ -74,6 +85,13 @@ public class MonthlyReferenceJob : BackgroundService
             context.References.RemoveRange(oldReferences);
         }
 
-        await context.SaveChangesAsync(stoppingToken);
+        try
+        {
+            await context.SaveChangesAsync(stoppingToken);
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogWarning(ex, "Não foi possível persistir alterações de Reference (provável registro já existente ou referência em uso). A API continuará ativa.");
+        }
     }
 }

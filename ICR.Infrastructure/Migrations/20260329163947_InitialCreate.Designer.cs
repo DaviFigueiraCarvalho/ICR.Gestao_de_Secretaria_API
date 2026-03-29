@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ICR.Infrastructure.Migrations
 {
     [DbContext(typeof(ConnectionContext))]
-    [Migration("20260325180814_ninguemliga")]
-    partial class ninguemliga
+    [Migration("20260329163947_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
