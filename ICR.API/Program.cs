@@ -28,8 +28,6 @@ public partial class Program
         var builder = WebApplication.CreateBuilder(args);
         builder.Configuration.AddEnvironmentVariables();
         builder.Services.AddSingleton<TokenService>();
-        var applyMigrationsOnStartup = builder.Configuration.GetValue<bool?>("Database:ApplyMigrationsOnStartup")
-            ?? builder.Environment.IsDevelopment();
 
         // Add services to the container
         builder.Services.AddControllers();
@@ -193,9 +191,9 @@ public partial class Program
                 }
                 else
                 {
-                    if (applyMigrationsOnStartup)
+                    if (!context.Database.CanConnect())
                     {
-                        context.Database.EnsureCreated();
+                        throw new InvalidOperationException("Não foi possível conectar ao banco de dados.");
                     }
                 }
 

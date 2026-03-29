@@ -56,24 +56,6 @@ public class MonthlyReferenceJob : BackgroundService
         var deleteLimit = currentCompetence.AddMonths(-13);
 
         // ===============================
-        // CRIA REFERENCE SE NÃO EXISTIR
-        // ===============================
-        var exists = await context.References.AnyAsync(r =>
-            r.CompetenceDate == currentCompetence,
-            stoppingToken
-        );
-
-        if (!exists)
-        {
-
-            var reference = new Reference(currentCompetence)
-            {
-            };
-
-            context.References.Add(reference);
-        }
-
-        // ===============================
         // REMOVE REFERENCES ANTIGAS
         // ===============================
         var oldReferences = await context.References
