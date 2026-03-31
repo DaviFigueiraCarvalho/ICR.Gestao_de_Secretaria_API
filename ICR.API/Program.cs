@@ -69,13 +69,16 @@ public partial class Program
             });
         });
 
+        var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+                             ?? Array.Empty<string>();
         builder.Services.AddCors(options =>
         {
-            options.AddPolicy("AllowAll", policy =>
+            options.AddPolicy("AllowConfigured", policy =>
             {
-                policy.WithOrigins("https://meudominio.com", "https://localhost")
-                      .AllowAnyMethod()
-                      .AllowAnyHeader();
+                if (allowedOrigins.Length > 0)
+                    policy.WithOrigins(allowedOrigins).AllowAnyMethod().AllowAnyHeader();
+                else
+                    policy.WithOrigins("https://localhost").AllowAnyMethod().AllowAnyHeader();
             });
         });
 
@@ -119,6 +122,7 @@ public partial class Program
             options.UseNpgsql(connectionString)
         );
         builder.Services.AddHostedService<MonthlyReferenceJob>();
+        builder.Services.AddHealthChecks();
 
         // Reposit�rio
         builder.Services.AddTransient<IFederationRepository, FederationRepository>();
@@ -134,9 +138,10 @@ public partial class Program
 
 
         // JWT
-        var secret = Environment.GetEnvironmentVariable("JWT_KEY");
+        var secret = Environment.GetEnvironmentVariable("JWT_KEY") ?? builder.Configuration["JWT_KEY"];
         if (string.IsNullOrWhiteSpace(secret))
-            secret = builder.Configuration["JWT_KEY"];
+            throw new InvalidOperationException(
+                "JWT_KEY não configurado. Defina a variável de ambiente JWT_KEY ou a chave 'JWT_KEY' no arquivo de configuração antes de iniciar a aplicação.");
 
         var key = Encoding.ASCII.GetBytes(secret);
         builder.Services.AddAuthentication(x =>
@@ -171,9 +176,9 @@ public partial class Program
         });
 
         var app = builder.Build();
-        // BLOCO DE PROTE��O: Roda antes de qualquer coisa
         var userroot = Environment.GetEnvironmentVariable("ROOTUSERNAME");
         var rootpass = Environment.GetEnvironmentVariable("ROOTPASSWORD");
+        var applyMigrations = app.Configuration.GetValue<bool>("Database:ApplyMigrationsOnStartup");
         using (var scope = app.Services.CreateScope())
         {
             var services = scope.ServiceProvider;
@@ -181,45 +186,47 @@ public partial class Program
             {
                 var context = services.GetRequiredService<ConnectionContext>();
 
-                // Apenas valida conectividade do banco no startup.
-                if (context.Database.IsRelational())
-                {
-                    if (!context.Database.CanConnect())
-                    {
-                        throw new InvalidOperationException("Não foi possível conectar ao banco de dados.");
-                    }
-                }
-                else
-                {
-                    if (!context.Database.CanConnect())
-                    {
-                        throw new InvalidOperationException("Não foi possível conectar ao banco de dados.");
-                    }
-                }
+                if (!context.Database.CanConnect())
+                    throw new InvalidOperationException("Não foi possível conectar ao banco de dados.");
+
+                if (applyMigrations && context.Database.IsRelational())
+                    context.Database.Migrate();
 
                 if (!context.Set<User>().Any())
                 {
-                    var rootUser = new User(
-                        null,
-                        userroot,
-                        BCrypt.Net.BCrypt.HashPassword(rootpass),
-                        User.UserScope.NATIONAL
-                    );
-                    context.Add(rootUser);
-                    context.SaveChanges();
+                    if (string.IsNullOrWhiteSpace(userroot) || string.IsNullOrWhiteSpace(rootpass))
+                    {
+                        if (app.Environment.IsProduction())
+                            throw new InvalidOperationException(
+                                "ROOTUSERNAME e ROOTPASSWORD são obrigatórios para inicializar o banco de dados em produção.");
 
-                    var loggerSeed = services.GetRequiredService<ILogger<Program>>();
-                    loggerSeed.LogInformation($"Usuário root criado com sucesso! Login: {userroot} | Senha: {rootpass}");
+                        var loggerWarn = services.GetRequiredService<ILogger<Program>>();
+                        loggerWarn.LogWarning("ROOTUSERNAME ou ROOTPASSWORD não configurados. Pulando criação do usuário root inicial.");
+                    }
+                    else
+                    {
+                        var rootUser = new User(
+                            null,
+                            userroot,
+                            BCrypt.Net.BCrypt.HashPassword(rootpass),
+                            User.UserScope.NATIONAL
+                        );
+                        context.Add(rootUser);
+                        context.SaveChanges();
+
+                        var loggerSeed = services.GetRequiredService<ILogger<Program>>();
+                        loggerSeed.LogInformation("Usuário root criado com sucesso. Username: {Username}", userroot);
+                    }
                 }
             }
             catch (Exception ex)
             {
                 var logger = services.GetRequiredService<ILogger<Program>>();
-                logger.LogCritical(ex, "O banco de dados n�o est� pronto. Abortando inicializa��o.");
-                throw; // Mata a aplica��o antes do MonthlyReferenceJob quebrar tudo
+                logger.LogCritical(ex, "Falha crítica na inicialização. Abortando.");
+                throw;
             }
         }
-        app.UseCors("AllowAll");
+        app.UseCors("AllowConfigured");
 
         app.UseForwardedHeaders();
 
@@ -262,6 +269,7 @@ public partial class Program
         app.UseAuthorization();
 
     
+        app.MapHealthChecks("/health");
         app.MapControllers();
         app.Run();
     }
