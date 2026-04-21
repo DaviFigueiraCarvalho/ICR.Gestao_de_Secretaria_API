@@ -364,3 +364,10 @@ FodyWeavers.xsd
 
 # PostgreSQL local data volume (do not commit database files)
 postgres_data/
+
+# Local environment file (do not commit secrets)
+.env
+
+# Local docker compose files (requested)
+docker-compose.yml
+docker-compose.*.yml

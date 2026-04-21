@@ -12,7 +12,7 @@ A ausência de qualquer uma delas causará falha imediata na inicialização com
 | Variável                              | Descrição                                                                                               | Exemplo                                      |
 |---------------------------------------|--------------------------------------------------------------------------------------------------------|----------------------------------------------|
 | `JWT_KEY`                             | Chave secreta para assinar tokens JWT. Use no mínimo 32 caracteres aleatórios.                         | _(gerado com ferramenta de secrets)_         |
-| `ConnectionStrings__DefaultConnection`| String de conexão com o banco de dados PostgreSQL.                                                     | `Host=db;Port=5432;Database=icr_connect;...` |
+| `DATABASE_URL`                        | URL de conexão do PostgreSQL em produção (Supabase).                                                    | `postgres://user:pass@host:5432/db`          |
 | `ROOTUSERNAME`                        | Nome de usuário do administrador root criado na primeira inicialização (banco vazio).                   | `admin_root`                                 |
 | `ROOTPASSWORD`                        | Senha do administrador root. Deve ser forte. **Nunca será logada.**                                    | _(gerado com ferramenta de secrets)_         |
 | `ASPNETCORE_ENVIRONMENT`              | Ambiente de execução. Deve ser `Production` em produção.                                               | `Production`                                 |
@@ -56,7 +56,7 @@ openssl rand -base64 48
 
 - [ ] `ASPNETCORE_ENVIRONMENT=Production` definido
 - [ ] `JWT_KEY` gerado com no mínimo 32 caracteres e armazenado em um secret manager
-- [ ] `ConnectionStrings__DefaultConnection` apontando para o banco de produção
+- [ ] `DATABASE_URL` apontando para o banco de produção (Supabase)
 - [ ] `ROOTUSERNAME` e `ROOTPASSWORD` definidos para o primeiro deploy (banco vazio)
 - [ ] `Cors__AllowedOrigins__0` definido com o domínio real do frontend
 - [ ] Banco de dados PostgreSQL acessível e saudável antes do primeiro start
@@ -97,21 +97,29 @@ curl https://api.meudominio.com/health
 
 ---
 
-## Exemplo de docker-compose para Produção
+## Estratégia de Deploy em Produção
 
-Em produção, **nunca coloque credenciais diretamente no `docker-compose.yml`**. Use um arquivo `.env` (fora do controle de versão) ou um secret manager (Docker Swarm Secrets, Kubernetes Secrets, HashiCorp Vault, etc.):
+Em produção, este projeto **não usa `docker-compose`**.
 
-```yaml
-# docker-compose.prod.yml
-services:
-  icr.api:
-    image: ghcr.io/davifigueiracarvalho/icr.gestao_de_secretaria_api:latest
-    environment:
-      ASPNETCORE_ENVIRONMENT: Production
-      ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__DefaultConnection: ${DB_CONNECTION_STRING}
-      JWT_KEY: ${JWT_KEY}
-      ROOTUSERNAME: ${ROOT_USERNAME}
-      ROOTPASSWORD: ${ROOT_PASSWORD}
-      Cors__AllowedOrigins__0: ${FRONTEND_URL}
+- Frontend e API são publicados em serviços separados.
+- O banco é externo (Supabase), acessado por `DATABASE_URL`.
+- A comunicação entre serviços é por HTTPS/URL pública.
+
+Exemplo de variáveis da API em produção:
+
+```bash
+ASPNETCORE_ENVIRONMENT=Production
+DATABASE_URL=postgres://user:pass@host:5432/db
+JWT_KEY=<secret>
+ROOTUSERNAME=<root-user>
+ROOTPASSWORD=<root-pass>
+Cors__AllowedOrigins__0=https://app.seudominio.com
 ```
+
+## Desenvolvimento Local
+
+Para desenvolvimento, use `docker-compose` local com banco PostgreSQL local (não usar banco de produção):
+
+- `docker-compose.yml` com `icr_db` local
+- API apontando para `ConnectionStrings__DefaultConnection` local
+- Nunca testar local contra banco de produção

@@ -19,6 +19,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Npgsql;
 using System.Text;
 
 public partial class Program
@@ -75,10 +76,14 @@ public partial class Program
         {
             options.AddPolicy("AllowConfigured", policy =>
             {
-                if (allowedOrigins.Length > 0)
+                if (builder.Environment.IsDevelopment())
+                {
+                    policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+                }
+                else if (allowedOrigins.Length > 0)
                     policy.WithOrigins(allowedOrigins).AllowAnyMethod().AllowAnyHeader();
                 else
-                    policy.WithOrigins("https://localhost").AllowAnyMethod().AllowAnyHeader();
+                    throw new InvalidOperationException("Cors:AllowedOrigins deve ser configurado em produção.");
             });
         });
 
@@ -116,8 +121,42 @@ public partial class Program
             });
         });
 
-        // ConnectionContext via DI com appsettings.json
+        // Connection string (supports ConnectionStrings__DefaultConnection and DATABASE_URL from platform)
         var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+        var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+        if (!string.IsNullOrWhiteSpace(databaseUrl))
+        {
+            var uri = new Uri(databaseUrl);
+            var userInfo = uri.UserInfo.Split(':', 2);
+            var npgBuilder = new NpgsqlConnectionStringBuilder
+            {
+                Host = uri.Host,
+                Port = uri.Port,
+                Database = uri.AbsolutePath.TrimStart('/'),
+                Username = userInfo.Length > 0 ? userInfo[0] : string.Empty,
+                Password = userInfo.Length > 1 ? userInfo[1] : string.Empty,
+                SslMode = SslMode.Require,
+                TrustServerCertificate = true
+            };
+            connectionString = npgBuilder.ToString();
+        }
+
+        if (string.IsNullOrWhiteSpace(connectionString) || connectionString.Contains("REDACTED") || connectionString.Contains("CHANGE_ME"))
+        {
+            if (builder.Environment.IsDevelopment())
+            {
+                connectionString = "Host=localhost;Port=5432;Database=icr_connect;Username=icradmin;Password=root";
+            }
+            else
+            {
+                throw new InvalidOperationException("DefaultConnection não configurada. Defina ConnectionStrings__DefaultConnection (ou DATABASE_URL) antes de iniciar a aplicação.");
+            }
+        }
+
+        var port = Environment.GetEnvironmentVariable("PORT");
+        if (!string.IsNullOrWhiteSpace(port))
+            Environment.SetEnvironmentVariable("ASPNETCORE_URLS", $"http://0.0.0.0:{port}");
+
         builder.Services.AddDbContext<ConnectionContext>(options =>
             options.UseNpgsql(connectionString)
         );
@@ -140,8 +179,13 @@ public partial class Program
         // JWT
         var secret = Environment.GetEnvironmentVariable("JWT_KEY") ?? builder.Configuration["JWT_KEY"];
         if (string.IsNullOrWhiteSpace(secret))
-            throw new InvalidOperationException(
-                "JWT_KEY não configurado. Defina a variável de ambiente JWT_KEY ou a chave 'JWT_KEY' no arquivo de configuração antes de iniciar a aplicação.");
+        {
+            if (builder.Environment.IsDevelopment())
+                secret = "dev-only-jwt-secret-key-minimum-32-chars!";
+            else
+                throw new InvalidOperationException(
+                    "JWT_KEY não configurado. Defina a variável de ambiente JWT_KEY ou a chave 'JWT_KEY' no arquivo de configuração antes de iniciar a aplicação.");
+        }
 
         var key = Encoding.ASCII.GetBytes(secret);
         builder.Services.AddAuthentication(x =>
@@ -176,8 +220,8 @@ public partial class Program
         });
 
         var app = builder.Build();
-        var userroot = Environment.GetEnvironmentVariable("ROOTUSERNAME");
-        var rootpass = Environment.GetEnvironmentVariable("ROOTPASSWORD");
+        var userroot = Environment.GetEnvironmentVariable("ROOTUSERNAME") ?? app.Configuration["ROOTUSERNAME"];
+        var rootpass = Environment.GetEnvironmentVariable("ROOTPASSWORD") ?? app.Configuration["ROOTPASSWORD"];
         var applyMigrations = app.Configuration.GetValue<bool>("Database:ApplyMigrationsOnStartup");
         using (var scope = app.Services.CreateScope())
         {
@@ -196,27 +240,28 @@ public partial class Program
                 {
                     if (string.IsNullOrWhiteSpace(userroot) || string.IsNullOrWhiteSpace(rootpass))
                     {
-                        if (app.Environment.IsProduction())
-                            throw new InvalidOperationException(
-                                "ROOTUSERNAME e ROOTPASSWORD são obrigatórios para inicializar o banco de dados em produção.");
-
-                        var loggerWarn = services.GetRequiredService<ILogger<Program>>();
-                        loggerWarn.LogWarning("ROOTUSERNAME ou ROOTPASSWORD não configurados. Pulando criação do usuário root inicial.");
+                        if (app.Environment.IsDevelopment())
+                        {
+                            userroot = "admin";
+                            rootpass = "admin123";
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException("ROOTUSERNAME e ROOTPASSWORD devem ser definidos para inicializar o usuário root.");
+                        }
                     }
-                    else
-                    {
-                        var rootUser = new User(
-                            null,
-                            userroot,
-                            BCrypt.Net.BCrypt.HashPassword(rootpass),
-                            User.UserScope.NATIONAL
-                        );
-                        context.Add(rootUser);
-                        context.SaveChanges();
 
-                        var loggerSeed = services.GetRequiredService<ILogger<Program>>();
-                        loggerSeed.LogInformation("Usuário root criado com sucesso. Username: {Username}", userroot);
-                    }
+                    var rootUser = new User(
+                        null,
+                        userroot,
+                        BCrypt.Net.BCrypt.HashPassword(rootpass),
+                        User.UserScope.NATIONAL
+                    );
+                    context.Add(rootUser);
+                    context.SaveChanges();
+
+                    var loggerSeed = services.GetRequiredService<ILogger<Program>>();
+                    loggerSeed.LogInformation("Usuário root criado com sucesso. Username: {Username}", userroot);
                 }
             }
             catch (Exception ex)

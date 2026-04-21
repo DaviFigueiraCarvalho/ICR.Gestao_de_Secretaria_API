@@ -3,20 +3,20 @@ services:
     image: postgres:16
     container_name: icr_db
     environment:
-      POSTGRES_DB: icr_connect
-      POSTGRES_USER: icradmin
-      POSTGRES_PASSWORD: root
+      POSTGRES_DB: ${POSTGRES_DB:-icr_connect}
+      POSTGRES_USER: ${POSTGRES_USER:-icradmin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
     ports:
       - "5432:5432"
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
-    networks:
-      - icr-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U icradmin -d icr_connect"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-icradmin} -d ${POSTGRES_DB:-icr_connect}"]
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - icr-net
 
   icr.api:
     image: ghcr.io/davifigueiracarvalho/icr.gestao_de_secretaria_api:latest
@@ -26,10 +26,11 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__DefaultConnection: Host=icr_db;Port=5432;Database=icr_connect;Username=icradmin;Password=root
-      JWT_KEY: KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30
-      ROOTUSERNAME: federacao_root
-      ROOTPASSWORD: Federação@25
+      ConnectionStrings__DefaultConnection: ${ConnectionStrings__DefaultConnection:-Host=icr_db;Port=5432;Database=icr_connect;Username=icradmin;Password=root}
+      JWT_KEY: ${JWT_KEY:-dev-only-jwt-secret-key-minimum-32-chars!}
+      ROOTUSERNAME: ${ROOTUSERNAME:-admin}
+      ROOTPASSWORD: ${ROOTPASSWORD:-admin123}
+      Cors__AllowedOrigins__0: ${FRONTEND_ORIGIN:-http://localhost:3000}
     depends_on:
       icr_db:
         condition: service_healthy
@@ -41,6 +42,9 @@ services:
     container_name: icr_frontend
     ports:
       - "3000:80"
+    environment:
+      ICR_API_URL: ${ICR_API_URL:-http://icr.api:8080}
+      OAUTH_SERVER_URL: ${OAUTH_SERVER_URL:-http://icr.api:8080}
     depends_on:
       - icr.api
     networks:
