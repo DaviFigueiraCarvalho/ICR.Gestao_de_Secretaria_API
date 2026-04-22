@@ -46,9 +46,12 @@ namespace ICR.API.Controllers
         // GET: api/repasses?pageNumber=1&pageQuantity=10
         [HttpGet]
         public async Task<ActionResult<IEnumerable<RepassResponseDTO>>> GetAll(
-            [FromQuery] int pageNumber = 1,
-            [FromQuery] int pageQuantity = 10)
+            [FromQuery(Name = "pageNumber")] int pageNumber = 1,
+            [FromQuery(Name = "pageQuantity")] int pageQuantity = 50)
         {
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageQuantity < 1) pageQuantity = 50;
+
             var result = await _repository.GetAllAsync(pageNumber, pageQuantity);
             return Ok(result);
         }

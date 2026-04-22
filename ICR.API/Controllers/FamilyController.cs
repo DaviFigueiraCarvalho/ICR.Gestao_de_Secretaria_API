@@ -24,10 +24,13 @@ namespace ICR.API.Controllers
         // GET api/families?pageNumber=1&pageQuantity=10
         [HttpGet]
         public async Task<IActionResult> Get(
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 50)
+            [FromQuery(Name = "pageNumber")] int page = 1,
+            [FromQuery(Name = "pageQuantity")] int pageQuantity = 50)
         {
-            var families = await _repository.GetAsync(page, pageSize);
+            if (page < 1) page = 1;
+            if (pageQuantity < 1) pageQuantity = 50;
+
+            var families = await _repository.GetAsync(page, pageQuantity);
             return Ok(families);
         }
 

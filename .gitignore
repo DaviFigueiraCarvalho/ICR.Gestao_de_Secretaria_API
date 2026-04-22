@@ -371,3 +371,13 @@ postgres_data/
 # Local docker compose files (requested)
 docker-compose.yml
 docker-compose.*.yml
+
+# Local migration/scripts files (requested)
+AddMigration.ps1
+AddMigration.cmd
+ICR.Infrastructure/AddMigration.cmd
+Cloudfared.bat
+Composedown -v.bat
+Composedown.bat
+composerestart.bat
+composeup.bat

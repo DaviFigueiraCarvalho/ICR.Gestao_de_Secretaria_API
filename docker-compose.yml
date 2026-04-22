@@ -37,19 +37,6 @@ services:
     networks:
       - icr-net
 
-  icr.frontend:
-    image: ghcr.io/davifigueiracarvalho/icr-gestao-secretaria-fe:latest
-    container_name: icr_frontend
-    ports:
-      - "3000:80"
-    environment:
-      ICR_API_URL: ${ICR_API_URL:-http://icr.api:8080}
-      OAUTH_SERVER_URL: ${OAUTH_SERVER_URL:-http://icr.api:8080}
-    depends_on:
-      - icr.api
-    networks:
-      - icr-net
-
 networks:
   icr-net:
     driver: bridge

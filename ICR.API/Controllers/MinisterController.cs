@@ -48,10 +48,13 @@ namespace ICR.API.Controllers
         // GET: api/ministers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<MinisterResponseDTO>>> GetAll(
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 50)
+            [FromQuery(Name = "pageNumber")] int page = 1,
+            [FromQuery(Name = "pageQuantity")] int pageQuantity = 50)
         {
-            var ministers = await _repository.GetAllAsync(page,pageSize);
+            if (page < 1) page = 1;
+            if (pageQuantity < 1) pageQuantity = 50;
+
+            var ministers = await _repository.GetAllAsync(page, pageQuantity);
             return Ok(ministers);
         }
 

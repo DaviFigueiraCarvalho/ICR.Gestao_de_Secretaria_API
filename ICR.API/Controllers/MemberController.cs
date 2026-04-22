@@ -22,10 +22,13 @@ namespace ICR.API.Controllers
         // GET: api/members
         [HttpGet]
         public async Task<ActionResult<IEnumerable<MemberResponseDTO>>> GetAll(
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 50)
-        { 
-            return Ok(await _repository.GetAllAsync(page, pageSize));
+            [FromQuery(Name = "pageNumber")] int page = 1,
+            [FromQuery(Name = "pageQuantity")] int pageQuantity = 50)
+        {
+            if (page < 1) page = 1;
+            if (pageQuantity < 1) pageQuantity = 50;
+
+            return Ok(await _repository.GetAllAsync(page, pageQuantity));
         }
 
         // GET: api/members/{id}
