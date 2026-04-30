@@ -16,7 +16,7 @@ A ausência de qualquer uma delas causará falha imediata na inicialização com
 | `ROOTUSERNAME`                        | Nome de usuário do administrador root criado na primeira inicialização (banco vazio).                   | `admin_root`                                 |
 | `ROOTPASSWORD`                        | Senha do administrador root. Deve ser forte. **Nunca será logada.**                                    | _(gerado com ferramenta de secrets)_         |
 | `ASPNETCORE_ENVIRONMENT`              | Ambiente de execução. Deve ser `Production` em produção.                                               | `Production`                                 |
-| `Cors__AllowedOrigins__0`             | Primeira origem CORS permitida (repita com `__1`, `__2` etc. para múltiplas origens).                  | `https://meudominio.com`                     |
+| `BASE_DOMAIN`                        | Domínio base permitido para CORS (libera domínio raiz e subdomínios).                                 | `meudominio.com`                             |
 
 ### Variáveis de Ambiente Opcionais
 
@@ -29,11 +29,10 @@ A ausência de qualquer uma delas causará falha imediata na inicialização com
 
 ## Configuração de CORS
 
-Os domínios do frontend permitidos devem ser fornecidos via variável de ambiente ou configuração. Use a notação de índice do ASP.NET Core para múltiplos valores:
+Defina o domínio base permitido via `BASE_DOMAIN`. Isso libera o domínio principal e qualquer subdomínio real:
 
 ```bash
-Cors__AllowedOrigins__0=https://meudominio.com
-Cors__AllowedOrigins__1=https://www.meudominio.com
+BASE_DOMAIN=meudominio.com
 ```
 
 ---
@@ -58,7 +57,7 @@ openssl rand -base64 48
 - [ ] `JWT_KEY` gerado com no mínimo 32 caracteres e armazenado em um secret manager
 - [ ] `DATABASE_URL` apontando para o banco de produção (Supabase)
 - [ ] `ROOTUSERNAME` e `ROOTPASSWORD` definidos para o primeiro deploy (banco vazio)
-- [ ] `Cors__AllowedOrigins__0` definido com o domínio real do frontend
+- [ ] `BASE_DOMAIN` definido com o domínio real do frontend
 - [ ] Banco de dados PostgreSQL acessível e saudável antes do primeiro start
 - [ ] Migrations aplicadas antes do primeiro start (`dotnet ef database update` ou pipeline de CI/CD)
 - [ ] Backup do banco configurado
@@ -99,11 +98,11 @@ curl https://api.meudominio.com/health
 
 ## Estratégia de Deploy em Produção
 
-Em produção, este projeto **não usa `docker-compose`**.
+Em produção, o deploy pode ser feito via `docker-compose` usando as imagens publicadas no GitHub Container Registry (GHCR):
 
-- Frontend e API são publicados em serviços separados.
-- O banco é externo (Supabase), acessado por `DATABASE_URL`.
-- A comunicação entre serviços é por HTTPS/URL pública.
+- Frontend: `ghcr.io/davifigueiracarvalho/icr-gestao-secretaria-fe:latest`
+- API: `ghcr.io/davifigueiracarvalho/icr.gestao_de_secretaria_api:latest`
+- Banco PostgreSQL local ou externo (via `DATABASE_URL`)
 
 Exemplo de variáveis da API em produção:
 
@@ -113,7 +112,7 @@ DATABASE_URL=postgres://user:pass@host:5432/db
 JWT_KEY=<secret>
 ROOTUSERNAME=<root-user>
 ROOTPASSWORD=<root-pass>
-Cors__AllowedOrigins__0=https://app.seudominio.com
+BASE_DOMAIN=app.seudominio.com
 ```
 
 ## Desenvolvimento Local

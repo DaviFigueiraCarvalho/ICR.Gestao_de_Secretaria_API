@@ -15,6 +15,7 @@
 - `ROOTUSERNAME`
 - `ROOTPASSWORD`
 - `ASPNETCORE_ENVIRONMENT=Production`
+ - `BASE_DOMAIN` (CORS base domain)
 
 ## 4) Rewrite Git history (optional but recommended if secrets were committed)
 > Warning: rewriting history is destructive. Coordinate with team first.
