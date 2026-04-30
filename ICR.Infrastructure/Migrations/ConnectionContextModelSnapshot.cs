@@ -200,6 +200,9 @@ namespace ICR.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<bool>("Insurance")
+                        .HasColumnType("boolean");
+
                     b.Property<long>("MemberId")
                         .HasColumnType("bigint");
 

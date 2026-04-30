@@ -66,6 +66,14 @@ namespace ICR.API.Controllers
             return Ok(ministers);
         }
 
+        // GET: api/ministers/insured
+        [HttpGet("insured")]
+        public async Task<ActionResult<IEnumerable<MinisterInsuredListDTO>>> GetInsured()
+        {
+            var result = await _repository.GetInsuredAsync();
+            return Ok(result);
+        }
+
         // GET: api/ministers/birthdays/month/5
         [HttpGet("birthdays/month/{month:int}")]
         public async Task<ActionResult<IEnumerable<MinisterBirthdayDTO>>> GetBirthdays(int month)

@@ -53,11 +53,22 @@ namespace ICR.Infra.Data.Repositories
                 MemberWeddingDate = family?.WeddingDate ?? DateTime.MinValue,
                 Cpf = m.Cpf,
                 Email = m.Email,
+                Insurance = m.Insurance,
                 CardValidity = m.CardValidity,
                 PresbiterOrdinationDate = m.PresbiterOrdinationDate,
                 MinisterOrdinationDate = m.MinisterOrdinationDate,
                 Address = AddressDTO.FromEntity(m.Address)
             };
+        }
+
+        private static bool CalculateInsurance(DateTime birthDate)
+        {
+            var today = DateTime.Today;
+            var age = today.Year - birthDate.Year;
+            if (birthDate.Date > today.AddYears(-age))
+                age--;
+
+            return age < 75;
         }
 
         // ============================
@@ -100,7 +111,8 @@ namespace ICR.Infra.Data.Repositories
                 dto.MinisterOrdinationDate.HasValue
                     ? DateTime.SpecifyKind(dto.MinisterOrdinationDate.Value, DateTimeKind.Utc)
                     : null,
-                dto.Address
+                dto.Address,
+                CalculateInsurance(member.BirthDate)
             );
 
             _context.Ministers.Add(minister);
@@ -134,6 +146,26 @@ namespace ICR.Infra.Data.Repositories
                 .ToListAsync();
 
             return ministers.Select(m => MapToResponse(m));
+        }
+
+        public async Task<IEnumerable<MinisterInsuredListDTO>> GetInsuredAsync()
+        {
+            var query = BaseQuery()
+                .AsNoTracking()
+                .Where(m => m.Insurance);
+
+            var ministers = await query
+                .OrderBy(m => m.Member!.Name)
+                .ToListAsync();
+
+            return ministers.Select(m => new MinisterInsuredListDTO
+            {
+                FullName = m.Member?.Name ?? string.Empty,
+                BirthDate = m.Member?.BirthDate ?? DateTime.MinValue,
+                Cpf = m.Cpf,
+                Email = m.Email,
+                Phone = m.Member?.CellPhone,
+            });
         }
 
         // ============================
@@ -215,6 +247,27 @@ namespace ICR.Infra.Data.Repositories
                     Id = 0,
                 };
 
+            if (dto.MemberId.HasValue && dto.MemberId.Value != minister.MemberId)
+            {
+                var member = await _context.Members
+                    .Include(m => m.Family)
+                        .ThenInclude(f => f.Church)
+                            .ThenInclude(c => c.Federation)
+                    .Include(m => m.Family)
+                        .ThenInclude(f => f.Woman)
+                    .FirstOrDefaultAsync(m => m.Id == dto.MemberId.Value);
+
+                if (member == null)
+                    return new MinisterResponseDTO
+                    {
+                        Id = minister.Id,
+                    };
+
+                minister.SetMemberId(member.Id);
+                minister.SetInsurance(CalculateInsurance(member.BirthDate));
+                minister.Member = member;
+            }
+
             if (!string.IsNullOrWhiteSpace(dto.Cpf))
                 minister.SetCpf(dto.Cpf);
 
@@ -260,6 +313,12 @@ namespace ICR.Infra.Data.Repositories
 
                 minister.SetMinisterAddress(updatedAddress);
             }
+
+            if (dto.Insurance.HasValue)
+            {
+                minister.SetInsurance(dto.Insurance.Value);
+            }
+
             await _context.SaveChangesAsync();
 
             return MapToResponse(minister);

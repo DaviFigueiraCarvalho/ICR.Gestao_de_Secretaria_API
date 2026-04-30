@@ -65,6 +65,26 @@ namespace ICR.API.Controllers
             return Ok(await _repository.GetFilteredAsync(federationId, churchId, cellId));
         }
 
+        // GET: api/members/stats/classes
+        [HttpGet("stats/classes")]
+        public async Task<ActionResult<IEnumerable<MemberClassCountDTO>>> GetClassCounts(
+            [FromQuery] long? federationId,
+            [FromQuery] long? churchId,
+            [FromQuery] long? cellId)
+        {
+            return Ok(await _repository.GetClassCountsAsync(federationId, churchId, cellId));
+        }
+
+        // GET: api/members/stats/roles
+        [HttpGet("stats/roles")]
+        public async Task<ActionResult<IEnumerable<MemberRoleCountDTO>>> GetRoleCounts(
+            [FromQuery] long? federationId,
+            [FromQuery] long? churchId,
+            [FromQuery] long? cellId)
+        {
+            return Ok(await _repository.GetRoleCountsAsync(federationId, churchId, cellId));
+        }
+
         // POST: api/members
         [HttpPost]
         public async Task<ActionResult<MemberResponseDTO>> Create([FromBody] MemberDTO member)

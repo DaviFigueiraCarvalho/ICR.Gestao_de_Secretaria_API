@@ -53,6 +53,10 @@ namespace ICR.API.Controllers
                 Id = user.Id,
                 Username = user.Username,
                 Scope = user.Scope,
+                MemberId = user.MemberId,
+                ChurchId = user.Member?.Family?.ChurchId,
+                FederationId = user.Member?.Family?.Church?.FederationId,
+                MemberName = user.Member?.Name,
                 Token = $"Bearer {token}"
             });
         }

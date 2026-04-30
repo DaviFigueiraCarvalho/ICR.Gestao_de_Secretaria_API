@@ -95,8 +95,13 @@ namespace ICR.Infra.Data.Repositories
 
         public async Task<User?> GetUserEntityByUsernameAsync(string username)
         {
+            var normalizedUsername = username.Trim().ToLower();
+
             return await _context.Users
-                .FirstOrDefaultAsync(u => u.Username == username);
+                .Include(u => u.Member)
+                    .ThenInclude(m => m!.Family)
+                        .ThenInclude(f => f.Church)
+                .FirstOrDefaultAsync(u => u.Username == normalizedUsername);
         }
 
         public async Task<UserResponseDTO?> GetUserByUsernameAsync(string username)

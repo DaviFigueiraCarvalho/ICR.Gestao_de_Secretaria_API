@@ -70,20 +70,43 @@ public partial class Program
             });
         });
 
-        var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
-                             ?? Array.Empty<string>();
+        var baseDomainRaw = Environment.GetEnvironmentVariable("BASE_DOMAIN");
+        var normalizedBaseDomain = baseDomainRaw?
+            .Trim()
+            .Trim('.')
+            .ToLowerInvariant();
+
         builder.Services.AddCors(options =>
         {
-            options.AddPolicy("AllowConfigured", policy =>
+            options.AddPolicy("DynamicCorsPolicy", policy =>
             {
-                if (builder.Environment.IsDevelopment())
-                {
-                    policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
-                }
-                else if (allowedOrigins.Length > 0)
-                    policy.WithOrigins(allowedOrigins).AllowAnyMethod().AllowAnyHeader();
-                else
-                    throw new InvalidOperationException("Cors:AllowedOrigins deve ser configurado em produção.");
+                policy
+                    .SetIsOriginAllowed(origin =>
+                    {
+                        if (string.IsNullOrWhiteSpace(normalizedBaseDomain))
+                            return false;
+
+                        if (string.IsNullOrWhiteSpace(origin))
+                            return false;
+
+                        if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+                            return false;
+
+                        var host = uri.Host?
+                            .Trim()
+                            .Trim('.')
+                            .ToLowerInvariant();
+
+                        if (string.IsNullOrWhiteSpace(host))
+                            return false;
+
+                        if (host == normalizedBaseDomain)
+                            return true;
+
+                        return host.EndsWith("." + normalizedBaseDomain, StringComparison.Ordinal);
+                    })
+                    .AllowAnyMethod()
+                    .AllowAnyHeader();
             });
         });
 
@@ -143,7 +166,7 @@ public partial class Program
 
         if (string.IsNullOrWhiteSpace(connectionString) || connectionString.Contains("REDACTED") || connectionString.Contains("CHANGE_ME"))
         {
-            if (builder.Environment.IsDevelopment())
+            if (builder.Environment.IsDevelopment() || builder.Environment.IsEnvironment("Testing"))
             {
                 connectionString = "Host=localhost;Port=5432;Database=icr_connect;Username=icradmin;Password=root";
             }
@@ -229,12 +252,27 @@ public partial class Program
             try
             {
                 var context = services.GetRequiredService<ConnectionContext>();
+                var logger = services.GetRequiredService<ILogger<Program>>();
 
                 if (!context.Database.CanConnect())
                     throw new InvalidOperationException("Não foi possível conectar ao banco de dados.");
 
                 if (applyMigrations && context.Database.IsRelational())
-                    context.Database.Migrate();
+                {
+                    try
+                    {
+                        context.Database.Migrate();
+                    }
+                    catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.DuplicateTable || ex.SqlState == PostgresErrorCodes.DuplicateObject)
+                    {
+                        logger.LogWarning(ex, "Conflito de objeto já existente durante Migrate(). A API continuará ativa e o banco será tratado como legado.");
+                    }
+                }
+
+                if (context.Database.IsRelational())
+                {
+                    context.Database.ExecuteSqlRaw("ALTER TABLE minister ADD COLUMN IF NOT EXISTS \"Insurance\" boolean NOT NULL DEFAULT false;");
+                }
 
                 if (!context.Set<User>().Any())
                 {
@@ -271,7 +309,7 @@ public partial class Program
                 throw;
             }
         }
-        app.UseCors("AllowConfigured");
+        app.UseCors("DynamicCorsPolicy");
 
         app.UseForwardedHeaders();
 

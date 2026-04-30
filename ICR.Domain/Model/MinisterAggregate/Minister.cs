@@ -27,6 +27,7 @@ namespace ICR.Domain.Model.MinisterAggregate
         // Datas de ordenação
         public DateTime PresbiterOrdinationDate { get; set; }
         public DateTime? MinisterOrdinationDate { get; set; }
+        public bool Insurance { get; private set; }
 
         // Endereço ministerial (value object, imagino)
         public Address Address { get; set; } = null!;
@@ -42,7 +43,8 @@ namespace ICR.Domain.Model.MinisterAggregate
             DateTime cardValidity,
             DateTime presbiterOrdinationDate,
             DateTime? ministerOrdinationDate,
-            Address address)
+            Address address,
+            bool insurance)
         {
             MemberId = memberId;
             Cpf = cpf;
@@ -51,6 +53,7 @@ namespace ICR.Domain.Model.MinisterAggregate
             PresbiterOrdinationDate = presbiterOrdinationDate;
             MinisterOrdinationDate = ministerOrdinationDate;
             Address = address ?? throw new ArgumentNullException(nameof(address));
+            Insurance = insurance;
         }
 
         // Métodos de ajuste 
@@ -84,6 +87,11 @@ namespace ICR.Domain.Model.MinisterAggregate
         public void SetMinisterAddress(Address address)
         {
             Address = address ?? throw new ArgumentNullException(nameof(address));
+        }
+
+        public void SetInsurance(bool insurance)
+        {
+            Insurance = insurance;
         }
     }
 }

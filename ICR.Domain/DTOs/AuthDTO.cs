@@ -18,6 +18,11 @@ namespace ICR.Domain.DTOs
             public long Id { get; set; }
             public string Username { get; set; } = null!;
             public User.UserScope Scope { get; set; }
+            public long? MemberId { get; set; }
+            public MemberDTO? Member { get; set; }
+            public long? ChurchId { get; set; }
+            public long? FederationId { get; set; }
+            public string? MemberName { get; set; }
             public string Token { get; set; } = null!;
         }
 

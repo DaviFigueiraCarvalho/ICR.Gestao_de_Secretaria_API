@@ -30,6 +30,7 @@ namespace ICR.Domain.DTOs
         public DateTime MemberWeddingDate { get; set; }
         public string Cpf { get; set; }
         public string Email { get; set; } = null!;
+        public bool Insurance { get; set; }
         public DateTime CardValidity { get; set; }
         public DateTime PresbiterOrdinationDate { get; set; }
         public DateTime? MinisterOrdinationDate { get; set; }
@@ -41,6 +42,7 @@ namespace ICR.Domain.DTOs
         public long? MemberId { get; set; }
         public string? Cpf { get; set; }
         public string? Email { get; set; }
+        public bool? Insurance { get; set; }
         public DateTime? CardValidity { get; set; }
         public DateTime? PresbiterOrdinationDate { get; set; }
         public DateTime? MinisterOrdinationDate { get; set; }
@@ -52,6 +54,16 @@ namespace ICR.Domain.DTOs
         public string Type { get; set; } 
         public string? MemberWifeName { get; set; }
         public DateTime Birthday { get; set; }
+    }
+
+    public class MinisterInsuredListDTO
+    {
+        public string FullName { get; set; } = null!;
+        public DateTime BirthDate { get; set; }
+        public string Cpf { get; set; } = null!;
+        public string Email { get; set; } = null!;
+        public string? Phone { get; set; }
+        public bool Insurance { get; set; }
     }
 
 }

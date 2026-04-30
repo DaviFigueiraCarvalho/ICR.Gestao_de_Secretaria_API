@@ -19,7 +19,10 @@ services:
       - icr-net
 
   icr.api:
-    image: ghcr.io/davifigueiracarvalho/icr.gestao_de_secretaria_api:latest
+    build:
+      context: .
+      dockerfile: ICR.API/Dockerfile
+      target: final
     container_name: icr_api
     ports:
       - "8080:8080"

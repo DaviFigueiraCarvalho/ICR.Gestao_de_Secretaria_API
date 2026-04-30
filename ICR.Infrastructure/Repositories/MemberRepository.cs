@@ -88,24 +88,45 @@ namespace ICR.Infra.Data.Repositories
                 .Include(m => m.Family).ThenInclude(f => f.Woman)
                 .AsQueryable();
 
-            if (cellId.HasValue)
-            {
-                query = query.Where(m => m.Family != null && m.Family.CellId == cellId.Value);
-            }
-            if (churchId.HasValue)
-            {
-                query = query.Where(m => m.Family != null && m.Family.ChurchId == churchId.Value);
-            }
-            if (federationId.HasValue)
-            {
-                query = query.Where(m => m.Family != null && m.Family.Church != null && m.Family.Church.FederationId == federationId.Value);
-            }
+            query = ApplyScopeFilters(query, federationId, churchId, cellId);
 
             var members = await query
                 .OrderBy(m => m.Id)
                 .ToListAsync();
 
             return members.Select(m => MapToResponse(m));
+        }
+
+        public async Task<IEnumerable<MemberClassCountDTO>> GetClassCountsAsync(long? federationId, long? churchId, long? cellId)
+        {
+            var query = _context.Members.AsNoTracking().AsQueryable();
+            query = ApplyScopeFilters(query, federationId, churchId, cellId);
+
+            return await query
+                .GroupBy(m => m.Class)
+                .Select(g => new MemberClassCountDTO
+                {
+                    Class = g.Key,
+                    Total = g.Count()
+                })
+                .OrderBy(x => x.Class)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<MemberRoleCountDTO>> GetRoleCountsAsync(long? federationId, long? churchId, long? cellId)
+        {
+            var query = _context.Members.AsNoTracking().AsQueryable();
+            query = ApplyScopeFilters(query, federationId, churchId, cellId);
+
+            return await query
+                .GroupBy(m => m.Role)
+                .Select(g => new MemberRoleCountDTO
+                {
+                    Role = g.Key,
+                    Total = g.Count()
+                })
+                .OrderBy(x => x.Role)
+                .ToListAsync();
         }
         public async Task<MemberResponseDTO> AddAsync(MemberDTO dto)
         {
@@ -284,6 +305,26 @@ namespace ICR.Infra.Data.Repositories
         // ============================
         // Helper
         // ============================
+        private static IQueryable<Member> ApplyScopeFilters(IQueryable<Member> query, long? federationId, long? churchId, long? cellId)
+        {
+            if (cellId.HasValue)
+            {
+                query = query.Where(m => m.Family != null && m.Family.CellId == cellId.Value);
+            }
+
+            if (churchId.HasValue)
+            {
+                query = query.Where(m => m.Family != null && m.Family.ChurchId == churchId.Value);
+            }
+
+            if (federationId.HasValue)
+            {
+                query = query.Where(m => m.Family != null && m.Family.Church != null && m.Family.Church.FederationId == federationId.Value);
+            }
+
+            return query;
+        }
+
         private static MemberResponseDTO MapToResponse(Member m)
         {
             string? spouseName = null;
