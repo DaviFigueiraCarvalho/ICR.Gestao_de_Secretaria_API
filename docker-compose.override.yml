@@ -1,5 +1,13 @@
 services:
   icr.api:
+    ports:
+      - "8080:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_HTTP_PORTS=8080
+      - Cors__AllowedOrigins__0=http://localhost:3000
+      - BASE_DOMAIN=localhost
+
+  icr.fe:
+    ports:
+      - "3000:3000"

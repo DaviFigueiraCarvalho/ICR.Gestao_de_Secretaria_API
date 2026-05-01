@@ -25,6 +25,7 @@ namespace ICR.Domain.DTOs
         public MemberRole Role { get; set; }
         public string RoleName => Role switch
         {
+            MemberRole.N_A => "N/A",
             MemberRole.Pastor => "Pastor",
             MemberRole.Presbitero => "Presbítero",
             MemberRole.Diacono => "Diácono",

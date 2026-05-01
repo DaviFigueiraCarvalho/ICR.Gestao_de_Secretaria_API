@@ -141,6 +141,7 @@ namespace ICR.Domain.Model.MemberAggregate
 
     public enum MemberRole
     {
+        N_A = 0,
         Pastor = 1,
         Presbitero = 2,
         Diacono = 3,

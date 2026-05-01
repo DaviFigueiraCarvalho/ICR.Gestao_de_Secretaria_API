@@ -1,0 +1,7 @@
+app.{$DOMAIN_NAME} {
+	reverse Proxy icr.fe:3000
+}
+
+api.{$DOMAIN_NAME}{
+	reverse Proxy icr.fe:8080
+}

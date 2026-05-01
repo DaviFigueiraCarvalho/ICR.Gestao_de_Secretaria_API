@@ -21,19 +21,20 @@ services:
 
   icr.api:
     image: ghcr.io/davifigueiracarvalho/icr.gestao_de_secretaria_api:latest
+    pull_policy: always
     container_name: icr_api
     expose:
       - "8080"
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
       # Em produção, avalie controlar o Swagger por configuração segura.
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: ${ConnectionStrings__DefaultConnection:-Host=icr_db;Port=5432;Database=icr_connect;Username=icradmin;Password=root}
       JWT_KEY: ${JWT_KEY:-dev-only-jwt-secret-key-minimum-32-chars!}
       ROOTUSERNAME: ${ROOTUSERNAME:-admin}
       ROOTPASSWORD: ${ROOTPASSWORD:-admin123}
-      Cors__AllowedOrigins__0: https://app.${DOMAIN_NAME}
-      BASE_DOMAIN: ${DOMAIN_NAME}
+      Cors__AllowedOrigins__0: https://app.${DOMAIN_NAME:-localhost}
+      BASE_DOMAIN: ${DOMAIN_NAME:-localhost}
     depends_on:
       icr_db:
         condition: service_healthy
@@ -42,6 +43,7 @@ services:
 
   icr.fe:
     image: ghcr.io/davifigueiracarvalho/icr-gestao-secretaria-fe:latest
+    pull_policy: always
     container_name: icr_fe
     expose:
       - "3000"
@@ -53,11 +55,13 @@ services:
   caddy:
     image: caddy:alpine
     container_name: icr_caddy
+    profiles:
+      - production
     ports:
       - "80:80"
       - "443:443"
     environment:
-      DOMAIN_NAME: ${DOMAIN_NAME}
+      DOMAIN_NAME: ${DOMAIN_NAME:-localhost}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
