@@ -49,6 +49,7 @@ namespace ICR.Infra.Data.Repositories
                 ChurchMemberName = family?.Church?.Name ?? string.Empty,
                 FederationMemberName = family?.Church?.Federation?.Name ?? string.Empty,
                 MemberBirthday = member?.BirthDate ?? DateTime.MinValue,
+                MemberPhone = member?.CellPhone,
                 MemberWifeName = family?.Woman?.Name ?? string.Empty,
                 MemberWeddingDate = family?.WeddingDate ?? DateTime.MinValue,
                 Cpf = m.Cpf,
