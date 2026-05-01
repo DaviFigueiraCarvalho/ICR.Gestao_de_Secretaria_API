@@ -6,6 +6,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-icr_connect}
       POSTGRES_USER: ${POSTGRES_USER:-icradmin}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
+    # Exponha 5432 publicamente apenas se precisar acessar o banco fora da VPS.
     ports:
       - "5432:5432"
     volumes:
@@ -21,16 +22,18 @@ services:
   icr.api:
     image: ghcr.io/davifigueiracarvalho/icr.gestao_de_secretaria_api:latest
     container_name: icr_api
-    ports:
-      - "8080:8080"
+    expose:
+      - "8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
+      # Em produção, avalie controlar o Swagger por configuração segura.
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: ${ConnectionStrings__DefaultConnection:-Host=icr_db;Port=5432;Database=icr_connect;Username=icradmin;Password=root}
       JWT_KEY: ${JWT_KEY:-dev-only-jwt-secret-key-minimum-32-chars!}
       ROOTUSERNAME: ${ROOTUSERNAME:-admin}
       ROOTPASSWORD: ${ROOTPASSWORD:-admin123}
-      Cors__AllowedOrigins__0: ${FRONTEND_ORIGIN:-http://localhost:3000}
+      Cors__AllowedOrigins__0: https://app.${DOMAIN_NAME}
+      BASE_DOMAIN: ${DOMAIN_NAME}
     depends_on:
       icr_db:
         condition: service_healthy
@@ -40,10 +43,28 @@ services:
   icr.fe:
     image: ghcr.io/davifigueiracarvalho/icr-gestao-secretaria-fe:latest
     container_name: icr_fe
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     depends_on:
       - icr.api
+    networks:
+      - icr-net
+
+  caddy:
+    image: caddy:alpine
+    container_name: icr_caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN_NAME: ${DOMAIN_NAME}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - icr.api
+      - icr.fe
     networks:
       - icr-net
 
@@ -51,3 +72,7 @@ services:
 networks:
   icr-net:
     driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:
