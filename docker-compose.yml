@@ -6,7 +6,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-icr_connect}
       POSTGRES_USER: ${POSTGRES_USER:-icradmin}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
-    # Exponha 5432 publicamente apenas se precisar acessar o banco fora da VPS.
+    # Em produção, remova se não precisar acessar o banco fora da VPS.
     ports:
       - "5432:5432"
     volumes:
@@ -26,15 +26,17 @@ services:
     expose:
       - "8080"
     environment:
-      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
-      # Em produção, avalie controlar o Swagger por configuração segura.
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
       ASPNETCORE_URLS: http://+:8080
+
       ConnectionStrings__DefaultConnection: ${ConnectionStrings__DefaultConnection:-Host=icr_db;Port=5432;Database=icr_connect;Username=icradmin;Password=root}
+
       JWT_KEY: ${JWT_KEY:-dev-only-jwt-secret-key-minimum-32-chars!}
       ROOTUSERNAME: ${ROOTUSERNAME:-admin}
       ROOTPASSWORD: ${ROOTPASSWORD:-admin123}
-      Cors__AllowedOrigins__0: https://app.${DOMAIN_NAME:-localhost}
-      BASE_DOMAIN: ${DOMAIN_NAME:-localhost}
+
+      BASE_DOMAIN: ${BASE_DOMAIN:-icravivalista.com.br}
+      Cors__AllowedOrigins__0: https://app.${BASE_DOMAIN:-icravivalista.com.br}
     depends_on:
       icr_db:
         condition: service_healthy
@@ -47,6 +49,20 @@ services:
     container_name: icr_fe
     expose:
       - "3000"
+    environment:
+      # URL pública da API. Browser não consegue acessar "icr.api".
+      ICR_API_URL: ${ICR_API_URL:-https://api.icravivalista.com.br}
+
+      # Se o frontend usa Vite, ele provavelmente precisa disso no BUILD da imagem.
+      VITE_API_URL: ${VITE_API_URL:-https://api.icravivalista.com.br}
+
+      OAUTH_SERVER_URL: ${OAUTH_SERVER_URL:-}
+      JWT_SECRET: ${JWT_SECRET:-}
+      VITE_APP_ID: ${VITE_APP_ID:-}
+      OWNER_OPEN_ID: ${OWNER_OPEN_ID:-}
+      BUILT_IN_FORGE_API_URL: ${BUILT_IN_FORGE_API_URL:-}
+      BUILT_IN_FORGE_API_KEY: ${BUILT_IN_FORGE_API_KEY:-}
+      DATABASE_URL: ${DATABASE_URL:-}
     depends_on:
       - icr.api
     networks:
@@ -61,7 +77,7 @@ services:
       - "80:80"
       - "443:443"
     environment:
-      DOMAIN_NAME: ${DOMAIN_NAME:-localhost}
+      DOMAIN_NAME: ${BASE_DOMAIN:-icravivalista.com.br}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
@@ -71,7 +87,6 @@ services:
       - icr.fe
     networks:
       - icr-net
-
 
 networks:
   icr-net:
