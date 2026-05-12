@@ -49,7 +49,7 @@ namespace ICR.Infra.Data.Repositories
                 ChurchMemberName = family?.Church?.Name ?? string.Empty,
                 FederationMemberName = family?.Church?.Federation?.Name ?? string.Empty,
                 MemberBirthday = member?.BirthDate ?? DateTime.MinValue,
-                MemberPhone = member?.CellPhone,
+                MemberPhone = PhoneResponseDTO.FromEntity(member?.CellPhone),
                 MemberWifeName = family?.Woman?.Name ?? string.Empty,
                 MemberWeddingDate = family?.WeddingDate ?? DateTime.MinValue,
                 Cpf = m.Cpf,
@@ -86,22 +86,34 @@ namespace ICR.Infra.Data.Repositories
                 .FirstOrDefaultAsync(m => m.Id == dto.MemberId);
 
             if (member == null)
-                return new MinisterResponseDTO
-                {
-                    Id = 0,
-                };
+                return new MinisterResponseDTO { Id = 0 };
 
-            if (dto.Cpf.Length != 11 || !dto.Cpf.All(char.IsDigit))
-                return new MinisterResponseDTO
-                {
-                    Id = 0,
-                };
+            // Validar CPF (não vazio e apenas dígitos)
+            if (string.IsNullOrWhiteSpace(dto.Cpf) || !dto.Cpf.All(char.IsDigit))
+                throw new ArgumentException("CPF inválido");
 
-            if (dto.Address.ZipCode.Length != 8 || !dto.Address.ZipCode.All(char.IsDigit))
-                return new MinisterResponseDTO
+            // Validar e criar Address se fornecido
+            Address? address = null;
+            if (dto.Address != null)
+            {
+                try
                 {
-                    Id = 0,
-                };
+                    address = new Address(
+                        dto.Address.CountryCode,
+                        dto.Address.PostalCode,
+                        dto.Address.Street,
+                        dto.Address.Number,
+                        dto.Address.City,
+                        dto.Address.State,
+                        dto.Address.Complement,
+                        dto.Address.CountyOrRegion
+                    );
+                }
+                catch (ArgumentException ex)
+                {
+                    throw new ArgumentException($"Erro ao validar endereço: {ex.Message}", ex);
+                }
+            }
 
             var minister = new Minister(
                 dto.MemberId,
@@ -112,7 +124,7 @@ namespace ICR.Infra.Data.Repositories
                 dto.MinisterOrdinationDate.HasValue
                     ? DateTime.SpecifyKind(dto.MinisterOrdinationDate.Value, DateTimeKind.Utc)
                     : null,
-                dto.Address,
+                address,
                 CalculateInsurance(member.BirthDate)
             );
 
@@ -165,7 +177,8 @@ namespace ICR.Infra.Data.Repositories
                 BirthDate = m.Member?.BirthDate ?? DateTime.MinValue,
                 Cpf = m.Cpf,
                 Email = m.Email,
-                Phone = m.Member?.CellPhone,
+                Phone = PhoneResponseDTO.FromEntity(m.Member?.CellPhone),
+                Insurance = m.Insurance
             });
         }
 
@@ -204,6 +217,7 @@ namespace ICR.Infra.Data.Repositories
             {
                 Name = m.Member!.Name,
                 Type = "BIRTHDAY",
+                Phone = PhoneResponseDTO.FromEntity(m.Member.CellPhone),
                 Birthday = m.Member.BirthDate
             }).ToList();
         }
@@ -229,6 +243,7 @@ namespace ICR.Infra.Data.Repositories
             {
                 Name = m.Member!.Name,
                 Type = "WEDDING",
+                Phone = PhoneResponseDTO.FromEntity(m.Member.CellPhone),
                 MemberWifeName = m.Member.Family!.Woman?.Name,
                 Birthday = m.Member.Family.WeddingDate!.Value
             }).ToList();
@@ -243,10 +258,7 @@ namespace ICR.Infra.Data.Repositories
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (minister == null)
-                return new MinisterResponseDTO
-                {
-                    Id = 0,
-                };
+                return new MinisterResponseDTO { Id = 0 };
 
             if (dto.MemberId.HasValue && dto.MemberId.Value != minister.MemberId)
             {
@@ -259,10 +271,7 @@ namespace ICR.Infra.Data.Repositories
                     .FirstOrDefaultAsync(m => m.Id == dto.MemberId.Value);
 
                 if (member == null)
-                    return new MinisterResponseDTO
-                    {
-                        Id = minister.Id,
-                    };
+                    return new MinisterResponseDTO { Id = minister.Id };
 
                 minister.SetMemberId(member.Id);
                 minister.SetInsurance(CalculateInsurance(member.BirthDate));
@@ -290,35 +299,28 @@ namespace ICR.Infra.Data.Repositories
 
             if (dto.Address != null)
             {
-                var current = minister.Address;
-
-                var zipCode = dto.Address.ZipCode ?? current.ZipCode;
-                var street = dto.Address.Street ?? current.Street;
-                var number = dto.Address.Number ?? current.Number;
-                var city = dto.Address.City ?? current.City;
-                var state = dto.Address.State ?? current.State;
-
-                if (zipCode.Length != 8 || !zipCode.All(char.IsDigit))
-                    return new MinisterResponseDTO
-                    {
-                        Id = minister.Id,
-                    };
-
-                var updatedAddress = new Address(
-                    zipCode,
-                    street,
-                    number,
-                    city,
-                    state
-                );
-
-                minister.SetMinisterAddress(updatedAddress);
+                try
+                {
+                    var address = new Address(
+                        dto.Address.CountryCode,
+                        dto.Address.PostalCode,
+                        dto.Address.Street,
+                        dto.Address.Number,
+                        dto.Address.City,
+                        dto.Address.State,
+                        dto.Address.Complement,
+                        dto.Address.CountyOrRegion
+                    );
+                    minister.SetMinisterAddress(address);
+                }
+                catch (ArgumentException ex)
+                {
+                    throw new ArgumentException($"Erro ao validar endereço: {ex.Message}", ex);
+                }
             }
 
             if (dto.Insurance.HasValue)
-            {
                 minister.SetInsurance(dto.Insurance.Value);
-            }
 
             await _context.SaveChangesAsync();
 
@@ -333,18 +335,12 @@ namespace ICR.Infra.Data.Repositories
             var minister = await _context.Ministers.FirstOrDefaultAsync(m => m.Id == id);
 
             if (minister == null)
-                return new MinisterResponseDTO
-                {
-                    Id = 0,
-                };
+                return new MinisterResponseDTO { Id = 0 };
 
             _context.Ministers.Remove(minister);
             await _context.SaveChangesAsync();
 
-            return new MinisterResponseDTO
-            {
-                Id = minister.Id,
-            };
+            return new MinisterResponseDTO { Id = minister.Id };
         }
     }
 }

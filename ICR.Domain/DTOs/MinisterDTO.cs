@@ -10,14 +10,14 @@ namespace ICR.Domain.DTOs
     public class MinisterDTO
     {
         public long MemberId { get; set; }
-        public string Cpf { get; set; }
+        public string Cpf { get; set; } = null!;
         public string Email { get; set; } = null!;
         public DateTime CardValidity { get; set; }
         public DateTime PresbiterOrdinationDate { get; set; }
         public DateTime? MinisterOrdinationDate { get; set; }
-        public Address Address { get; set; } = null!;
-
+        public AddressDTO? Address { get; set; }
     }
+
     public class MinisterResponseDTO
     {
         public long Id { get; set; }
@@ -26,16 +26,16 @@ namespace ICR.Domain.DTOs
         public string ChurchMemberName { get; set; } = null!;
         public string FederationMemberName { get; set; } = null!;
         public DateTime MemberBirthday { get; set; }
-        public string? MemberPhone { get; set; }
+        public PhoneResponseDTO? MemberPhone { get; set; }
         public string MemberWifeName { get; set; } = null!;
         public DateTime MemberWeddingDate { get; set; }
-        public string Cpf { get; set; }
+        public string Cpf { get; set; } = null!;
         public string Email { get; set; } = null!;
         public bool Insurance { get; set; }
         public DateTime CardValidity { get; set; }
         public DateTime PresbiterOrdinationDate { get; set; }
         public DateTime? MinisterOrdinationDate { get; set; }
-        public AddressDTO Address { get; set; } = null!;
+        public AddressDTO? Address { get; set; }
     }
 
     public class MinisterPatchDTO
@@ -49,11 +49,12 @@ namespace ICR.Domain.DTOs
         public DateTime? MinisterOrdinationDate { get; set; }
         public AddressPatchDTO? Address { get; set; }
     }
+
     public class MinisterBirthdayDTO
     {
-        public string Name { get; set; } 
-        public string Type { get; set; } 
-        public string? Phone { get; set; }
+        public string Name { get; set; } = null!;
+        public string Type { get; set; } = null!;
+        public PhoneResponseDTO? Phone { get; set; }
         public string? MemberWifeName { get; set; }
         public DateTime Birthday { get; set; }
     }
@@ -64,8 +65,7 @@ namespace ICR.Domain.DTOs
         public DateTime BirthDate { get; set; }
         public string Cpf { get; set; } = null!;
         public string Email { get; set; } = null!;
-        public string? Phone { get; set; }
+        public PhoneResponseDTO? Phone { get; set; }
         public bool Insurance { get; set; }
     }
-
 }

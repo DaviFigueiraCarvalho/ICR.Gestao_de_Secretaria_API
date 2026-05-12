@@ -12,8 +12,6 @@ namespace ICR.API.Controllers
 {
     [ApiController]
     [Route("api/repasses")]
-    [Authorize]
-    [AuthorizeScope(UserModel.UserScope.NATIONAL)]
     public class RepassController : ControllerBase
     {
         private readonly IRepassRepository _repository;
@@ -23,16 +21,39 @@ namespace ICR.API.Controllers
             _repository = repository;
         }
 
-        // POST: api/repasses
+        // POST: api/repasses - Sem proteção
         [HttpPost]
+        [AllowAnonymous]
         public async Task<ActionResult<RepassResponseDTO>> Create([FromBody] RepassDTO dto)
         {
             var result = await _repository.AddAsync(dto);
             return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
         }
 
+        // POST: api/repasses/references
+        [HttpPost("references")]
+        [Authorize]
+        [AuthorizeScope(UserModel.UserScope.NATIONAL)]
+        public async Task<ActionResult<ReferenceResponseDTO>> CreateReference([FromBody] ReferenceDTO dto)
+        {
+            if (dto == null)
+                return BadRequest("CompetenceDate é obrigatório");
+
+            if (dto.CompetenceDate == default)
+                return BadRequest("CompetenceDate deve ser uma data válida");
+
+            var result = await _repository.CreateReferenceAsync(dto);
+
+            if (result.Id == 0)
+                return BadRequest(result);
+
+            return CreatedAtAction(nameof(GetReferenceById), new { id = result.Id }, result);
+        }
+
         // GET: api/repasses/{id}
         [HttpGet("{id:long}")]
+        [Authorize]
+        [AuthorizeScope(UserModel.UserScope.NATIONAL)]
         public async Task<ActionResult<RepassResponseDTO>> GetById(long id)
         {
             var result = await _repository.GetByIdAsync(id);
@@ -45,6 +66,8 @@ namespace ICR.API.Controllers
 
         // GET: api/repasses?pageNumber=1&pageQuantity=10
         [HttpGet]
+        [Authorize]
+        [AuthorizeScope(UserModel.UserScope.NATIONAL)]
         public async Task<ActionResult<IEnumerable<RepassResponseDTO>>> GetAll(
             [FromQuery(Name = "pageNumber")] int pageNumber = 1,
             [FromQuery(Name = "pageQuantity")] int pageQuantity = 50)
@@ -58,6 +81,8 @@ namespace ICR.API.Controllers
 
         // GET: api/repasses/church/{churchId}
         [HttpGet("church/{churchId:long}")]
+        [Authorize]
+        [AuthorizeScope(UserModel.UserScope.NATIONAL)]
         public async Task<ActionResult<IEnumerable<RepassResponseDTO>>> GetByChurch(long churchId)
         {
             var result = await _repository.GetByChurchIdAsync(churchId);
@@ -66,6 +91,8 @@ namespace ICR.API.Controllers
 
         // GET: api/repasses/reference/{reference}
         [HttpGet("reference/{reference:long}")]
+        [Authorize]
+        [AuthorizeScope(UserModel.UserScope.NATIONAL)]
         public async Task<ActionResult<IEnumerable<RepassResponseDTO>>> GetByReference(long reference)
         {
             var result = await _repository.GetByReferenceIdAsync(reference);
@@ -74,6 +101,8 @@ namespace ICR.API.Controllers
 
         // PATCH: api/repasses/{id}
         [HttpPatch("{id:long}")]
+        [Authorize]
+        [AuthorizeScope(UserModel.UserScope.NATIONAL)]
         public async Task<ActionResult<RepassResponseDTO>> Update(
             long id,
             [FromBody] RepassUpdateDTO dto)
@@ -91,6 +120,8 @@ namespace ICR.API.Controllers
 
         // DELETE: api/repasses/{id}
         [HttpDelete("{id:long}")]
+        [Authorize]
+        [AuthorizeScope(UserModel.UserScope.NATIONAL)]
         public async Task<ActionResult<RepassResponseDTO>> Delete(long id)
         {
             var result = await _repository.DeleteAsync(id);
@@ -100,14 +131,21 @@ namespace ICR.API.Controllers
 
             return Ok(result);
         }
+
+        // GET: api/repasses/references
         [HttpGet("references")]
+        [Authorize]
+        [AuthorizeScope(UserModel.UserScope.NATIONAL)]
         public async Task<ActionResult<IEnumerable<Reference>>> GetAllRefences()
         {
             var references = await _repository.GetAllReferencesAsync();
             return Ok(references);
         }
 
+        // GET: api/repasses/references/{id}
         [HttpGet("references/{id:long}")]
+        [Authorize]
+        [AuthorizeScope(UserModel.UserScope.NATIONAL)]
         public async Task<ActionResult<Reference>> GetReferenceById(long id)
         {
             var reference = await _repository.GetReferenceByIdAsync(id);

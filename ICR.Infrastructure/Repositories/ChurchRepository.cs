@@ -44,15 +44,32 @@ namespace ICR.Infra.Data.Repositories
                 if (minister == null)
                     throw new KeyNotFoundException($"O pastor de ID:{dto.MinisterId.Value} não existe");
 
-                // Responsible da célula é o MEMBER do ministro
                 cellResponsibleId = minister.Member.Id;
             }
-            if (dto.Address.ZipCode.Length != 8 || !dto.Address.ZipCode.All(char.IsDigit))
-                throw new ArgumentException($"o CEP:{dto.Address.ZipCode} é inválido. Deve conter exatamente 8 dígitos numéricos");
+
+            // Validar e criar Address
+            Address address;
+            try
+            {
+                address = new Address(
+                    dto.Address.CountryCode,
+                    dto.Address.PostalCode,
+                    dto.Address.Street,
+                    dto.Address.Number,
+                    dto.Address.City,
+                    dto.Address.State,
+                    dto.Address.Complement,
+                    dto.Address.CountyOrRegion
+                );
+            }
+            catch (ArgumentException ex)
+            {
+                throw new ArgumentException($"Endereço inválido: {ex.Message}", ex);
+            }
 
             var church = new Church(
                 dto.Name,
-                dto.Address,
+                address,
                 federation.Id,
                 minister?.Id
             );
@@ -66,10 +83,8 @@ namespace ICR.Infra.Data.Repositories
                 cellResponsibleId
             );
 
-
             _context.Cells.Add(cell);
             await _context.SaveChangesAsync();
-
 
             return new ChurchResponseDto
             {
@@ -89,6 +104,7 @@ namespace ICR.Infra.Data.Repositories
         {
             return await _context.Churches
                 .AsNoTracking()
+                .Where(c => c.IsActive)
                 .Include(c => c.Federation)
                 .Include(c => c.Minister)
                     .ThenInclude(m => m.Member)
@@ -110,6 +126,7 @@ namespace ICR.Infra.Data.Repositories
         {
             return await _context.Churches
                 .AsNoTracking()
+                .Where(c => c.IsActive)
                 .Include(c => c.Federation)
                 .Include(c => c.Minister)
                     .ThenInclude(m => m.Member)
@@ -132,6 +149,7 @@ namespace ICR.Infra.Data.Repositories
         {
             return await _context.Churches
                 .AsNoTracking()
+                .Where(c => c.IsActive && c.FederationId == id)
                 .Include(c => c.Federation)
                 .Include(c => c.Minister)
                     .ThenInclude(m => m.Member)
@@ -204,38 +222,42 @@ namespace ICR.Infra.Data.Repositories
                     .Include(m => m.Member)
                     .FirstOrDefaultAsync(m => m.Id == church.MinisterId.Value);
             }
-           
-            
 
             // Name
             if (!string.IsNullOrWhiteSpace(dto.Name))
                 church.SetName(dto.Name);
 
-            // Address
             // Address PATCH
             if (dto.Address != null)
             {
-                var address = church.Address;
-
-                if (dto.Address.ZipCode != null)
+                try
                 {
-                    if (dto.Address.ZipCode.Length != 8 || !dto.Address.ZipCode.All(char.IsDigit))
-                        throw new ArgumentException($"o CEP:{dto.Address.ZipCode} é inválido. Deve conter exatamente 8 dígitos numéricos");
+                    var countryCode = dto.Address.CountryCode ?? church.Address.Country.Code;
+                    var postalCode = dto.Address.PostalCode ?? church.Address.PostalCode;
+                    var street = dto.Address.Street ?? church.Address.Street;
+                    var number = dto.Address.Number ?? church.Address.Number;
+                    var city = dto.Address.City ?? church.Address.City;
+                    var state = dto.Address.State ?? church.Address.State;
+                    var complement = dto.Address.Complement ?? church.Address.Complement;
+                    var countyOrRegion = dto.Address.CountyOrRegion ?? church.Address.CountyOrRegion;
 
-                    address.SetZipCode(dto.Address.ZipCode);
+                    var newAddress = new Address(
+                        countryCode,
+                        postalCode,
+                        street,
+                        number,
+                        city,
+                        state,
+                        complement,
+                        countyOrRegion
+                    );
+
+                    church.SetAddress(newAddress);
                 }
-
-                if (dto.Address.Street != null)
-                    address.SetStreet(dto.Address.Street);
-
-                if (dto.Address.Number != null)
-                    address.SetNumber(dto.Address.Number);
-
-                if (dto.Address.City != null)
-                    address.SetCity(dto.Address.City);
-
-                if (dto.Address.State != null)
-                    address.SetState(dto.Address.State);
+                catch (ArgumentException ex)
+                {
+                    throw new ArgumentException($"Endereço inválido: {ex.Message}", ex);
+                }
             }
 
             await _context.SaveChangesAsync();
@@ -256,71 +278,16 @@ namespace ICR.Infra.Data.Repositories
 
 
 
-
-
-        public async Task<ChurchResponseDto?> DeleteWithRelationsAsync(long id, long? targetChurchId = null, long? targetCellId = null)
-        {
-            var church = await _context.Churches.FirstOrDefaultAsync(c => c.Id == id);
-            if (church == null) return null;
-
-            // Find all cells of this church
-            var cells = await _context.Cells.Where(c => c.ChurchId == id).ToListAsync();
-            var cellIds = cells.Select(c => c.Id).ToList();
-
-            // Find all families
-            var families = await _context.Families.Where(f => f.ChurchId == id || cellIds.Contains(f.CellId)).ToListAsync();
-
-            if (targetChurchId.HasValue && targetCellId.HasValue)
-            {
-                // Move families
-                foreach (var family in families)
-                {
-                    family.SetChurchId(targetChurchId.Value);
-                    family.SetCellId(targetCellId.Value);
-                }
-            }
-            else
-            {
-                // Clear restrictions before cascade delete
-                foreach (var c in cells) c.SetResponsible(null);
-                church.SetMinisterId(null);
-
-                var familyIds = families.Select(f => f.Id).ToList();
-                var members = await _context.Members.Where(m => familyIds.Contains(m.FamilyId)).ToListAsync();
-                var memberIds = members.Select(m => m.Id).ToList();
-
-                var users = await _context.Users.Where(u => u.MemberId != null && memberIds.Contains((long)u.MemberId)).ToListAsync();
-                var userIds = users.Select(u => u.Id).ToList();
-                var userRoles = await _context.UserRoles.Where(ur => userIds.Contains(ur.UserId)).ToListAsync();
-
-                var ministers = await _context.Ministers.Where(m => memberIds.Contains(m.MemberId)).ToListAsync();
-
-                var repasses = await _context.Repasses.Where(r => r.ChurchId == id).ToListAsync();
-
-                _context.UserRoles.RemoveRange(userRoles);
-                _context.Users.RemoveRange(users);
-                _context.Ministers.RemoveRange(ministers);
-                _context.Members.RemoveRange(members);
-                _context.Families.RemoveRange(families);
-                _context.Repasses.RemoveRange(repasses);
-            }
-
-            _context.Cells.RemoveRange(cells);
-            _context.Churches.Remove(church);
-            await _context.SaveChangesAsync();
-
-            return new ChurchResponseDto { Id = church.Id, Name = church.Name };
-        }
-
-        public async Task<ChurchResponseDto?> DeleteAsync(long id)
+        public async Task<ChurchResponseDto?> DeactivateAsync(long id)
         {
             var church = await _context.Churches
                 .FirstOrDefaultAsync(c => c.Id == id);
 
             if (church == null)
-                throw new KeyNotFoundException($"A igreja de ID:{id} não existe");
+                return null;
 
-            _context.Churches.Remove(church);
+            // Apenas desativa a igreja, mantendo histórico de repasses
+            church.Deactivate();
             await _context.SaveChangesAsync();
 
             return new ChurchResponseDto
@@ -329,7 +296,6 @@ namespace ICR.Infra.Data.Repositories
                 Name = church.Name,
             };
         }
-
 
         public async Task SaveAsync()
         {

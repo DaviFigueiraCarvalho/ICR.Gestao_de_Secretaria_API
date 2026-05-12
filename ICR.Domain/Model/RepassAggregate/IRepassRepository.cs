@@ -14,6 +14,6 @@ namespace ICR.Domain.Model.RepassAggregate
         Task<RepassResponseDTO> DeleteAsync(long id);
         Task<Reference?> GetReferenceByIdAsync(long id);
         Task<IEnumerable<Reference>> GetAllReferencesAsync();
-
+        Task<ReferenceResponseDTO> CreateReferenceAsync(ReferenceDTO dto);
     }
 }

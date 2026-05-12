@@ -10,6 +10,8 @@ using Microsoft.Extensions.Hosting;
 using ICR.Domain.Model.UserRoleAgreggate;
 using BCrypt.Net;
 using ICR.Domain.Model.MemberAggregate;
+using ICR.Domain.Model;
+using ICR.Domain.Model.ChurchAggregate;
 
 namespace ICR.Tests.Integration
 {
@@ -85,8 +87,23 @@ namespace ICR.Tests.Integration
 
             if (!context.Users.Any())
             {
-                var adminMember = new Member(0, "Admin Member", GenderType.HOMEM, DateTime.Now, true, MemberRole.Outros, "123456789", ClassType.HOMENS);
-                var userMember = new Member(0, "User Member", GenderType.MULHER, DateTime.Now, true, MemberRole.Outros, "0987654321", ClassType.MULHERES);
+                // Criar phones opcionais para membros
+                Phone? adminPhone = null;
+                try
+                {
+                    adminPhone = new Phone("BR", "11999999999");
+                }
+                catch { }
+
+                Phone? userPhone = null;
+                try
+                {
+                    userPhone = new Phone("BR", "11988888888");
+                }
+                catch { }
+
+                var adminMember = new Member(0, "Admin Member", GenderType.HOMEM, DateTime.Now, true, MemberRole.Outros, adminPhone, ClassType.HOMENS);
+                var userMember = new Member(0, "User Member", GenderType.MULHER, DateTime.Now, true, MemberRole.Outros, userPhone, ClassType.MULHERES);
 
                 context.Members.AddRange(adminMember, userMember);
                 await context.SaveChangesAsync(cancellationToken);

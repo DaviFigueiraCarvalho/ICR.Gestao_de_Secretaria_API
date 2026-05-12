@@ -214,7 +214,34 @@ namespace ICR.Infra.Repositories
                 .ToListAsync();
         }
 
+        public async Task<ReferenceResponseDTO> CreateReferenceAsync(ReferenceDTO dto)
+        {
+            // Validar se a reference já existe para esta data de competência
+            var existingReference = await _context.References
+                .AsNoTracking()
+                .FirstOrDefaultAsync(r => r.CompetenceDate.Date == dto.CompetenceDate.Date);
 
+            if (existingReference != null)
+            {
+                return new ReferenceResponseDTO
+                {
+                    Id = 0,
+                    ResultMessage = $"Já existe uma referência para {dto.CompetenceDate:MMMM/yyyy}"
+                };
+            }
+
+            var reference = new Reference(dto.CompetenceDate);
+            _context.References.Add(reference);
+            await _context.SaveChangesAsync();
+
+            return new ReferenceResponseDTO
+            {
+                Id = reference.Id,
+                Name = reference.Name,
+                CompetenceDate = reference.CompetenceDate,
+                CreatedAt = reference.CreatedAt
+            };
+        }
 
     }
 }

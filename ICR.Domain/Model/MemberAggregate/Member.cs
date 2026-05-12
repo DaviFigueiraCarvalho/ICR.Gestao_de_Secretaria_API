@@ -1,4 +1,5 @@
 ﻿using ICR.Domain.Model.FamilyAggregate;
+using ICR.Domain.Model;
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -17,7 +18,7 @@ namespace ICR.Domain.Model.MemberAggregate
         public GenderType Gender { get; private set; }
         public MemberRole Role { get; private set; }
         public DateTime BirthDate { get; private set; }
-        public string? CellPhone { get; private set; }
+        public Phone? CellPhone { get; private set; }
         public ClassType Class { get; private set; }
 
         protected Member() { } // EF
@@ -28,7 +29,7 @@ namespace ICR.Domain.Model.MemberAggregate
             DateTime birthDate,
             bool hasBeenMarried,
             MemberRole role,
-            string? cellPhone,
+            Phone? cellPhone,
             ClassType classes
         )
         {
@@ -42,7 +43,6 @@ namespace ICR.Domain.Model.MemberAggregate
             Class = classes;
         }
        
-        
         public void SetName(string name)
         {
             if (string.IsNullOrWhiteSpace(name))
@@ -75,7 +75,7 @@ namespace ICR.Domain.Model.MemberAggregate
             Role = role;
         }
 
-        public void SetCellPhone(string? phone)
+        public void SetCellPhone(Phone? phone)
         {
             CellPhone = phone;
         }

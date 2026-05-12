@@ -1,4 +1,5 @@
 ﻿using ICR.Domain.Model.MemberAggregate;
+using ICR.Domain.Model;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -17,7 +18,7 @@ namespace ICR.Domain.Model.MinisterAggregate
         public Member? Member { get; set; }
 
         // CPF do ministro
-        public string Cpf { get; set; }
+        public string Cpf { get; set; } = null!;
 
         public string Email { get; set; } = null!;
 
@@ -29,8 +30,8 @@ namespace ICR.Domain.Model.MinisterAggregate
         public DateTime? MinisterOrdinationDate { get; set; }
         public bool Insurance { get; private set; }
 
-        // Endereço ministerial (value object, imagino)
-        public Address Address { get; set; } = null!;
+        // Endereço ministerial (opcional no Minister)
+        public Address? Address { get; set; }
 
         // Construtor padrão pro EF parar de chorar
         protected Minister() { }
@@ -43,16 +44,16 @@ namespace ICR.Domain.Model.MinisterAggregate
             DateTime cardValidity,
             DateTime presbiterOrdinationDate,
             DateTime? ministerOrdinationDate,
-            Address address,
+            Address? address,
             bool insurance)
         {
             MemberId = memberId;
-            Cpf = cpf;
+            Cpf = cpf ?? throw new ArgumentNullException(nameof(cpf));
             Email = email ?? throw new ArgumentNullException(nameof(email));
             CardValidity = cardValidity;
             PresbiterOrdinationDate = presbiterOrdinationDate;
             MinisterOrdinationDate = ministerOrdinationDate;
-            Address = address ?? throw new ArgumentNullException(nameof(address));
+            Address = address;
             Insurance = insurance;
         }
 
@@ -61,32 +62,39 @@ namespace ICR.Domain.Model.MinisterAggregate
         {
             MemberId = memberId;
         }
+
         public void SetCpf(string cpf)
         {
+            if (string.IsNullOrWhiteSpace(cpf))
+                throw new ArgumentException("CPF cannot be empty", nameof(cpf));
             Cpf = cpf;
         }
+
         public void SetEmail(string email)
         {
             if (string.IsNullOrWhiteSpace(email))
                 throw new ArgumentException("Email cannot be empty", nameof(email));
-
             Email = email;
         }
+
         public void SetCardValidity(DateTime validity)
         {
             CardValidity = validity;
         }
-        public void SetPresbiterOrdinationDate (DateTime presbiterordinationdate)
+
+        public void SetPresbiterOrdinationDate(DateTime presbiterordinationdate)
         {
             PresbiterOrdinationDate = presbiterordinationdate;
         }
+
         public void SetMinisterOrdinationDate(DateTime? ministerordinationdate)
         {
             MinisterOrdinationDate = ministerordinationdate;
         }
-        public void SetMinisterAddress(Address address)
+
+        public void SetMinisterAddress(Address? address)
         {
-            Address = address ?? throw new ArgumentNullException(nameof(address));
+            Address = address;
         }
 
         public void SetInsurance(bool insurance)

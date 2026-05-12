@@ -23,6 +23,10 @@ namespace ICR.Domain.Model.ChurchAggregate
         public long? MinisterId { get; set; }
         public Minister? Minister { get; set; }
 
+        // Soft Delete - Igrejas nunca são excluídas fisicamente, apenas desativadas
+        // Isso preserva o histórico de repasses e dados financeiros
+        public bool IsActive { get; private set; } = true;
+
         //adicionei agora
         protected Church() { }
 
@@ -32,6 +36,7 @@ namespace ICR.Domain.Model.ChurchAggregate
             Address = address ?? throw new ArgumentNullException(nameof(address));
             FederationId = federationId;
             MinisterId = ministerId;
+            IsActive = true;
         }
 
         public void SetName(string newName)
@@ -62,6 +67,16 @@ namespace ICR.Domain.Model.ChurchAggregate
         public void SetMinisterId(long? ministerId)
         {
             MinisterId = ministerId;
+        }
+
+        public void Deactivate()
+        {
+            IsActive = false;
+        }
+
+        public void Activate()
+        {
+            IsActive = true;
         }
     }
     

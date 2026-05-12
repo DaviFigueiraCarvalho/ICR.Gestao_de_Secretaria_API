@@ -70,30 +70,17 @@ namespace ICR.API.Controllers
             return Ok(updated);
         }
 
-
-
         // DELETE: api/churches/{id}
+        // Desativa a Igreja em vez de deletar fisicamente
         [HttpDelete("{id:long}")]
         public async Task<IActionResult> Delete(long id)
         {
-            var deleted = await _repository.DeleteAsync(id);
+            var deactivated = await _repository.DeactivateAsync(id);
 
-            if (deleted == null)
+            if (deactivated == null)
                 return NotFound();
 
-            return NoContent();
-        }
-
-        // DELETE: api/churches/bulk/{id}
-        [HttpDelete("bulk/{id:long}")]
-        public async Task<IActionResult> DeleteBulk(long id, [FromQuery] long? targetChurchId, [FromQuery] long? targetCellId)
-        {
-            var deleted = await _repository.DeleteWithRelationsAsync(id, targetChurchId, targetCellId);
-
-            if (deleted == null)
-                return NotFound(new { message = "Church not found" });
-
-            return Ok(new { message = targetChurchId.HasValue ? "Church deleted and relations moved successfully." : "Church and relations deleted successfully.", data = deleted });
+            return Ok(new { message = "Church deactivated successfully.", data = deactivated });
         }
 
     }

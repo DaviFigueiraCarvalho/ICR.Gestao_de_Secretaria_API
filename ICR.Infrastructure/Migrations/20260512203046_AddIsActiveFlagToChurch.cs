@@ -1,26 +1,29 @@
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace ICR.Infrastructure.Migrations
 {
-    public partial class AddMinisterInsurance : Migration
+    /// <inheritdoc />
+    public partial class AddIsActiveFlagToChurch : Migration
     {
+        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<bool>(
-                name: "Insurance",
-                table: "minister",
+                name: "IsActive",
+                table: "church",
                 type: "boolean",
                 nullable: false,
-                defaultValue: false);
+                defaultValue: true);
         }
 
+        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "Insurance",
-                table: "minister");
+                name: "IsActive",
+                table: "church");
         }
     }
 }

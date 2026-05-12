@@ -68,11 +68,20 @@ namespace ICR.Infra
             // Church -> Address (Value Object)
             modelBuilder.Entity<Church>().OwnsOne(c => c.Address, address =>
             {
-                address.Property(a => a.ZipCode).HasColumnName("ZipCode");
+                address.OwnsOne(a => a.Country, country =>
+                {
+                    country.Property(co => co.Code).HasColumnName("Country_Code");
+                    country.Property(co => co.Name).HasColumnName("Country_Name");
+                    country.Property(co => co.PhoneCountryCode).HasColumnName("Country_PhoneCountryCode");
+                    country.Property(co => co.CultureCode).HasColumnName("Country_CultureCode");
+                });
+                address.Property(a => a.PostalCode).HasColumnName("PostalCode");
                 address.Property(a => a.Street).HasColumnName("Street");
                 address.Property(a => a.Number).HasColumnName("Number");
+                address.Property(a => a.Complement).HasColumnName("Complement");
                 address.Property(a => a.City).HasColumnName("City");
                 address.Property(a => a.State).HasColumnName("State");
+                address.Property(a => a.CountyOrRegion).HasColumnName("CountyOrRegion");
             });
 
             // =======================
@@ -85,14 +94,39 @@ namespace ICR.Infra
                 .HasForeignKey(m => m.MemberId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Minister -> Address (Value Object)
+            // Minister -> Address (Value Object, opcional)
             modelBuilder.Entity<Minister>().OwnsOne(m => m.Address, address =>
             {
-                address.Property(a => a.ZipCode).HasColumnName("ZipCode");
+                address.OwnsOne(a => a.Country, country =>
+                {
+                    country.Property(co => co.Code).HasColumnName("Country_Code");
+                    country.Property(co => co.Name).HasColumnName("Country_Name");
+                    country.Property(co => co.PhoneCountryCode).HasColumnName("Country_PhoneCountryCode");
+                    country.Property(co => co.CultureCode).HasColumnName("Country_CultureCode");
+                });
+                address.Property(a => a.PostalCode).HasColumnName("PostalCode");
                 address.Property(a => a.Street).HasColumnName("Street");
                 address.Property(a => a.Number).HasColumnName("Number");
+                address.Property(a => a.Complement).HasColumnName("Complement");
                 address.Property(a => a.City).HasColumnName("City");
                 address.Property(a => a.State).HasColumnName("State");
+                address.Property(a => a.CountyOrRegion).HasColumnName("CountyOrRegion");
+            });
+
+            // Member -> CellPhone (Value Object, opcional)
+            modelBuilder.Entity<Member>().OwnsOne(m => m.CellPhone, phone =>
+            {
+                phone.OwnsOne(p => p.Country, country =>
+                {
+                    country.Property(co => co.Code).HasColumnName("Country_Code");
+                    country.Property(co => co.Name).HasColumnName("Country_Name");
+                    country.Property(co => co.PhoneCountryCode).HasColumnName("Country_PhoneCountryCode");
+                    country.Property(co => co.CultureCode).HasColumnName("Country_CultureCode");
+                });
+                phone.Property(p => p.Number).HasColumnName("PhoneNumber");
+                phone.Property(p => p.DisplayFormat).HasColumnName("PhoneDisplayFormat");
+                phone.Property(p => p.InternationalFormat).HasColumnName("PhoneInternationalFormat");
+                phone.Property(p => p.E164Format).HasColumnName("PhoneE164Format");
             });
 
             // =======================

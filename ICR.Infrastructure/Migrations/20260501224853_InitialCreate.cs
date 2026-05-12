@@ -174,6 +174,7 @@ namespace ICR.Infrastructure.Migrations
                     CardValidity = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     PresbiterOrdinationDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     MinisterOrdinationDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    Insurance = table.Column<bool>(type: "boolean", nullable: false),
                     ZipCode = table.Column<string>(type: "text", nullable: false),
                     Street = table.Column<string>(type: "text", nullable: false),
                     Number = table.Column<string>(type: "text", nullable: false),

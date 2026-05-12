@@ -1,4 +1,5 @@
-﻿using ICR.Domain.Model.FamilyAggregate;
+﻿using ICR.Domain.Model;
+using ICR.Domain.Model.FamilyAggregate;
 using ICR.Domain.Model.MemberAggregate;
 using System;
 using System.Collections.Generic;
@@ -14,7 +15,7 @@ namespace ICR.Domain.DTOs
         public DateTime BirthDate { get; set; }
         public bool HasBeenMarried { get; set; }
         public MemberRole Role { get; set; }
-        public string? CellPhone { get; set; }
+        public PhoneDTO? CellPhone { get; set; }
     }
 
     public class MemberResponseDTO
@@ -68,8 +69,9 @@ namespace ICR.Domain.DTOs
             _ => "Desconhecido"
         };
 
-        public string? CellPhone { get; set; }
+        public PhoneResponseDTO? CellPhone { get; set; }
     }
+
     public class MemberPatchDTO
     {
         public long? FamilyId { get; set; }
@@ -78,8 +80,7 @@ namespace ICR.Domain.DTOs
         public DateTime? BirthDate { get; set; }
         public bool? HasBeenMarried { get;  set; }
         public MemberRole? Role { get; set; }
-        public string? CellPhone { get; set; }
+        public PhonePatchDTO? CellPhone { get; set; }
         public ClassType? Class { get; set; }
-
     }
 }

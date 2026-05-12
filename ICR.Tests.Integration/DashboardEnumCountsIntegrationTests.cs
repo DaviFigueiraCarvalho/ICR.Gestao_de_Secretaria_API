@@ -161,7 +161,8 @@ namespace ICR.Tests.Integration
             context.Federations.Add(federation);
             await context.SaveChangesAsync();
 
-            var church = new Church("Dashboard Church", new Address("12345678", "Rua A", "100", "Cidade", "ST"), federation.Id);
+            var address = new Address("BR", "12345678", "Rua A", "100", "Cidade", "ST");
+            var church = new Church("Dashboard Church", address, federation.Id);
             context.Churches.Add(church);
             await context.SaveChangesAsync();
 
@@ -173,7 +174,14 @@ namespace ICR.Tests.Integration
             context.Families.Add(family);
             await context.SaveChangesAsync();
 
-            var member = new Member(family.Id, "Dashboard Member", GenderType.HOMEM, DateTime.UtcNow.AddYears(-30), false, MemberRole.Pastor, "11999999999", ClassType.BEBE);
+            Phone? phone = null;
+            try
+            {
+                phone = new Phone("BR", "11999999999");
+            }
+            catch { }
+
+            var member = new Member(family.Id, "Dashboard Member", GenderType.HOMEM, DateTime.UtcNow.AddYears(-30), false, MemberRole.Pastor, phone, ClassType.BEBE);
             context.Members.Add(member);
             await context.SaveChangesAsync();
 
@@ -189,7 +197,8 @@ namespace ICR.Tests.Integration
             context.Federations.Add(federation);
             await context.SaveChangesAsync();
 
-            var church = new Church("Empty Church", new Address("87654321", "Rua B", "200", "Cidade", "ST"), federation.Id);
+            var emptyAddress = new Address("BR", "87654321", "Rua B", "200", "Cidade", "ST");
+            var church = new Church("Empty Church", emptyAddress, federation.Id);
             context.Churches.Add(church);
             await context.SaveChangesAsync();
 

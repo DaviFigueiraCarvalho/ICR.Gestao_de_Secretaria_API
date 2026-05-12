@@ -261,6 +261,29 @@ public partial class Program
                 {
                     try
                     {
+                        const string initialMigrationId = "20260501224853_InitialCreate";
+
+                        context.Database.ExecuteSqlRaw(@"
+CREATE TABLE IF NOT EXISTS ""__EFMigrationsHistory"" (
+    ""MigrationId"" character varying(150) NOT NULL,
+    ""ProductVersion"" character varying(32) NOT NULL,
+    CONSTRAINT ""PK___EFMigrationsHistory"" PRIMARY KEY (""MigrationId"")
+);");
+
+                        context.Database.ExecuteSqlRaw($@"
+INSERT INTO ""__EFMigrationsHistory"" (""MigrationId"", ""ProductVersion"")
+SELECT '{initialMigrationId}', '10.0.1'
+WHERE EXISTS (
+    SELECT 1
+    FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'reference'
+)
+AND NOT EXISTS (
+    SELECT 1
+    FROM ""__EFMigrationsHistory""
+    WHERE ""MigrationId"" = '{initialMigrationId}'
+);");
+
                         context.Database.Migrate();
                     }
                     catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.DuplicateTable || ex.SqlState == PostgresErrorCodes.DuplicateObject)

@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ICR.Infrastructure.Migrations
 {
     [DbContext(typeof(ConnectionContext))]
-    [Migration("20260329163947_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260512203046_AddIsActiveFlagToChurch")]
+    partial class AddIsActiveFlagToChurch
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -65,6 +65,9 @@ namespace ICR.Infrastructure.Migrations
 
                     b.Property<long>("FederationId")
                         .HasColumnType("bigint");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
 
                     b.Property<long?>("MinisterId")
                         .HasColumnType("bigint");
@@ -155,9 +158,6 @@ namespace ICR.Infrastructure.Migrations
                     b.Property<DateTime>("BirthDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("CellPhone")
-                        .HasColumnType("text");
-
                     b.Property<int>("Class")
                         .HasColumnType("integer");
 
@@ -202,6 +202,9 @@ namespace ICR.Infrastructure.Migrations
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<bool>("Insurance")
+                        .HasColumnType("boolean");
 
                     b.Property<long>("MemberId")
                         .HasColumnType("bigint");
@@ -383,10 +386,23 @@ namespace ICR.Infrastructure.Migrations
                                 .HasColumnType("text")
                                 .HasColumnName("City");
 
+                            b1.Property<string>("Complement")
+                                .HasColumnType("text")
+                                .HasColumnName("Complement");
+
+                            b1.Property<string>("CountyOrRegion")
+                                .HasColumnType("text")
+                                .HasColumnName("CountyOrRegion");
+
                             b1.Property<string>("Number")
                                 .IsRequired()
                                 .HasColumnType("text")
                                 .HasColumnName("Number");
+
+                            b1.Property<string>("PostalCode")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("PostalCode");
 
                             b1.Property<string>("State")
                                 .IsRequired()
@@ -398,17 +414,48 @@ namespace ICR.Infrastructure.Migrations
                                 .HasColumnType("text")
                                 .HasColumnName("Street");
 
-                            b1.Property<string>("ZipCode")
-                                .IsRequired()
-                                .HasColumnType("text")
-                                .HasColumnName("ZipCode");
-
                             b1.HasKey("ChurchId");
 
                             b1.ToTable("church");
 
                             b1.WithOwner()
                                 .HasForeignKey("ChurchId");
+
+                            b1.OwnsOne("ICR.Domain.Model.Country", "Country", b2 =>
+                                {
+                                    b2.Property<long>("AddressChurchId")
+                                        .HasColumnType("bigint");
+
+                                    b2.Property<string>("Code")
+                                        .IsRequired()
+                                        .HasColumnType("text")
+                                        .HasColumnName("Country_Code");
+
+                                    b2.Property<string>("CultureCode")
+                                        .IsRequired()
+                                        .HasColumnType("text")
+                                        .HasColumnName("Country_CultureCode");
+
+                                    b2.Property<string>("Name")
+                                        .IsRequired()
+                                        .HasColumnType("text")
+                                        .HasColumnName("Country_Name");
+
+                                    b2.Property<string>("PhoneCountryCode")
+                                        .IsRequired()
+                                        .HasColumnType("text")
+                                        .HasColumnName("Country_PhoneCountryCode");
+
+                                    b2.HasKey("AddressChurchId");
+
+                                    b2.ToTable("church");
+
+                                    b2.WithOwner()
+                                        .HasForeignKey("AddressChurchId");
+                                });
+
+                            b1.Navigation("Country")
+                                .IsRequired();
                         });
 
                     b.Navigation("Address")
@@ -469,6 +516,77 @@ namespace ICR.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.OwnsOne("ICR.Domain.Model.Phone", "CellPhone", b1 =>
+                        {
+                            b1.Property<long>("MemberId")
+                                .HasColumnType("bigint");
+
+                            b1.Property<string>("DisplayFormat")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("PhoneDisplayFormat");
+
+                            b1.Property<string>("E164Format")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("PhoneE164Format");
+
+                            b1.Property<string>("InternationalFormat")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("PhoneInternationalFormat");
+
+                            b1.Property<string>("Number")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("PhoneNumber");
+
+                            b1.HasKey("MemberId");
+
+                            b1.ToTable("members");
+
+                            b1.WithOwner()
+                                .HasForeignKey("MemberId");
+
+                            b1.OwnsOne("ICR.Domain.Model.Country", "Country", b2 =>
+                                {
+                                    b2.Property<long>("PhoneMemberId")
+                                        .HasColumnType("bigint");
+
+                                    b2.Property<string>("Code")
+                                        .IsRequired()
+                                        .HasColumnType("text")
+                                        .HasColumnName("Country_Code");
+
+                                    b2.Property<string>("CultureCode")
+                                        .IsRequired()
+                                        .HasColumnType("text")
+                                        .HasColumnName("Country_CultureCode");
+
+                                    b2.Property<string>("Name")
+                                        .IsRequired()
+                                        .HasColumnType("text")
+                                        .HasColumnName("Country_Name");
+
+                                    b2.Property<string>("PhoneCountryCode")
+                                        .IsRequired()
+                                        .HasColumnType("text")
+                                        .HasColumnName("Country_PhoneCountryCode");
+
+                                    b2.HasKey("PhoneMemberId");
+
+                                    b2.ToTable("members");
+
+                                    b2.WithOwner()
+                                        .HasForeignKey("PhoneMemberId");
+                                });
+
+                            b1.Navigation("Country")
+                                .IsRequired();
+                        });
+
+                    b.Navigation("CellPhone");
+
                     b.Navigation("Family");
                 });
 
@@ -490,10 +608,23 @@ namespace ICR.Infrastructure.Migrations
                                 .HasColumnType("text")
                                 .HasColumnName("City");
 
+                            b1.Property<string>("Complement")
+                                .HasColumnType("text")
+                                .HasColumnName("Complement");
+
+                            b1.Property<string>("CountyOrRegion")
+                                .HasColumnType("text")
+                                .HasColumnName("CountyOrRegion");
+
                             b1.Property<string>("Number")
                                 .IsRequired()
                                 .HasColumnType("text")
                                 .HasColumnName("Number");
+
+                            b1.Property<string>("PostalCode")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("PostalCode");
 
                             b1.Property<string>("State")
                                 .IsRequired()
@@ -505,21 +636,51 @@ namespace ICR.Infrastructure.Migrations
                                 .HasColumnType("text")
                                 .HasColumnName("Street");
 
-                            b1.Property<string>("ZipCode")
-                                .IsRequired()
-                                .HasColumnType("text")
-                                .HasColumnName("ZipCode");
-
                             b1.HasKey("MinisterId");
 
                             b1.ToTable("minister");
 
                             b1.WithOwner()
                                 .HasForeignKey("MinisterId");
+
+                            b1.OwnsOne("ICR.Domain.Model.Country", "Country", b2 =>
+                                {
+                                    b2.Property<long>("AddressMinisterId")
+                                        .HasColumnType("bigint");
+
+                                    b2.Property<string>("Code")
+                                        .IsRequired()
+                                        .HasColumnType("text")
+                                        .HasColumnName("Country_Code");
+
+                                    b2.Property<string>("CultureCode")
+                                        .IsRequired()
+                                        .HasColumnType("text")
+                                        .HasColumnName("Country_CultureCode");
+
+                                    b2.Property<string>("Name")
+                                        .IsRequired()
+                                        .HasColumnType("text")
+                                        .HasColumnName("Country_Name");
+
+                                    b2.Property<string>("PhoneCountryCode")
+                                        .IsRequired()
+                                        .HasColumnType("text")
+                                        .HasColumnName("Country_PhoneCountryCode");
+
+                                    b2.HasKey("AddressMinisterId");
+
+                                    b2.ToTable("minister");
+
+                                    b2.WithOwner()
+                                        .HasForeignKey("AddressMinisterId");
+                                });
+
+                            b1.Navigation("Country")
+                                .IsRequired();
                         });
 
-                    b.Navigation("Address")
-                        .IsRequired();
+                    b.Navigation("Address");
 
                     b.Navigation("Member");
                 });

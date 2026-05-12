@@ -9,7 +9,7 @@ namespace ICR.Domain.Model.RepassAggregate
     {
         public long Id { get; set; }
 
-        public string Name { get; private set; }          // ex: JAN.26
+        public string Name { get; private set; }          // ex: ABR-26
         public DateTime CompetenceDate { get; private set; }
         public DateTime CreatedAt { get; private set; }
 
@@ -20,10 +20,12 @@ namespace ICR.Domain.Model.RepassAggregate
             CompetenceDate = competenceDate;
             CreatedAt = DateTime.UtcNow;
 
-            // Nome no padrão JAN.26
-            Name = competenceDate
-                .ToString("MMMyy", new System.Globalization.CultureInfo("pt-BR"))
-                .ToUpper();
+            var referenceDate = competenceDate.AddMonths(-1);
+
+            Name = referenceDate
+                .ToString("MMMyy", new CultureInfo("pt-BR"))
+                .ToUpper()
+                .Replace('.', '-');
         }
     }
 }

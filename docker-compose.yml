@@ -20,11 +20,15 @@ services:
       - icr-net
 
   icr.api:
-    image: ghcr.io/davifigueiracarvalho/icr.gestao_de_secretaria_api:latest
-    pull_policy: always
+    build:
+      context: .
+      dockerfile: ICR.API/Dockerfile
+      target: dev
     container_name: icr_api
     expose:
       - "8080"
+    volumes:
+      - .:/app
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
       # Em produção, avalie controlar o Swagger por configuração segura.
@@ -45,6 +49,8 @@ services:
     image: ghcr.io/davifigueiracarvalho/icr-gestao-secretaria-fe:latest
     pull_policy: always
     container_name: icr_fe
+    profiles:
+      - production
     expose:
       - "3000"
     depends_on:

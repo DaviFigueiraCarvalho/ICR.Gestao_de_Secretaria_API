@@ -1,5 +1,6 @@
 ﻿using ICR.Application.Services;
 using ICR.Domain.DTOs;
+using ICR.Domain.Model;
 using ICR.Domain.Model.FamilyAggregate;
 using ICR.Domain.Model.MemberAggregate;
 using Microsoft.EntityFrameworkCore;
@@ -38,6 +39,7 @@ namespace ICR.Infra.Data.Repositories
 
             return members.Select(m => MapToResponse(m));
         }
+
         public async Task<MemberResponseDTO?> GetByIdAsync(long id)
         {
             var member = await _context.Members
@@ -49,6 +51,7 @@ namespace ICR.Infra.Data.Repositories
 
             return member == null ? null : MapToResponse(member);
         }
+
         public async Task<IEnumerable<MemberResponseDTO>> GetByFamilyAsync(long familyId)
         {
             var members = await _context.Members
@@ -61,6 +64,7 @@ namespace ICR.Infra.Data.Repositories
 
             return members.Select(m => MapToResponse(m));
         }
+
         public async Task<IEnumerable<MemberResponseDTO>> GetBirthdaysByMonthAsync(int monthNumber, long churchId)
         {
             var members = await _context.Members
@@ -79,6 +83,7 @@ namespace ICR.Infra.Data.Repositories
                 .Select(m => MapToResponse(m))
                 .ToList();
         }
+
         public async Task<IEnumerable<MemberResponseDTO>> GetFilteredAsync(long? federationId, long? churchId, long? cellId)
         {
             var query = _context.Members
@@ -128,6 +133,7 @@ namespace ICR.Infra.Data.Repositories
                 .OrderBy(x => x.Role)
                 .ToListAsync();
         }
+
         public async Task<MemberResponseDTO> AddAsync(MemberDTO dto)
         {
             var family = await _context.Families
@@ -137,23 +143,24 @@ namespace ICR.Infra.Data.Repositories
 
             if (family == null)
             {
-                return new MemberResponseDTO
-                {
-                    Id = 0,
-                };
+                return new MemberResponseDTO { Id = 0 };
             }
 
-            if (dto.CellPhone.Length != 11 || !dto.CellPhone.All(char.IsDigit))
+            Phone? phone = null;
+            if (dto.CellPhone != null)
             {
-                return new MemberResponseDTO
+                try
                 {
-                    Id = 0,
-                };
+                    phone = new Phone(dto.CellPhone.CountryCode, dto.CellPhone.Number);
+                }
+                catch (ArgumentException ex)
+                {
+                    throw new ArgumentException($"Telefone inválido: {ex.Message}", ex);
+                }
             }
 
             var birthDateUtc = DateTime.SpecifyKind(dto.BirthDate, DateTimeKind.Utc);
 
-            // Calcula a classe usando lógica de domínio na entidade
             var calculatedClass = Member.ComputeClass(
                 dto.Gender,
                 birthDateUtc,
@@ -167,14 +174,12 @@ namespace ICR.Infra.Data.Repositories
                 birthDateUtc,
                 dto.HasBeenMarried,
                 dto.Role,
-                dto.CellPhone,
+                phone,
                 calculatedClass
             );
 
-
             _context.Members.Add(member);
             await _context.SaveChangesAsync();
-
 
             var completeMember = await _context.Members
                     .Include(m => m.Family).ThenInclude(f => f.Church)
@@ -183,6 +188,7 @@ namespace ICR.Infra.Data.Repositories
 
             return MapToResponse(completeMember!);
         }
+
         public async Task<MemberResponseDTO?> UpdateAsync(long id, MemberPatchDTO dto)
         {
             var member = await _context.Members
@@ -192,15 +198,9 @@ namespace ICR.Infra.Data.Repositories
 
             if (member == null)
             {
-                return new MemberResponseDTO
-                {
-                    Id = 0,
-                };
+                return new MemberResponseDTO { Id = 0 };
             }
 
-            // ============================
-            // PREVISÃO DE ESTADO FINAL
-            // ============================
             var finalGender = dto.Gender ?? member.Gender;
             var finalBirthDate = dto.BirthDate.HasValue
                 ? DateTime.SpecifyKind(dto.BirthDate.Value, DateTimeKind.Utc)
@@ -213,9 +213,6 @@ namespace ICR.Infra.Data.Repositories
                 dto.BirthDate.HasValue ||
                 dto.HasBeenMarried == true;
 
-            // ============================
-            // UPDATES NORMAIS
-            // ============================
             if (dto.FamilyId.HasValue && dto.FamilyId.Value != member.FamilyId)
             {
                 var family = await _context.Families
@@ -225,10 +222,7 @@ namespace ICR.Infra.Data.Repositories
 
                 if (family == null)
                 {
-                    return new MemberResponseDTO
-                    {
-                        Id = member.Id,
-                    };
+                    return new MemberResponseDTO { Id = member.Id };
                 }
 
                 member.SetFamily(dto.FamilyId.Value);
@@ -249,22 +243,19 @@ namespace ICR.Infra.Data.Repositories
             if (dto.Role.HasValue)
                 member.SetRole(dto.Role.Value);
 
-            if (!string.IsNullOrWhiteSpace(dto.CellPhone))
+            if (dto.CellPhone != null)
             {
-                if (dto.CellPhone.Length != 11 || !dto.CellPhone.All(char.IsDigit))
+                try
                 {
-                    return new MemberResponseDTO
-                    {
-                        Id = 0,
-                    };
+                    var phone = new Phone(dto.CellPhone.CountryCode, dto.CellPhone.Number);
+                    member.SetCellPhone(phone);
                 }
-
-                member.SetCellPhone(dto.CellPhone);
+                catch (ArgumentException ex)
+                {
+                    throw new ArgumentException($"Telefone inválido: {ex.Message}", ex);
+                }
             }
 
-            // ============================
-            // CLASSE
-            // ============================
             if (dto.Class.HasValue)
             {
                 member.SetClass(dto.Class.Value);
@@ -284,6 +275,7 @@ namespace ICR.Infra.Data.Repositories
 
             return MapToResponse(member);
         }
+
         public async Task<MemberResponseDTO> RemoveAsync(long id)
         {
             var member = await _context.Members
@@ -293,7 +285,7 @@ namespace ICR.Infra.Data.Repositories
 
             if (member == null)
             {
-                return null;
+                return null!;
             }
 
             _context.Members.Remove(member);
@@ -356,10 +348,8 @@ namespace ICR.Infra.Data.Repositories
                 WeddingDate = m.Family?.WeddingDate,
                 Gender = m.Gender,
                 Class = m.Class,
-                CellPhone = m.CellPhone,
+                CellPhone = PhoneResponseDTO.FromEntity(m.CellPhone),
             };
         }
-        
-
     }
 }
