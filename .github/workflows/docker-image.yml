@@ -14,7 +14,8 @@ jobs:
       packages: write
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -26,10 +27,21 @@ jobs:
       - name: Convert owner to lowercase
         run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
-      - name: Build image
-        run: |
-          docker build -f ICR.API/Dockerfile -t ghcr.io/${OWNER_LC}/icr.gestao_de_secretaria_api:latest .
+      - name: Extract metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ env.OWNER_LC }}/icr.gestao_de_secretaria_api
+          tags: |
+            type=raw,value=latest
+            type=sha
 
-      - name: Push image
-        run: |
-          docker push ghcr.io/${OWNER_LC}/icr.gestao_de_secretaria_api:latest
+      - name: Build and push Docker image (PRODUCTION)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ICR.API/Dockerfile
+          target: final # AQUI que evita tua burrice
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
