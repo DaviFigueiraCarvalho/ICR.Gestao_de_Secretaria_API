@@ -6,7 +6,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-icr_connect}
       POSTGRES_USER: ${POSTGRES_USER:-icradmin}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
-    # Em produção, remova se não precisar acessar o banco fora da VPS.
     ports:
       - "5432:5432"
     volumes:
@@ -32,13 +31,10 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
       ASPNETCORE_URLS: http://+:8080
-
       ConnectionStrings__DefaultConnection: ${ConnectionStrings__DefaultConnection:-Host=icr_db;Port=5432;Database=icr_connect;Username=icradmin;Password=root}
-
       JWT_KEY: ${JWT_KEY:-dev-only-jwt-secret-key-minimum-32-chars!}
       ROOTUSERNAME: ${ROOTUSERNAME:-admin}
       ROOTPASSWORD: ${ROOTPASSWORD:-admin123}
-
       BASE_DOMAIN: ${BASE_DOMAIN:-icravivalista.com.br}
       Cors__AllowedOrigins__0: https://app.${BASE_DOMAIN:-icravivalista.com.br}
     depends_on:
@@ -46,6 +42,22 @@ services:
         condition: service_healthy
     networks:
       - icr-net
+      - dokploy-network
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=dokploy-network
+
+      - traefik.http.routers.icr-api-web.rule=Host(`api.icravivalista.com.br`)
+      - traefik.http.routers.icr-api-web.entrypoints=web
+      - traefik.http.routers.icr-api-web.middlewares=redirect-to-https@file
+      - traefik.http.routers.icr-api-web.service=icr-api-web
+      - traefik.http.services.icr-api-web.loadbalancer.server.port=8080
+
+      - traefik.http.routers.icr-api-websecure.rule=Host(`api.icravivalista.com.br`)
+      - traefik.http.routers.icr-api-websecure.entrypoints=websecure
+      - traefik.http.routers.icr-api-websecure.tls.certresolver=letsencrypt
+      - traefik.http.routers.icr-api-websecure.service=icr-api-websecure
+      - traefik.http.services.icr-api-websecure.loadbalancer.server.port=8080
 
   icr.fe:
     image: ghcr.io/davifigueiracarvalho/icr-gestao-secretaria-fe:latest
@@ -56,12 +68,8 @@ services:
     expose:
       - "3000"
     environment:
-      # URL pública da API. Browser não consegue acessar "icr.api".
       ICR_API_URL: ${ICR_API_URL:-https://api.icravivalista.com.br}
-
-      # Se o frontend usa Vite, ele provavelmente precisa disso no BUILD da imagem.
       VITE_API_URL: ${VITE_API_URL:-https://api.icravivalista.com.br}
-
       OAUTH_SERVER_URL: ${OAUTH_SERVER_URL:-}
       JWT_SECRET: ${JWT_SECRET:-}
       VITE_APP_ID: ${VITE_APP_ID:-}
@@ -73,31 +81,26 @@ services:
       - icr.api
     networks:
       - icr-net
+      - dokploy-network
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=dokploy-network
 
-  caddy:
-    image: caddy:alpine
-    container_name: icr_caddy
-    profiles:
-      - production
-    ports:
-      - "80:80"
-      - "443:443"
-    environment:
-      DOMAIN_NAME: ${BASE_DOMAIN:-icravivalista.com.br}
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      - icr.api
-      - icr.fe
-    networks:
-      - icr-net
+      - traefik.http.routers.icr-fe-web.rule=Host(`app.icravivalista.com.br`)
+      - traefik.http.routers.icr-fe-web.entrypoints=web
+      - traefik.http.routers.icr-fe-web.middlewares=redirect-to-https@file
+      - traefik.http.routers.icr-fe-web.service=icr-fe-web
+      - traefik.http.services.icr-fe-web.loadbalancer.server.port=3000
+
+      - traefik.http.routers.icr-fe-websecure.rule=Host(`app.icravivalista.com.br`)
+      - traefik.http.routers.icr-fe-websecure.entrypoints=websecure
+      - traefik.http.routers.icr-fe-websecure.tls.certresolver=letsencrypt
+      - traefik.http.routers.icr-fe-websecure.service=icr-fe-websecure
+      - traefik.http.services.icr-fe-websecure.loadbalancer.server.port=3000
 
 networks:
   icr-net:
     driver: bridge
 
-volumes:
-  caddy_data:
-  caddy_config:
+  dokploy-network:
+    external: true
