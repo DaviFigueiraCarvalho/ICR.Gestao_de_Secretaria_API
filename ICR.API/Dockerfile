@@ -16,7 +16,7 @@ WORKDIR /src
 COPY ["ICR.API/ICR.API.csproj", "ICR.API/"]
 COPY ["ICR.Application/ICR.Application.csproj", "ICR.Application/"]
 COPY ["ICR.Infrastructure/ICR.Infrastructure.csproj", "ICR.Infrastructure/"]
-COPY ["ICR.Domain/ICR.Domain.csproj", "ICR.Domain/"]crie uma lógica que me permita criar References no banco um endpoint post
+COPY ["ICR.Domain/ICR.Domain.csproj", "ICR.Domain/"]
 RUN dotnet restore "./ICR.API/ICR.API.csproj"
 COPY . .
 WORKDIR "/src/ICR.API"
