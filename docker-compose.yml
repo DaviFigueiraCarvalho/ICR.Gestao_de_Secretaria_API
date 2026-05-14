@@ -22,7 +22,7 @@ services:
     build:
       context: .
       dockerfile: ICR.API/Dockerfile
-      target: dev
+      target: final
     container_name: icr_api
     expose:
       - "8080"
