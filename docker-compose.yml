@@ -63,8 +63,6 @@ services:
     image: ghcr.io/davifigueiracarvalho/icr-gestao-secretaria-fe:latest
     pull_policy: always
     container_name: icr_fe
-    profiles:
-      - production
     expose:
       - "3000"
     environment:
