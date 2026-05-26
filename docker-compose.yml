@@ -1,46 +1,30 @@
 services:
-  icr_db:
-    image: postgres:16
-    container_name: icr_db
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-icr_connect}
-      POSTGRES_USER: ${POSTGRES_USER:-icradmin}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
-    ports:
-      - "5432:5432"
-    volumes:
-      - ./postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-icradmin} -d ${POSTGRES_DB:-icr_connect}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    networks:
-      - icr-net
-
   icr.api:
     build:
       context: .
       dockerfile: ICR.API/Dockerfile
       target: final
-    container_name: icr_api
+
     expose:
       - "8080"
+
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__DefaultConnection: ${ConnectionStrings__DefaultConnection:-Host=icr_db;Port=5432;Database=icr_connect;Username=icradmin;Password=root}
+
+      # Banco externo separado
+      ConnectionStrings__DefaultConnection: Host=gesto-de-membros-icr-db-eb15un;Port=5432;Database=icr_connect;Username=icradmin;Password=ICRDB@2026
+
       JWT_KEY: ${JWT_KEY:-dev-only-jwt-secret-key-minimum-32-chars!}
       ROOTUSERNAME: ${ROOTUSERNAME:-admin}
       ROOTPASSWORD: ${ROOTPASSWORD:-admin123}
+
       BASE_DOMAIN: ${BASE_DOMAIN:-icravivalista.com.br}
       Cors__AllowedOrigins__0: https://app.${BASE_DOMAIN:-icravivalista.com.br}
-    depends_on:
-      icr_db:
-        condition: service_healthy
+
     networks:
-      - icr-net
       - dokploy-network
+
     labels:
       - traefik.enable=true
       - traefik.docker.network=dokploy-network
@@ -60,24 +44,20 @@ services:
   icr.fe:
     image: ghcr.io/davifigueiracarvalho/icr-gestao-secretaria-fe:latest
     pull_policy: always
-    container_name: icr_fe
+
     expose:
       - "3000"
+
     environment:
       ICR_API_URL: ${ICR_API_URL:-https://api.icravivalista.com.br}
       VITE_API_URL: ${VITE_API_URL:-https://api.icravivalista.com.br}
-      OAUTH_SERVER_URL: ${OAUTH_SERVER_URL:-}
-      JWT_SECRET: ${JWT_SECRET:-}
-      VITE_APP_ID: ${VITE_APP_ID:-}
-      OWNER_OPEN_ID: ${OWNER_OPEN_ID:-}
-      BUILT_IN_FORGE_API_URL: ${BUILT_IN_FORGE_API_URL:-}
-      BUILT_IN_FORGE_API_KEY: ${BUILT_IN_FORGE_API_KEY:-}
-      DATABASE_URL: ${DATABASE_URL:-}
+
     depends_on:
       - icr.api
+
     networks:
-      - icr-net
       - dokploy-network
+
     labels:
       - traefik.enable=true
       - traefik.docker.network=dokploy-network
@@ -95,8 +75,5 @@ services:
       - traefik.http.services.icr-fe-websecure.loadbalancer.server.port=3000
 
 networks:
-  icr-net:
-    driver: bridge
-
   dokploy-network:
     external: true
