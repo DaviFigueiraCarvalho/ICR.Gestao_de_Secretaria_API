@@ -7,6 +7,12 @@ namespace ICR.Domain.Model
     {
         private static readonly PhoneNumberUtil PhoneUtil = PhoneNumberUtil.GetInstance();
 
+        /// <summary>
+        /// Padrões aceitos para números de telefone brasileiros:
+        /// - (00)0000-0000 - Telefone fixo (10 dígitos)
+        /// - (00)90000-0000 - Telefone celular (11 dígitos)
+        /// Também aceita variações sem formatação: 0000000000 ou 00900000000
+        /// </summary>
         public Country Country { get; private set; }
         public string Number { get; private set; }              // Apenas dígitos: "11999999999"
         public string DisplayFormat { get; private set; }       // Formato visual: "(11) 99999-9999"
@@ -15,13 +21,25 @@ namespace ICR.Domain.Model
 
         protected Phone() { }
 
-        public Phone(string countryCode, string phoneNumber)
+        public Phone(string? countryCode, string? phoneNumber)
         {
+            // Se ambos forem vazios, cria um telefone vazio
+            if (string.IsNullOrWhiteSpace(countryCode) && string.IsNullOrWhiteSpace(phoneNumber))
+            {
+                Country = null!;
+                Number = string.Empty;
+                DisplayFormat = string.Empty;
+                InternationalFormat = string.Empty;
+                E164Format = string.Empty;
+                return;
+            }
+
+            // Se um dos dois for vazio, ambos são obrigatórios
             if (string.IsNullOrWhiteSpace(countryCode))
-                throw new ArgumentException("Código do país é obrigatório", nameof(countryCode));
+                throw new ArgumentException("Código do país é obrigatório quando um número é fornecido", nameof(countryCode));
 
             if (string.IsNullOrWhiteSpace(phoneNumber))
-                throw new ArgumentException("Número de telefone é obrigatório", nameof(phoneNumber));
+                throw new ArgumentException("Número de telefone é obrigatório quando um código de país é fornecido", nameof(phoneNumber));
 
             Country = Country.GetByCode(countryCode);
             ValidateAndParsePhone(phoneNumber);
@@ -31,8 +49,11 @@ namespace ICR.Domain.Model
         {
             try
             {
+                // Remove espaços, parênteses e hífens para normalizar
+                var normalizedNumber = NormalizePhoneNumber(phoneNumber);
+
                 // Parse do número de telefone
-                var parsed = PhoneUtil.Parse(phoneNumber, Country.Code);
+                var parsed = PhoneUtil.Parse(normalizedNumber, Country.Code);
 
                 // Valida se é um número válido para o país
                 if (!PhoneUtil.IsValidNumberForRegion(parsed, Country.Code))
@@ -55,6 +76,19 @@ namespace ICR.Domain.Model
                     nameof(phoneNumber),
                     ex);
             }
+        }
+
+        /// <summary>
+        /// Normaliza o número de telefone removendo formatação comum
+        /// Aceita padrões como: (00)0000-0000 ou (00)90000-0000
+        /// </summary>
+        private static string NormalizePhoneNumber(string phoneNumber)
+        {
+            if (string.IsNullOrWhiteSpace(phoneNumber))
+                return phoneNumber;
+
+            // Remove espaços, parênteses, hífens e pontos
+            return System.Text.RegularExpressions.Regex.Replace(phoneNumber, @"[\s\(\)\-\.]", "");
         }
 
         /// <summary>

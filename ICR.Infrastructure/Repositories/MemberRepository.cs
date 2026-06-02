@@ -147,7 +147,9 @@ namespace ICR.Infra.Data.Repositories
             }
 
             Phone? phone = null;
-            if (dto.CellPhone != null)
+            if (dto.CellPhone != null && 
+                !string.IsNullOrWhiteSpace(dto.CellPhone.CountryCode) && 
+                !string.IsNullOrWhiteSpace(dto.CellPhone.Number))
             {
                 try
                 {
@@ -157,6 +159,13 @@ namespace ICR.Infra.Data.Repositories
                 {
                     throw new ArgumentException($"Telefone inválido: {ex.Message}", ex);
                 }
+            }
+            else if (dto.CellPhone != null && 
+                     (string.IsNullOrWhiteSpace(dto.CellPhone.CountryCode) || 
+                      string.IsNullOrWhiteSpace(dto.CellPhone.Number)))
+            {
+                // Se um dos campos foi preenchido, mas não ambos, ignore o telefone
+                phone = null;
             }
 
             var birthDateUtc = DateTime.SpecifyKind(dto.BirthDate, DateTimeKind.Utc);
@@ -243,7 +252,7 @@ namespace ICR.Infra.Data.Repositories
             if (dto.Role.HasValue)
                 member.SetRole(dto.Role.Value);
 
-            if (dto.CellPhone != null)
+            if (dto.CellPhone != null && !string.IsNullOrWhiteSpace(dto.CellPhone.CountryCode) && !string.IsNullOrWhiteSpace(dto.CellPhone.Number))
             {
                 try
                 {
@@ -254,6 +263,13 @@ namespace ICR.Infra.Data.Repositories
                 {
                     throw new ArgumentException($"Telefone inválido: {ex.Message}", ex);
                 }
+            }
+            else if (dto.CellPhone != null && 
+                     (string.IsNullOrWhiteSpace(dto.CellPhone.CountryCode) || 
+                      string.IsNullOrWhiteSpace(dto.CellPhone.Number)))
+            {
+                // Se um dos campos foi preenchido, mas não ambos, ignore o telefone
+                // (não faz nada, mantém o telefone antigo ou nulo)
             }
 
             if (dto.Class.HasValue)
