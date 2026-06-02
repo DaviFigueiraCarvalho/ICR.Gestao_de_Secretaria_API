@@ -7,13 +7,22 @@
   </PropertyGroup>
   <ItemGroup>
     <None Include=".env.example" />
+    <None Include=".env.local" />
+    <None Include=".gitignore.local-config" />
     <None Include="AddMigration.cmd" />
     <None Include="AddMigration.ps1" />
+    <None Include="docker-compose.local.yml" />
     <None Include="docker-compose.override.yml">
       <DependentUpon>docker-compose.yml</DependentUpon>
     </None>
     <None Include="docker-compose.yml" />
     <None Include=".dockerignore" />
+    <None Include="docker-local.ps1" />
+    <None Include="DOCKER_REFERENCE.md" />
+    <None Include="init-db.sql" />
+    <None Include="QUICK_START.md" />
+    <None Include="README_LOCAL.md" />
     <None Include="SECURITY_ROTATION.md" />
+    <None Include="SETUP_CHECKLIST.md" />
   </ItemGroup>
 </Project>

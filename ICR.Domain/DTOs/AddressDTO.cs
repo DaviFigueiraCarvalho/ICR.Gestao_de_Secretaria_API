@@ -3,21 +3,21 @@
 public class AddressDTO
 {
     /// <summary>
-    /// Código ISO do país (BR, US, PT, etc.)
+    /// Código ISO do país (BR, US, PT, etc.). Nulo se endereço não fornecido.
     /// </summary>
-    public string CountryCode { get; set; } = null!;
+    public string? CountryCode { get; set; }
 
-    public string PostalCode { get; set; } = null!;
-    public string Street { get; set; } = null!;
-    public string Number { get; set; } = null!;
+    public string? PostalCode { get; set; }
+    public string? Street { get; set; }
+    public string? Number { get; set; }
     public string? Complement { get; set; }
-    public string City { get; set; } = null!;
-    public string State { get; set; } = null!;
+    public string? City { get; set; }
+    public string? State { get; set; }
     public string? CountyOrRegion { get; set; }
 
     public static AddressDTO? FromEntity(Address? address)
     {
-        if (address == null)
+        if (address == null || address.Country == null)
             return null;
 
         return new AddressDTO
@@ -46,7 +46,7 @@ public class AddressDTO
 
         public static AddressPatchDTO? FromEntity(Address? address)
         {
-            if (address == null)
+            if (address == null || address.Country == null)
                 return null;
 
             return new AddressPatchDTO

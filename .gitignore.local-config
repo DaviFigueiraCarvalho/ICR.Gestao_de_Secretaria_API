@@ -1,0 +1,68 @@
+# Local development environment
+.env.local
+.env.*.local
+
+# Docker volumes
+postgres_data/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Build results
+bin/
+obj/
+*.o
+*.a
+*.so
+
+# Nuget
+nuget.exe
+*.nupkg
+*.snupkg
+
+# Test Results
+TestResults/
+
+# Visual Studio
+.vs/
+.vscode/
+
+# User-specific
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Rider
+.idea/
+*.sln.iml
+riderModule.xml
+_ReSharper*/
+
+# Node modules (if frontend is in repo)
+node_modules/
+dist/
+.next/
+
+# Environment files
+.env
+.env.*.local
+docker.env
+
+# Logs
+*.log
+logs/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# OS
+Thumbs.db
+.DS_Store

@@ -2,7 +2,11 @@
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 # Precisamos ser root para instalar a lib
 USER root 
-RUN apt-get update && apt-get install -y --no-install-recommends libgssapi-krb5-2 && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgssapi-krb5-2 \
+    libc6 \
+    libssl3 \
+    && rm -rf /var/lib/apt/lists/*
 # Voltamos para o usuário seguro
 USER $APP_UID
 WORKDIR /app
@@ -31,6 +35,9 @@ RUN dotnet publish "./ICR.API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+ENV COMPlus_GC_HeapCount=1 \
+    COMPlus_GC_HeapAffinitizeMask=0 \
+    DOTNET_EnableDiagnostics=0
 ENTRYPOINT ["dotnet", "ICR.API.dll"]
 
 # Estágio de Desenvolvimento (O que você usa no Compose)

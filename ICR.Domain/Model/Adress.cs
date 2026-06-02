@@ -5,29 +5,53 @@ namespace ICR.Domain.Model
 {
     public class Address
     {
-        public Country Country { get; private set; }
-        public string PostalCode { get; private set; }      // CEP, ZIP, Código Postal, etc.
-        public string Street { get; private set; }
-        public string Number { get; private set; }
+        // Propriedade interna para EF Core identificar quando Address existe
+        public int? Id { get; set; }
+
+        public Country? Country { get; private set; }
+        public string? PostalCode { get; private set; }      // CEP, ZIP, Código Postal, etc.
+        public string? Street { get; private set; }
+        public string? Number { get; private set; }
         public string? Complement { get; private set; }     // Apartamento, bloco, etc.
-        public string City { get; private set; }
-        public string State { get; private set; }           // Estado, Província, Região, etc.
+        public string? City { get; private set; }
+        public string? State { get; private set; }           // Estado, Província, Região, etc.
         public string? CountyOrRegion { get; private set; } // Condado, Região (opcional)
 
         protected Address() { }
 
         public Address(
-            string countryCode,
-            string postalCode,
-            string street,
-            string number,
-            string city,
-            string state,
+            string? countryCode,
+            string? postalCode,
+            string? street,
+            string? number,
+            string? city,
+            string? state,
             string? complement = null,
             string? countyOrRegion = null)
         {
+            // Se todos os campos obrigatórios forem nulos/vazios, criar um endereço vazio (nullable)
+            if (string.IsNullOrWhiteSpace(countryCode) &&
+                string.IsNullOrWhiteSpace(postalCode) &&
+                string.IsNullOrWhiteSpace(street) &&
+                string.IsNullOrWhiteSpace(number) &&
+                string.IsNullOrWhiteSpace(city) &&
+                string.IsNullOrWhiteSpace(state))
+            {
+                // Todos nulos - endereço vazio permitido
+                Country = null;
+                PostalCode = null;
+                Street = null;
+                Number = null;
+                City = null;
+                State = null;
+                Complement = null;
+                CountyOrRegion = null;
+                return;
+            }
+
+            // Se alguns campos estão preenchidos, todos obrigatórios devem estar
             if (string.IsNullOrWhiteSpace(countryCode))
-                throw new ArgumentException("Código do país é obrigatório", nameof(countryCode));
+                throw new ArgumentException("Código do país é obrigatório quando endereço é fornecido", nameof(countryCode));
 
             Country = Country.GetByCode(countryCode);
             PostalCode = ValidatePostalCode(postalCode);
@@ -39,10 +63,13 @@ namespace ICR.Domain.Model
             CountyOrRegion = countyOrRegion?.Trim();
         }
 
-        private string ValidatePostalCode(string postalCode)
+        private string? ValidatePostalCode(string? postalCode)
         {
             if (string.IsNullOrWhiteSpace(postalCode))
-                throw new ArgumentException("Código postal é obrigatório", nameof(postalCode));
+                return null;
+
+            if (Country == null)
+                return postalCode;
 
             return Country.Code switch
             {
@@ -188,18 +215,23 @@ namespace ICR.Domain.Model
             return Regex.Replace(postalCode, @"\s+", "").Trim();
         }
 
-        public void SetPostalCode(string postalCode) => PostalCode = ValidatePostalCode(postalCode);
-        public void SetStreet(string street) => Street = street?.Trim() ?? throw new ArgumentException("Rua é obrigatória");
-        public void SetNumber(string number) => Number = number?.Trim() ?? throw new ArgumentException("Número é obrigatório");
-        public void SetCity(string city) => City = city?.Trim() ?? throw new ArgumentException("Cidade é obrigatória");
-        public void SetState(string state) => State = state?.Trim() ?? throw new ArgumentException("Estado/Região é obrigatório");
+        public void SetPostalCode(string? postalCode) => PostalCode = ValidatePostalCode(postalCode);
+        public void SetStreet(string? street) => Street = street?.Trim();
+        public void SetNumber(string? number) => Number = number?.Trim();
+        public void SetCity(string? city) => City = city?.Trim();
+        public void SetState(string? state) => State = state?.Trim();
         public void SetComplement(string? complement) => Complement = complement?.Trim();
         public void SetCountyOrRegion(string? county) => CountyOrRegion = county?.Trim();
 
         public override bool Equals(object? obj)
         {
-            return obj is Address address &&
-                   Country.Code == address.Country.Code &&
+            if (obj is not Address address)
+                return false;
+
+            if (Country == null || address.Country == null)
+                return Country == address.Country;
+
+            return Country.Code == address.Country.Code &&
                    PostalCode == address.PostalCode &&
                    Street == address.Street &&
                    Number == address.Number;
@@ -207,11 +239,14 @@ namespace ICR.Domain.Model
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(Country.Code, PostalCode, Street, Number);
+            return HashCode.Combine(Country?.Code ?? "", PostalCode ?? "", Street ?? "", Number ?? "");
         }
 
         public string GetFormattedAddress()
         {
+            if (Country == null || string.IsNullOrWhiteSpace(Street))
+                return string.Empty;
+
             var address = $"{Street}, {Number}";
             if (!string.IsNullOrWhiteSpace(Complement))
                 address += $" - {Complement}";

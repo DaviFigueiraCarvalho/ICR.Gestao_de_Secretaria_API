@@ -96,22 +96,33 @@ namespace ICR.Infra.Data.Repositories
             Address? address = null;
             if (dto.Address != null)
             {
-                try
+                // Verificar se há ao menos um campo preenchido
+                bool hasAddressData = !string.IsNullOrWhiteSpace(dto.Address.CountryCode) ||
+                                      !string.IsNullOrWhiteSpace(dto.Address.PostalCode) ||
+                                      !string.IsNullOrWhiteSpace(dto.Address.Street) ||
+                                      !string.IsNullOrWhiteSpace(dto.Address.Number) ||
+                                      !string.IsNullOrWhiteSpace(dto.Address.City) ||
+                                      !string.IsNullOrWhiteSpace(dto.Address.State);
+
+                if (hasAddressData)
                 {
-                    address = new Address(
-                        dto.Address.CountryCode,
-                        dto.Address.PostalCode,
-                        dto.Address.Street,
-                        dto.Address.Number,
-                        dto.Address.City,
-                        dto.Address.State,
-                        dto.Address.Complement,
-                        dto.Address.CountyOrRegion
-                    );
-                }
-                catch (ArgumentException ex)
-                {
-                    throw new ArgumentException($"Erro ao validar endereço: {ex.Message}", ex);
+                    try
+                    {
+                        address = new Address(
+                            dto.Address.CountryCode,
+                            dto.Address.PostalCode,
+                            dto.Address.Street,
+                            dto.Address.Number,
+                            dto.Address.City,
+                            dto.Address.State,
+                            dto.Address.Complement,
+                            dto.Address.CountyOrRegion
+                        );
+                    }
+                    catch (ArgumentException ex)
+                    {
+                        throw new ArgumentException($"Erro ao validar endereço: {ex.Message}", ex);
+                    }
                 }
             }
 
@@ -299,23 +310,39 @@ namespace ICR.Infra.Data.Repositories
 
             if (dto.Address != null)
             {
-                try
+                // Verificar se há ao menos um campo preenchido
+                bool hasAddressData = !string.IsNullOrWhiteSpace(dto.Address.CountryCode) ||
+                                      !string.IsNullOrWhiteSpace(dto.Address.PostalCode) ||
+                                      !string.IsNullOrWhiteSpace(dto.Address.Street) ||
+                                      !string.IsNullOrWhiteSpace(dto.Address.Number) ||
+                                      !string.IsNullOrWhiteSpace(dto.Address.City) ||
+                                      !string.IsNullOrWhiteSpace(dto.Address.State);
+
+                if (hasAddressData)
                 {
-                    var address = new Address(
-                        dto.Address.CountryCode,
-                        dto.Address.PostalCode,
-                        dto.Address.Street,
-                        dto.Address.Number,
-                        dto.Address.City,
-                        dto.Address.State,
-                        dto.Address.Complement,
-                        dto.Address.CountyOrRegion
-                    );
-                    minister.SetMinisterAddress(address);
+                    try
+                    {
+                        var address = new Address(
+                            dto.Address.CountryCode,
+                            dto.Address.PostalCode,
+                            dto.Address.Street,
+                            dto.Address.Number,
+                            dto.Address.City,
+                            dto.Address.State,
+                            dto.Address.Complement,
+                            dto.Address.CountyOrRegion
+                        );
+                        minister.SetMinisterAddress(address);
+                    }
+                    catch (ArgumentException ex)
+                    {
+                        throw new ArgumentException($"Erro ao validar endereço: {ex.Message}", ex);
+                    }
                 }
-                catch (ArgumentException ex)
+                else
                 {
-                    throw new ArgumentException($"Erro ao validar endereço: {ex.Message}", ex);
+                    // Se o objeto Address foi enviado mas está vazio, limpar o endereço
+                    minister.SetMinisterAddress(null);
                 }
             }
 

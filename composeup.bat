@@ -1,5 +1,6 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
+set "COMPOSE_FILE=docker-compose.local.yml"
 REM ============================================================
 REM Sobe os containers em modo de desenvolvimento local.
 REM Usa docker-compose.override.yml para expor localhost:3000 e localhost:8080.
@@ -20,7 +21,7 @@ if errorlevel 1 (
 )
 
 echo [INFO] Derrubando containers existentes...
-docker compose down
+docker compose -f "%COMPOSE_FILE%" down
 if errorlevel 1 (
 	pause
 	exit /b 1
@@ -38,7 +39,7 @@ exit /b 0
 :StartComposeUp
 echo [INFO] Subindo os containers em modo local...
 set "COMPOSE_LOG=%TEMP%\composeup_%RANDOM%%RANDOM%.log"
-powershell -NoProfile -Command "$log = '%COMPOSE_LOG%'; & docker compose up 2>&1 | Tee-Object -FilePath $log; exit $LASTEXITCODE"
+powershell -NoProfile -Command "$log = '%COMPOSE_LOG%'; & docker compose -f '%COMPOSE_FILE%' up 2>&1 | Tee-Object -FilePath $log; exit $LASTEXITCODE"
 set "COMPOSE_EXIT=!errorlevel!"
 findstr /i /c:"denied" "%COMPOSE_LOG%" >nul
 set "DENIED_FOUND=!errorlevel!"
@@ -50,8 +51,9 @@ if "!DENIED_FOUND!"=="0" (
 	echo        Faça login novamente e tente de novo.
 	docker login ghcr.io
 	if errorlevel 1 exit /b 1
-	echo [INFO] Tentando subir novamente...
-	powershell -NoProfile -Command "$log = '%COMPOSE_LOG%'; & docker compose up 2>&1 | Tee-Object -FilePath $log; exit $LASTEXITCODE"
+		echo [INFO] Tentando subir novamente...
+		powershell -NoProfile -Command "$log = '%COMPOSE_LOG%'; & docker compose -f '%COMPOSE_FILE%' up 2>&1 | Tee-Object -FilePath $log; exit $LASTEXITCODE"
 	set "COMPOSE_EXIT=!errorlevel!"
 )
+
 exit /b !COMPOSE_EXIT!

@@ -94,24 +94,30 @@ namespace ICR.Infra
                 .HasForeignKey(m => m.MemberId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Minister -> Address (Value Object, opcional)
-            modelBuilder.Entity<Minister>().OwnsOne(m => m.Address, address =>
+            // Minister -> Address (Value Object)
+            var ministerAddressBuilder = modelBuilder.Entity<Minister>().OwnsOne(m => m.Address);
+            ministerAddressBuilder.WithOwner().HasForeignKey("MinisterId");
+            ministerAddressBuilder.Property(a => a.Id).HasColumnName("AddressId");
+            // Adiciona propriedade shadow para discriminação quando Address é opcional com dependentes
+            ministerAddressBuilder.Property<bool>("_addressExists").HasColumnName("AddressExists").HasDefaultValue(false);
+
+            // Definir que a navegação é obrigatória se qualquer propriedade de Address for preenchida
+            ministerAddressBuilder.OwnsOne(a => a.Country, country =>
             {
-                address.OwnsOne(a => a.Country, country =>
-                {
-                    country.Property(co => co.Code).HasColumnName("Country_Code");
-                    country.Property(co => co.Name).HasColumnName("Country_Name");
-                    country.Property(co => co.PhoneCountryCode).HasColumnName("Country_PhoneCountryCode");
-                    country.Property(co => co.CultureCode).HasColumnName("Country_CultureCode");
-                });
-                address.Property(a => a.PostalCode).HasColumnName("PostalCode");
-                address.Property(a => a.Street).HasColumnName("Street");
-                address.Property(a => a.Number).HasColumnName("Number");
-                address.Property(a => a.Complement).HasColumnName("Complement");
-                address.Property(a => a.City).HasColumnName("City");
-                address.Property(a => a.State).HasColumnName("State");
-                address.Property(a => a.CountyOrRegion).HasColumnName("CountyOrRegion");
+                country.Property(co => co.Code).HasColumnName("Country_Code").IsRequired(false);
+                country.Property(co => co.Name).HasColumnName("Country_Name").IsRequired(false);
+                country.Property(co => co.PhoneCountryCode).HasColumnName("Country_PhoneCountryCode").IsRequired(false);
+                country.Property(co => co.CultureCode).HasColumnName("Country_CultureCode").IsRequired(false);
+                // Adiciona propriedade shadow para discriminação do Country quando for opcional
+                country.Property<bool>("_countryExists").HasColumnName("CountryExists").HasDefaultValue(false);
             });
+            ministerAddressBuilder.Property(a => a.PostalCode).HasColumnName("PostalCode");
+            ministerAddressBuilder.Property(a => a.Street).HasColumnName("Street");
+            ministerAddressBuilder.Property(a => a.Number).HasColumnName("Number");
+            ministerAddressBuilder.Property(a => a.Complement).HasColumnName("Complement");
+            ministerAddressBuilder.Property(a => a.City).HasColumnName("City");
+            ministerAddressBuilder.Property(a => a.State).HasColumnName("State");
+            ministerAddressBuilder.Property(a => a.CountyOrRegion).HasColumnName("CountyOrRegion");
 
             // Member -> CellPhone (Value Object, opcional)
             modelBuilder.Entity<Member>().OwnsOne(m => m.CellPhone, phone =>
