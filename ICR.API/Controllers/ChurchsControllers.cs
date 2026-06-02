@@ -25,9 +25,15 @@ namespace ICR.API.Controllers
 
         // GET: api/churches?pageNumber=1&pageQuantity=10
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ChurchResponseDto>>> GetAll()
+        public async Task<ActionResult<IEnumerable<ChurchResponseDto>>> GetAll(
+            [FromQuery(Name = "pageNumber")] int page = 1,
+            [FromQuery(Name = "pageQuantity")] int pageQuantity = 50,
+            [FromQuery(Name = "querySearch")] string? search = null)
         {
-            var churches = await _repository.GetAllChurchesAsync();
+            if (page < 1) page = 1;
+            if (pageQuantity < 1) pageQuantity = 50;
+
+            var churches = await _repository.GetAllChurchesAsync(page, pageQuantity, search);
             return Ok(churches);
         }
 

@@ -84,12 +84,22 @@ namespace ICR.Infra.Data.Repositories
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<IEnumerable<CellResponseDTO>> GetAllAsync()
+        public async Task<IEnumerable<CellResponseDTO>> GetAllAsync(int page = 1, int pageSize = 50, string? search = null)
         {
-            return await _context.Cells
+            var query = _context.Cells
                 .Include(c => c.Church)
                 .Include(c => c.Responsible)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(c => c.Name.ToLower().Contains(search.ToLower()));
+            }
+
+            return await query
                 .OrderBy(c => c.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(c => new CellResponseDTO
                 {
                     Id = c.Id,

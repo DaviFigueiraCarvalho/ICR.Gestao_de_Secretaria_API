@@ -35,9 +35,15 @@ namespace ICR.API.Controllers
 
         // GET: api/federations
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<FederationResponseDTO>>> GetAll()
+        public async Task<ActionResult<IEnumerable<FederationResponseDTO>>> GetAll(
+            [FromQuery(Name = "pageNumber")] int page = 1,
+            [FromQuery(Name = "pageQuantity")] int pageQuantity = 50,
+            [FromQuery] string? search = null)
         {
-            var federations = await _repository.GetAllFederationsAsync();
+            if (page < 1) page = 1;
+            if (pageQuantity < 1) pageQuantity = 50;
+
+            var federations = await _repository.GetAllFederationsAsync(page, pageQuantity, search);
             return Ok(federations);
         }
 

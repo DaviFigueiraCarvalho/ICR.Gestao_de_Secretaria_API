@@ -160,10 +160,18 @@ namespace ICR.Infra.Data.Repositories
         // ============================
         // GET ALL
         // ============================
-        public async Task<IEnumerable<MinisterResponseDTO>> GetAllAsync(int page, int pageSize)
+        public async Task<IEnumerable<MinisterResponseDTO>> GetAllAsync(int page, int pageSize, string? search = null)
         {
-            var ministers = await BaseQuery()
+            var query = BaseQuery()
                 .AsNoTracking()
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(m => m.Member.Name.ToLower().Contains(search.ToLower()));
+            }
+
+            var ministers = await query
                 .OrderBy(m => m.Id)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)

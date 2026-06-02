@@ -20,9 +20,15 @@ namespace ICR.API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get(
+            [FromQuery(Name = "pageNumber")] int page = 1,
+            [FromQuery(Name = "pageQuantity")] int pageQuantity = 50,
+            [FromQuery(Name = "querySearch")] string? search = null)
         {
-            var cells = await _repository.GetAllAsync();
+            if (page < 1) page = 1;
+            if (pageQuantity < 1) pageQuantity = 50;
+
+            var cells = await _repository.GetAllAsync(page, pageQuantity, search);
             return Ok(cells);
         }
 

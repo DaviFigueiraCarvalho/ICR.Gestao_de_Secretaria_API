@@ -84,10 +84,21 @@ namespace ICR.Infra.Repositories
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<IEnumerable<FederationResponseDTO>> GetAllFederationsAsync()
+        public async Task<IEnumerable<FederationResponseDTO>> GetAllFederationsAsync(int page = 1, int pageSize = 50, string? search = null)
         {
-            return await _context.Federations
+            var query = _context.Federations
                 .Include(f => f.Minister)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(f => f.Name.ToLower().Contains(search.ToLower()));
+            }
+
+            return await query
+                .OrderBy(f => f.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(f => new FederationResponseDTO
                 {
                     Id = f.Id,

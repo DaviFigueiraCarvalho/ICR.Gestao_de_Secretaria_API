@@ -11,7 +11,7 @@ namespace ICR.Domain.Model.CellAggregate
 
         Task<CellResponseDTO?> GetByIdAsync(long id);
 
-        Task<IEnumerable<CellResponseDTO>> GetAllAsync();
+        Task<IEnumerable<CellResponseDTO>> GetAllAsync(int page = 1, int pageSize = 50, string? search = null);
 
         Task<IEnumerable<CellResponseDTO>> GetFilteredAsync(long? federationId, long? churchId);
 

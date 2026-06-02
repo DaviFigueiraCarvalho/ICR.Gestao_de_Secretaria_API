@@ -100,13 +100,21 @@ namespace ICR.Infra.Data.Repositories
         // =========================
         // GET PAGINADO
         // =========================
-        public async Task<List<ResponseFamilyDTO>> GetAsync(int pageNumber, int pageQuantity)
+        public async Task<List<ResponseFamilyDTO>> GetAsync(int pageNumber, int pageQuantity, string? search = null)
         {
-            var families = await _context.Families
+            var query = _context.Families
                 .Include(f => f.Church)
                 .Include(f => f.Cell)
                 .Include(f => f.Man)
                 .Include(f => f.Woman)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(x => x.Name.ToLower().Contains(search.ToLower()));
+            }
+
+            var families = await query
                 .OrderBy(f => f.Id)
                 .Skip((pageNumber - 1) * pageQuantity)
                 .Take(pageQuantity)

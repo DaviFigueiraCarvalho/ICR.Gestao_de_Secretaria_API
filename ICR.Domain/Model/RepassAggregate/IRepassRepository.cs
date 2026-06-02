@@ -7,7 +7,7 @@ namespace ICR.Domain.Model.RepassAggregate
     {
         Task<RepassResponseDTO> AddAsync(RepassDTO repass);
         Task<RepassResponseDTO?> GetByIdAsync(long id);
-        Task<IEnumerable<RepassResponseDTO>> GetAllAsync(int pageNumber, int pageQuantity);
+        Task<IEnumerable<RepassResponseDTO>> GetAllAsync(int pageNumber, int pageQuantity, string? search = null);
         Task<IEnumerable<RepassResponseDTO>> GetByChurchIdAsync(long churchId);
         Task<IEnumerable<RepassResponseDTO>> GetByReferenceIdAsync(long reference);
         Task<RepassResponseDTO> UpdateAsync(long id, RepassUpdateDTO dto);

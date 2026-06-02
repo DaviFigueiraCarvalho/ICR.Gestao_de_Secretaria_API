@@ -73,10 +73,19 @@ namespace ICR.Infra.Repositories
             };
         }
 
-        public async Task<IEnumerable<RepassResponseDTO>> GetAllAsync(int pageNumber, int pageQuantity)
+        public async Task<IEnumerable<RepassResponseDTO>> GetAllAsync(int pageNumber, int pageQuantity, string? search = null)
         {
-            return await _context.Repasses
+            var query = _context.Repasses
                 .AsNoTracking()
+                .Include(r => r.Church)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(r => r.Church.Name.ToLower().Contains(search.ToLower()));
+            }
+
+            return await query
                 .OrderBy(r => r.Id)
                 .Skip((pageNumber - 1) * pageQuantity)
                 .Take(pageQuantity)
@@ -84,6 +93,7 @@ namespace ICR.Infra.Repositories
                 {
                     Id = r.Id,
                     ChurchId = r.ChurchId,
+                    ChurchName = r.Church.Name,
                     Reference = r.ReferenceId,
                     Amount = r.Amount
                 })

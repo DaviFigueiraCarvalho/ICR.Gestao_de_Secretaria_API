@@ -21,9 +21,9 @@ namespace ICR.Infra.Data.Repositories
             _context = context;
         }
 
-        public async Task<IEnumerable<MemberResponseDTO>> GetAllAsync(int page, int pageSize)
+        public async Task<IEnumerable<MemberResponseDTO>> GetAllAsync(int page, int pageSize, string? search = null)
         {
-            var members = await _context.Members
+            var query = _context.Members
                 .Include(m => m.Family)
                     .ThenInclude(f => f.Church)
                 .Include(m => m.Family)
@@ -32,6 +32,14 @@ namespace ICR.Infra.Data.Repositories
                     .ThenInclude(f => f.Man)
                 .Include(m => m.Family)
                     .ThenInclude(f => f.Woman)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(x => x.Name.ToLower().Contains(search.ToLower()));
+            }
+
+            var members = await query
                 .OrderBy(m => m.Id)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)

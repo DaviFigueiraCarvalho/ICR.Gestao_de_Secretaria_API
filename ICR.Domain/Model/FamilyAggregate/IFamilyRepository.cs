@@ -10,7 +10,7 @@ namespace ICR.Domain.Model.FamilyAggregate
 
         Task<ResponseFamilyDTO?> GetByIdAsync(long id);
 
-        Task<List<ResponseFamilyDTO>> GetAsync(int pageNumber, int pageQuantity);
+        Task<List<ResponseFamilyDTO>> GetAsync(int pageNumber, int pageQuantity, string? search = null);
 
         Task<List<ResponseFamilyDTO>> GetFamiliesByWeddingBirthdayMonthAsync(int monthNumber);
         Task<List<ResponseFamilyDTO>> GetByChurchId(long churchId);

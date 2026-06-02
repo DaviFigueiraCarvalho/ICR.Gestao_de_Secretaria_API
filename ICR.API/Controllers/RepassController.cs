@@ -70,12 +70,13 @@ namespace ICR.API.Controllers
         [AuthorizeScope(UserModel.UserScope.NATIONAL)]
         public async Task<ActionResult<IEnumerable<RepassResponseDTO>>> GetAll(
             [FromQuery(Name = "pageNumber")] int pageNumber = 1,
-            [FromQuery(Name = "pageQuantity")] int pageQuantity = 50)
+            [FromQuery(Name = "pageQuantity")] int pageQuantity = 50,
+            [FromQuery] string? search = null)
         {
             if (pageNumber < 1) pageNumber = 1;
             if (pageQuantity < 1) pageQuantity = 50;
 
-            var result = await _repository.GetAllAsync(pageNumber, pageQuantity);
+            var result = await _repository.GetAllAsync(pageNumber, pageQuantity, search);
             return Ok(result);
         }
 
