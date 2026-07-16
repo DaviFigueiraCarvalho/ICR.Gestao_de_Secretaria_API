@@ -181,7 +181,15 @@ namespace ICR.Tests.Integration
             }
             catch { }
 
-            var member = new Member(family.Id, "Dashboard Member", GenderType.HOMEM, DateTime.UtcNow.AddYears(-30), false, MemberRole.Pastor, phone, ClassType.BEBE);
+            var member = new Member(
+    family.Id,
+    "Dashboard Member",
+    GenderType.HOMEM,
+    DateOnly.FromDateTime(DateTime.UtcNow).AddYears(-30),
+    false,
+    MemberRole.Pastor,
+    phone,
+    ClassType.BEBE);
             context.Members.Add(member);
             await context.SaveChangesAsync();
 

@@ -48,10 +48,10 @@ namespace ICR.Infra.Data.Repositories
                 MemberName = member?.Name ?? string.Empty,
                 ChurchMemberName = family?.Church?.Name ?? string.Empty,
                 FederationMemberName = family?.Church?.Federation?.Name ?? string.Empty,
-                MemberBirthday = member?.BirthDate ?? DateTime.MinValue,
+                MemberBirthday = member?.BirthDate ?? DateOnly.MinValue,
                 MemberPhone = PhoneResponseDTO.FromEntity(member?.CellPhone),
                 MemberWifeName = family?.Woman?.Name ?? string.Empty,
-                MemberWeddingDate = family?.WeddingDate ?? DateTime.MinValue,
+                MemberWeddingDate = family?.WeddingDate ?? DateOnly.MinValue,
                 Cpf = m.Cpf,
                 Email = m.Email,
                 Insurance = m.Insurance,
@@ -62,11 +62,11 @@ namespace ICR.Infra.Data.Repositories
             };
         }
 
-        private static bool CalculateInsurance(DateTime birthDate)
+        private static bool CalculateInsurance(DateOnly birthDate)
         {
-            var today = DateTime.Today;
+            var today = DateOnly.FromDateTime(DateTime.Today);
             var age = today.Year - birthDate.Year;
-            if (birthDate.Date > today.AddYears(-age))
+            if (birthDate > today.AddYears(-age))
                 age--;
 
             return age < 75;
@@ -130,11 +130,9 @@ namespace ICR.Infra.Data.Repositories
                 dto.MemberId,
                 dto.Cpf,
                 dto.Email,
-                DateTime.SpecifyKind(dto.CardValidity, DateTimeKind.Utc),
-                DateTime.SpecifyKind(dto.PresbiterOrdinationDate, DateTimeKind.Utc),
-                dto.MinisterOrdinationDate.HasValue
-                    ? DateTime.SpecifyKind(dto.MinisterOrdinationDate.Value, DateTimeKind.Utc)
-                    : null,
+                dto.CardValidity,
+                dto.PresbiterOrdinationDate,
+                dto.MinisterOrdinationDate,
                 address,
                 CalculateInsurance(member.BirthDate)
             );
@@ -193,7 +191,7 @@ namespace ICR.Infra.Data.Repositories
             return ministers.Select(m => new MinisterInsuredListDTO
             {
                 FullName = m.Member?.Name ?? string.Empty,
-                BirthDate = m.Member?.BirthDate ?? DateTime.MinValue,
+                BirthDate = m.Member?.BirthDate ?? DateOnly.MinValue,
                 Cpf = m.Cpf,
                 Email = m.Email,
                 Phone = PhoneResponseDTO.FromEntity(m.Member?.CellPhone),
@@ -304,16 +302,16 @@ namespace ICR.Infra.Data.Repositories
                 minister.SetEmail(dto.Email);
 
             if (dto.CardValidity.HasValue)
-                minister.SetCardValidity(DateTime.SpecifyKind(dto.CardValidity.Value, DateTimeKind.Utc));
+                minister.SetCardValidity(dto.CardValidity.Value);
 
             if (dto.PresbiterOrdinationDate.HasValue)
                 minister.SetPresbiterOrdinationDate(
-                    DateTime.SpecifyKind(dto.PresbiterOrdinationDate.Value, DateTimeKind.Utc)
+                    dto.PresbiterOrdinationDate.Value
                 );
 
             if (dto.MinisterOrdinationDate.HasValue)
                 minister.SetMinisterOrdinationDate(
-                    DateTime.SpecifyKind(dto.MinisterOrdinationDate.Value, DateTimeKind.Utc)
+                    dto.MinisterOrdinationDate.Value
                 );
 
             if (dto.Address != null)

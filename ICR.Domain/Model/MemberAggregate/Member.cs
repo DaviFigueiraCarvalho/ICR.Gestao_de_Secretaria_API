@@ -17,7 +17,7 @@ namespace ICR.Domain.Model.MemberAggregate
         public bool HasBeenMarried { get; private set; }
         public GenderType Gender { get; private set; }
         public MemberRole Role { get; private set; }
-        public DateTime BirthDate { get; private set; }
+        public DateOnly BirthDate { get; private set; }
         public Phone? CellPhone { get; private set; }
         public ClassType Class { get; private set; }
 
@@ -26,7 +26,7 @@ namespace ICR.Domain.Model.MemberAggregate
             long familyId,
             string name,
             GenderType gender,
-            DateTime birthDate,
+            DateOnly birthDate,
             bool hasBeenMarried,
             MemberRole role,
             Phone? cellPhone,
@@ -60,7 +60,7 @@ namespace ICR.Domain.Model.MemberAggregate
             Gender = gender;
         }
 
-        public void SetBirthDate(DateTime date)
+        public void SetBirthDate(DateOnly date)
         {
             BirthDate = date;
         }
@@ -86,7 +86,7 @@ namespace ICR.Domain.Model.MemberAggregate
         }
 
         // regra central de classificação
-        public static ClassType ComputeClass(GenderType gender, DateTime birthDate, bool hasBeenMarried)
+        public static ClassType ComputeClass(GenderType gender, DateOnly birthDate, bool hasBeenMarried)
         {
             int age = CalculateAge(birthDate);
 
@@ -110,12 +110,12 @@ namespace ICR.Domain.Model.MemberAggregate
             return ClassType.JOVENS;
         }
 
-        private static int CalculateAge(DateTime birthDate)
+        private static int CalculateAge(DateOnly birthDate)
         {
-            var today = DateTime.Today;
+            var today = DateOnly.FromDateTime(DateTime.Today);
             var age = today.Year - birthDate.Year;
 
-            if (birthDate.Date > today.AddYears(-age))
+            if (birthDate > today.AddYears(-age))
                 age--;
 
             return age;

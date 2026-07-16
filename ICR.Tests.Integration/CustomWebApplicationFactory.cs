@@ -102,8 +102,8 @@ namespace ICR.Tests.Integration
                 }
                 catch { }
 
-                var adminMember = new Member(0, "Admin Member", GenderType.HOMEM, DateTime.Now, true, MemberRole.Outros, adminPhone, ClassType.HOMENS);
-                var userMember = new Member(0, "User Member", GenderType.MULHER, DateTime.Now, true, MemberRole.Outros, userPhone, ClassType.MULHERES);
+                var adminMember = new Member(0, "Admin Member", GenderType.HOMEM, DateOnly.FromDateTime(DateTime.Now), true, MemberRole.Outros, adminPhone, ClassType.HOMENS);
+                var userMember = new Member(0, "User Member", GenderType.MULHER, DateOnly.FromDateTime(DateTime.Now), true, MemberRole.Outros, userPhone, ClassType.MULHERES);
 
                 context.Members.AddRange(adminMember, userMember);
                 await context.SaveChangesAsync(cancellationToken);

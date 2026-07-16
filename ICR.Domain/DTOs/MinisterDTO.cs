@@ -12,9 +12,9 @@ namespace ICR.Domain.DTOs
         public long MemberId { get; set; }
         public string Cpf { get; set; } = null!;
         public string Email { get; set; } = null!;
-        public DateTime CardValidity { get; set; }
-        public DateTime PresbiterOrdinationDate { get; set; }
-        public DateTime? MinisterOrdinationDate { get; set; }
+        public DateOnly CardValidity { get; set; }
+        public DateOnly PresbiterOrdinationDate { get; set; }
+        public DateOnly? MinisterOrdinationDate { get; set; }
         public AddressDTO? Address { get; set; }
     }
 
@@ -25,16 +25,16 @@ namespace ICR.Domain.DTOs
         public string MemberName { get; set; } = null!;
         public string ChurchMemberName { get; set; } = null!;
         public string FederationMemberName { get; set; } = null!;
-        public DateTime MemberBirthday { get; set; }
+        public DateOnly MemberBirthday { get; set; }
         public PhoneResponseDTO? MemberPhone { get; set; }
         public string MemberWifeName { get; set; } = null!;
-        public DateTime MemberWeddingDate { get; set; }
+        public DateOnly MemberWeddingDate { get; set; }
         public string Cpf { get; set; } = null!;
         public string Email { get; set; } = null!;
         public bool Insurance { get; set; }
-        public DateTime CardValidity { get; set; }
-        public DateTime PresbiterOrdinationDate { get; set; }
-        public DateTime? MinisterOrdinationDate { get; set; }
+        public DateOnly CardValidity { get; set; }
+        public DateOnly PresbiterOrdinationDate { get; set; }
+        public DateOnly? MinisterOrdinationDate { get; set; }
         public AddressDTO? Address { get; set; }
     }
 
@@ -44,9 +44,9 @@ namespace ICR.Domain.DTOs
         public string? Cpf { get; set; }
         public string? Email { get; set; }
         public bool? Insurance { get; set; }
-        public DateTime? CardValidity { get; set; }
-        public DateTime? PresbiterOrdinationDate { get; set; }
-        public DateTime? MinisterOrdinationDate { get; set; }
+        public DateOnly? CardValidity { get; set; }
+        public DateOnly? PresbiterOrdinationDate { get; set; }
+        public DateOnly? MinisterOrdinationDate { get; set; }
         public AddressPatchDTO? Address { get; set; }
     }
 
@@ -56,13 +56,13 @@ namespace ICR.Domain.DTOs
         public string Type { get; set; } = null!;
         public PhoneResponseDTO? Phone { get; set; }
         public string? MemberWifeName { get; set; }
-        public DateTime Birthday { get; set; }
+        public DateOnly Birthday { get; set; }
     }
 
     public class MinisterInsuredListDTO
     {
         public string FullName { get; set; } = null!;
-        public DateTime BirthDate { get; set; }
+        public DateOnly BirthDate { get; set; }
         public string Cpf { get; set; } = null!;
         public string Email { get; set; } = null!;
         public PhoneResponseDTO? Phone { get; set; }

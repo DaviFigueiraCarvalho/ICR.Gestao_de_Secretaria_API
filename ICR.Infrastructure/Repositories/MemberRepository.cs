@@ -176,11 +176,10 @@ namespace ICR.Infra.Data.Repositories
                 phone = null;
             }
 
-            var birthDateUtc = DateTime.SpecifyKind(dto.BirthDate, DateTimeKind.Utc);
 
             var calculatedClass = Member.ComputeClass(
                 dto.Gender,
-                birthDateUtc,
+                dto.BirthDate,
                 dto.HasBeenMarried
             );
 
@@ -188,7 +187,7 @@ namespace ICR.Infra.Data.Repositories
                 dto.FamilyId,
                 dto.Name,
                 dto.Gender,
-                birthDateUtc,
+                dto.BirthDate,
                 dto.HasBeenMarried,
                 dto.Role,
                 phone,
@@ -219,9 +218,7 @@ namespace ICR.Infra.Data.Repositories
             }
 
             var finalGender = dto.Gender ?? member.Gender;
-            var finalBirthDate = dto.BirthDate.HasValue
-                ? DateTime.SpecifyKind(dto.BirthDate.Value, DateTimeKind.Utc)
-                : member.BirthDate;
+            var finalBirthDate = dto.BirthDate ?? member.BirthDate;
             var finalHasBeenMarried =
                 dto.HasBeenMarried == true || member.HasBeenMarried;
 

@@ -13,7 +13,7 @@ namespace ICR.Tests.Integration
             var familyId = 1L;
             var name = "Test Member";
             var gender = GenderType.HOMEM;
-            var birthDate = new DateTime(1990, 1, 1);
+            var birthDate = new DateOnly(1990, 1, 1);
             var hasBeenMarried = false;
             var role = MemberRole.N_A;
             Phone? emptyPhone = new Phone(null, null);  // Telefone vazio
@@ -44,7 +44,7 @@ namespace ICR.Tests.Integration
             var familyId = 1L;
             var name = "Test Member";
             var gender = GenderType.HOMEM;
-            var birthDate = new DateTime(1990, 1, 1);
+            var birthDate = new DateOnly(1990, 1, 1);
             var hasBeenMarried = false;
             var role = MemberRole.N_A;
             Phone? nullPhone = null;  // Telefone nulo

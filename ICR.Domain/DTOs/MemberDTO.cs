@@ -12,7 +12,7 @@ namespace ICR.Domain.DTOs
         public long FamilyId { get; set; }
         public string Name { get; set; } = null!;
         public GenderType Gender { get; set; }
-        public DateTime BirthDate { get; set; }
+        public DateOnly BirthDate { get; set; }
         public bool HasBeenMarried { get; set; }
         public MemberRole Role { get; set; }
         public PhoneDTO? CellPhone { get; set; }
@@ -45,10 +45,10 @@ namespace ICR.Domain.DTOs
         public string FamilyName { get; set; }
         public string FamilyChurchName  { get; set; }
         public string FamilyCellName { get; set; }
-        public DateTime BirthDate { get; set; }
+        public DateOnly BirthDate { get; set; }
         public bool HasBeenMarried { get; set; }
         public string? SpouseName { get; set; }
-        public DateTime? WeddingDate { get; set; }
+        public DateOnly? WeddingDate { get; set; }
         public GenderType Gender { get; set; }
         public string GenderName => Gender switch
         {
@@ -77,7 +77,7 @@ namespace ICR.Domain.DTOs
         public long? FamilyId { get; set; }
         public string? Name { get; set; } = null!;
         public GenderType? Gender { get; set; }
-        public DateTime? BirthDate { get; set; }
+        public DateOnly? BirthDate { get; set; }
         public bool? HasBeenMarried { get;  set; }
         public MemberRole? Role { get; set; }
         public PhonePatchDTO? CellPhone { get; set; }

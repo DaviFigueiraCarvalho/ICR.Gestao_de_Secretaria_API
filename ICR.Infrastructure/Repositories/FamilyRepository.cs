@@ -62,8 +62,8 @@ namespace ICR.Infra.Data.Repositories
                 !await _context.Members.AnyAsync(m => m.Id == dto.WomanId.Value))
                 return new ResponseFamilyDTO { Id = 0, ResultMessage = $"O membro (mãe) de ID:{dto.WomanId} não existe" };
 
-            DateTime? weddingDateUtc = dto.WeddingDate.HasValue
-                ? DateTime.SpecifyKind(dto.WeddingDate.Value, DateTimeKind.Utc)
+            DateOnly? weddingDateUtc = dto.WeddingDate.HasValue
+                ? dto.WeddingDate.Value
                 : null;
 
 
@@ -198,7 +198,7 @@ namespace ICR.Infra.Data.Repositories
                 family.SetMotherId(dto.WomanId == 0 ? null : dto.WomanId);
 
             if (dto.WeddingDate.HasValue)
-                family.SetWeddingDate(DateTime.SpecifyKind(dto.WeddingDate.Value, DateTimeKind.Utc));
+                family.SetWeddingDate(dto.WeddingDate.Value);
 
             await _context.SaveChangesAsync();
 

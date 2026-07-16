@@ -23,11 +23,11 @@ namespace ICR.Domain.Model.MinisterAggregate
         public string Email { get; set; } = null!;
 
         // Validade da carteirinha ministerial
-        public DateTime CardValidity { get; set; }
+        public DateOnly CardValidity { get; set; }
 
         // Datas de ordenação
-        public DateTime PresbiterOrdinationDate { get; set; }
-        public DateTime? MinisterOrdinationDate { get; set; }
+        public DateOnly PresbiterOrdinationDate { get; set; }
+        public DateOnly? MinisterOrdinationDate { get; set; }
         public bool Insurance { get; private set; }
 
         // Endereço ministerial (opcional no Minister)
@@ -41,9 +41,9 @@ namespace ICR.Domain.Model.MinisterAggregate
             long memberId,
             string cpf,
             string email,
-            DateTime cardValidity,
-            DateTime presbiterOrdinationDate,
-            DateTime? ministerOrdinationDate,
+            DateOnly cardValidity,
+            DateOnly presbiterOrdinationDate,
+            DateOnly? ministerOrdinationDate,
             Address? address,
             bool insurance)
         {
@@ -77,17 +77,17 @@ namespace ICR.Domain.Model.MinisterAggregate
             Email = email;
         }
 
-        public void SetCardValidity(DateTime validity)
+        public void SetCardValidity(DateOnly validity)
         {
             CardValidity = validity;
         }
 
-        public void SetPresbiterOrdinationDate(DateTime presbiterordinationdate)
+        public void SetPresbiterOrdinationDate(DateOnly presbiterordinationdate)
         {
             PresbiterOrdinationDate = presbiterordinationdate;
         }
 
-        public void SetMinisterOrdinationDate(DateTime? ministerordinationdate)
+        public void SetMinisterOrdinationDate(DateOnly? ministerordinationdate)
         {
             MinisterOrdinationDate = ministerordinationdate;
         }

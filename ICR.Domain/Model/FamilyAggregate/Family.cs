@@ -27,11 +27,11 @@ namespace ICR.Domain.Model.FamilyAggregate
         public long? WomanId { get; set; }
         public Member? Woman { get; set; }
 
-        public DateTime? WeddingDate { get; set; }
+        public DateOnly? WeddingDate { get; set; }
 
 
         public Family(){ }
-        public Family(string name, long churchId, long cellId, long? manId, long? womanId, DateTime? weddingDate)
+        public Family(string name, long churchId, long cellId, long? manId, long? womanId, DateOnly? weddingDate)
         {
             Name = name;
             ChurchId = churchId;
@@ -60,7 +60,7 @@ namespace ICR.Domain.Model.FamilyAggregate
         {
             WomanId = womanId;
         }
-        public void SetWeddingDate(DateTime? weddingDate)
+        public void SetWeddingDate(DateOnly? weddingDate)
         {
             WeddingDate = weddingDate;
         }

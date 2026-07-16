@@ -12,7 +12,7 @@ namespace ICR.Domain.DTOs
         public long CellId { get; set; }
         public long? ManId { get; set; }
         public long? WomanId { get; set; }
-        public DateTime? WeddingDate { get; set; }
+        public DateOnly? WeddingDate { get; set; }
 
     }
 
@@ -28,7 +28,7 @@ namespace ICR.Domain.DTOs
         public string ManName { get; set; }
         public long? WomanId { get; set; }
         public string WomanName { get; set; }
-        public DateTime? WeddingDate { get; set; }
+        public DateOnly? WeddingDate { get; set; }
         public string ResultMessage { get; set; }
     }
     public class FamilyPatchDTO
@@ -38,7 +38,7 @@ namespace ICR.Domain.DTOs
         public long? CellId { get; set; }
         public long? ManId { get; set; }
         public long? WomanId { get; set; }
-        public DateTime? WeddingDate { get; set; }
+        public DateOnly? WeddingDate { get; set; }
 
     }
 }
