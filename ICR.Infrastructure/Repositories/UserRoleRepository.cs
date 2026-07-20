@@ -122,15 +122,32 @@ namespace ICR.Infra.Data.Repositories
             };
         }
 
-        public async Task<IEnumerable<UserResponseDTO>> GetAllUsersAsync()
+        public async Task<IEnumerable<UserResponseDTO>> GetAllUsersAsync(
+            int page = 1,
+            int pageSize = 50,
+            string? search = null)
         {
-            return await _context.Users
-                .Include(u => u.Member)
+            var query = _context.Users
+                .AsNoTracking()
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var normalizedSearch = search.Trim().ToLower();
+                query = query.Where(u =>
+                    u.Username.ToLower().Contains(normalizedSearch) ||
+                    (u.Member != null && u.Member.Name.ToLower().Contains(normalizedSearch)));
+            }
+
+            return await query
+                .OrderBy(u => u.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(u => new UserResponseDTO
                 {
                     Id = u.Id,
                     MemberId = u.MemberId,
-                    MemberName = u.Member.Name ?? "",
+                    MemberName = u.Member != null ? u.Member.Name : "",
                     Username = u.Username,
                     Scope = u.Scope,
                 })

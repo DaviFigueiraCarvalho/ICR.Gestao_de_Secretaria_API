@@ -47,10 +47,17 @@ namespace ICR.API.Controllers
             return Ok(result);
         }
 
+        // GET: api/user-roles/users?pageNumber=1&pageQuantity=50&querySearch=joao
         [HttpGet("users")]
-        public async Task<ActionResult<IEnumerable<UserResponseDTO>>> GetAllUsers()
+        public async Task<ActionResult<IEnumerable<UserResponseDTO>>> GetAllUsers(
+            [FromQuery(Name = "pageNumber")] int page = 1,
+            [FromQuery(Name = "pageQuantity")] int pageQuantity = 50,
+            [FromQuery(Name = "querySearch")] string? search = null)
         {
-            return Ok(await _repository.GetAllUsersAsync());
+            if (page < 1) page = 1;
+            if (pageQuantity < 1) pageQuantity = 50;
+
+            return Ok(await _repository.GetAllUsersAsync(page, pageQuantity, search));
         }
 
         [HttpGet("filter")]

@@ -7,7 +7,13 @@ public interface IMemberRepository
     Task<MemberResponseDTO?> GetByIdAsync(long id);
     Task<IEnumerable<MemberResponseDTO>> GetByFamilyAsync(long familyId);
     Task<IEnumerable<MemberResponseDTO>> GetBirthdaysByMonthAsync(int month, long churchId);
-    Task<IEnumerable<MemberResponseDTO>> GetFilteredAsync(long? federationId, long? churchId, long? cellId);
+    Task<IEnumerable<MemberResponseDTO>> GetFilteredAsync(
+        long? federationId,
+        long? churchId,
+        long? cellId,
+        int page,
+        int pageSize,
+        string? search = null);
     Task<IEnumerable<MemberClassCountDTO>> GetClassCountsAsync(long? federationId, long? churchId, long? cellId);
     Task<IEnumerable<MemberRoleCountDTO>> GetRoleCountsAsync(long? federationId, long? churchId, long? cellId);
 

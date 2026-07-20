@@ -367,8 +367,18 @@ FodyWeavers.xsd
 # PostgreSQL local data volume (do not commit database files)
 postgres_data/
 
+# PostgreSQL backups imported or generated locally (may contain production data)
+*.backup
+*.dump
+*.pgdump
+*.sql.gz
+*.tar
+2026-07-20T03-00-00-087Z.sql
+.codex-restore-temp/
+
 # Local environment file (do not commit secrets)
 .env
+.env.local
 
 # Local docker compose files (requested)
 docker-compose.yml

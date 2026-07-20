@@ -92,7 +92,13 @@ namespace ICR.Infra.Data.Repositories
                 .ToList();
         }
 
-        public async Task<IEnumerable<MemberResponseDTO>> GetFilteredAsync(long? federationId, long? churchId, long? cellId)
+        public async Task<IEnumerable<MemberResponseDTO>> GetFilteredAsync(
+            long? federationId,
+            long? churchId,
+            long? cellId,
+            int page,
+            int pageSize,
+            string? search = null)
         {
             var query = _context.Members
                 .Include(m => m.Family).ThenInclude(f => f.Church)
@@ -103,8 +109,16 @@ namespace ICR.Infra.Data.Repositories
 
             query = ApplyScopeFilters(query, federationId, churchId, cellId);
 
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var normalizedSearch = search.Trim().ToLower();
+                query = query.Where(m => m.Name.ToLower().Contains(normalizedSearch));
+            }
+
             var members = await query
                 .OrderBy(m => m.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
             return members.Select(m => MapToResponse(m));

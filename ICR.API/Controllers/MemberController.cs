@@ -56,14 +56,26 @@ namespace ICR.API.Controllers
             return Ok(await _repository.GetBirthdaysByMonthAsync(month, churchId));
         }
 
-        // GET: api/members/filter
+        // GET: api/members/filter?federationId=1&churchId=2&cellId=3&pageNumber=1&pageQuantity=50&querySearch=joao
         [HttpGet("filter")]
         public async Task<ActionResult<IEnumerable<MemberResponseDTO>>> GetFiltered(
             [FromQuery] long? federationId,
             [FromQuery] long? churchId,
-            [FromQuery] long? cellId)
+            [FromQuery] long? cellId,
+            [FromQuery(Name = "pageNumber")] int page = 1,
+            [FromQuery(Name = "pageQuantity")] int pageQuantity = 50,
+            [FromQuery(Name = "querySearch")] string? search = null)
         {
-            return Ok(await _repository.GetFilteredAsync(federationId, churchId, cellId));
+            if (page < 1) page = 1;
+            if (pageQuantity < 1) pageQuantity = 50;
+
+            return Ok(await _repository.GetFilteredAsync(
+                federationId,
+                churchId,
+                cellId,
+                page,
+                pageQuantity,
+                search));
         }
 
         // GET: api/members/stats/classes

@@ -1,11 +1,8 @@
-using ICR.API.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using ICR.Domain.DTOs;
 using ICR.Domain.Model.FamilyAggregate;
-using ICR.Domain.Model.UserRoleAgreggate;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
-using UserModel = ICR.Domain.Model.UserRoleAgreggate.User;
 
 namespace ICR.API.Controllers
 {
@@ -49,7 +46,6 @@ namespace ICR.API.Controllers
 
         // GET api/families/filter?churchId=10&cellId=5&pageNumber=1&pageQuantity=50&querySearch=silva
         [HttpGet("filter")]
-        [AuthorizeScope(UserModel.UserScope.FEDERATION)]
         public async Task<IActionResult> GetFiltered(
             [FromQuery] long? churchId,
             [FromQuery] long? cellId,
