@@ -12,6 +12,12 @@ namespace ICR.Domain.Model.UserRoleAgreggate
         Task<UserResponseDTO?> GetUserByIdAsync(long userId);
         Task<UserResponseDTO?> GetUserByUsernameAsync(string username);
         Task<IEnumerable<UserResponseDTO>> GetAllUsersAsync();
+        Task<IEnumerable<UserResponseDTO>> GetFilteredUsersAsync(
+            long? churchId,
+            long? cellId,
+            int page = 1,
+            int pageSize = 50,
+            string? search = null);
         Task<UserResponseDTO> UpdateUserAsync(long userId, UserPatchDTO user);
         Task<UserResponseDTO> DeleteUserAsync(long userId);
 

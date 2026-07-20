@@ -50,9 +50,20 @@ namespace ICR.API.Controllers
 
         // GET: api/churches/federation/{federationId}
         [HttpGet("federation/{federationId:long}")]
-        public async Task<ActionResult<IEnumerable<ChurchResponseDto>>> GetByFederation(long federationId)
+        public async Task<ActionResult<IEnumerable<ChurchResponseDto>>> GetByFederation(
+            long federationId,
+            [FromQuery(Name = "pageNumber")] int page = 1,
+            [FromQuery(Name = "pageQuantity")] int pageQuantity = 50,
+            [FromQuery(Name = "querySearch")] string? search = null)
         {
-            var churches = await _repository.GetChurchesbyFederationId(federationId);
+            if (page < 1) page = 1;
+            if (pageQuantity < 1) pageQuantity = 50;
+
+            var churches = await _repository.GetChurchesbyFederationId(
+                federationId,
+                page,
+                pageQuantity,
+                search);
             return Ok(churches);
         }
 

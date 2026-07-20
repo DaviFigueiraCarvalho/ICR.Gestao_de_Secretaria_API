@@ -112,7 +112,12 @@ namespace ICR.Infra.Data.Repositories
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<CellResponseDTO>> GetFilteredAsync(long? federationId, long? churchId)
+        public async Task<IEnumerable<CellResponseDTO>> GetFilteredAsync(
+            long? federationId,
+            long? churchId,
+            int page = 1,
+            int pageSize = 50,
+            string? search = null)
         {
             var query = _context.Cells
                 .Include(c => c.Church)
@@ -127,13 +132,21 @@ namespace ICR.Infra.Data.Repositories
             {
                 query = query.Where(c => c.Church != null && c.Church.FederationId == federationId.Value);
             }
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var normalizedSearch = search.Trim().ToLower();
+                query = query.Where(c => c.Name.ToLower().Contains(normalizedSearch));
+            }
 
             return await query
                 .OrderBy(c => c.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(c => new CellResponseDTO
                 {
                     Id = c.Id,
                     Name = c.Name,
+                    Type = c.Type,
                     ChurchId = c.ChurchId,
                     ChurchName = c.Church != null ? c.Church.Name : null,
                     ResponsibleId = c.ResponsibleId,

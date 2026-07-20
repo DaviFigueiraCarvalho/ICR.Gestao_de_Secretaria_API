@@ -142,32 +142,40 @@ namespace ICR.Infra.Data.Repositories
         }
 
         // =========================
-        // GET POR IGREJA
+        // GET FILTRADO POR IGREJA E/OU CÉLULA
         // =========================
-        public async Task<List<ResponseFamilyDTO>> GetByChurchId(long churchId)
+        public async Task<List<ResponseFamilyDTO>> GetFilteredAsync(
+            long? churchId,
+            long? cellId,
+            int pageNumber = 1,
+            int pageQuantity = 50,
+            string? search = null)
         {
-            var families = await _context.Families
+            var query = _context.Families
                 .Include(f => f.Church)
                 .Include(f => f.Cell)
                 .Include(f => f.Man)
                 .Include(f => f.Woman)
-                .Where(f => f.ChurchId == churchId)
-                .ToListAsync();
+                .AsQueryable();
 
-            return families.Select(f => MapToResponse(f)).ToList();
-        }
+            if (churchId.HasValue)
+            {
+                query = query.Where(f => f.ChurchId == churchId.Value);
+            }
+            if (cellId.HasValue)
+            {
+                query = query.Where(f => f.CellId == cellId.Value);
+            }
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var normalizedSearch = search.Trim().ToLower();
+                query = query.Where(f => f.Name.ToLower().Contains(normalizedSearch));
+            }
 
-        // =========================
-        // GET POR CÉLULA
-        // =========================
-        public async Task<List<ResponseFamilyDTO>> GetByCellIdAsync(long cellId)
-        {
-            var families = await _context.Families
-                .Include(f => f.Church)
-                .Include(f => f.Cell)
-                .Include(f => f.Man)
-                .Include(f => f.Woman)
-                .Where(f => f.CellId == cellId)
+            var families = await query
+                .OrderBy(f => f.Id)
+                .Skip((pageNumber - 1) * pageQuantity)
+                .Take(pageQuantity)
                 .ToListAsync();
 
             return families.Select(f => MapToResponse(f)).ToList();

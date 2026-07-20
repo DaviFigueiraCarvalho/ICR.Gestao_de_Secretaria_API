@@ -155,15 +155,30 @@ namespace ICR.Infra.Data.Repositories
         }
 
 
-        public async Task<IEnumerable<ChurchResponseDto>> GetChurchesbyFederationId(long id)
+        public async Task<IEnumerable<ChurchResponseDto>> GetChurchesbyFederationId(
+            long id,
+            int page = 1,
+            int pageSize = 50,
+            string? search = null)
         {
-            return await _context.Churches
+            var query = _context.Churches
                 .AsNoTracking()
                 .Where(c => c.IsActive && c.FederationId == id)
                 .Include(c => c.Federation)
                 .Include(c => c.Minister)
                     .ThenInclude(m => m.Member)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var normalizedSearch = search.Trim().ToLower();
+                query = query.Where(c => c.Name.ToLower().Contains(normalizedSearch));
+            }
+
+            return await query
                 .OrderBy(c => c.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(c => new ChurchResponseDto
                 {
                     Id = c.Id,

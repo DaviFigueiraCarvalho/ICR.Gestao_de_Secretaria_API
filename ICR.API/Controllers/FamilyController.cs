@@ -47,20 +47,25 @@ namespace ICR.API.Controllers
             return Ok(family);
         }
 
-        // GET api/families/church/10
-        [HttpGet("church/{churchId:long}")]
+        // GET api/families/filter?churchId=10&cellId=5&pageNumber=1&pageQuantity=50&querySearch=silva
+        [HttpGet("filter")]
         [AuthorizeScope(UserModel.UserScope.FEDERATION)]
-        public async Task<IActionResult> GetByChurch(long churchId)
+        public async Task<IActionResult> GetFiltered(
+            [FromQuery] long? churchId,
+            [FromQuery] long? cellId,
+            [FromQuery(Name = "pageNumber")] int page = 1,
+            [FromQuery(Name = "pageQuantity")] int pageQuantity = 50,
+            [FromQuery(Name = "querySearch")] string? search = null)
         {
-            var families = await _repository.GetByChurchId(churchId);
-            return Ok(families);
-        }
+            if (page < 1) page = 1;
+            if (pageQuantity < 1) pageQuantity = 50;
 
-        // GET api/families/cell/5
-        [HttpGet("cell/{cellId:long}")]
-        public async Task<IActionResult> GetByCell(long cellId)
-        {
-            var families = await _repository.GetByCellIdAsync(cellId);
+            var families = await _repository.GetFilteredAsync(
+                churchId,
+                cellId,
+                page,
+                pageQuantity,
+                search);
             return Ok(families);
         }
 

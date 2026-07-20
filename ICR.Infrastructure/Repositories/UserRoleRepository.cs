@@ -137,6 +137,70 @@ namespace ICR.Infra.Data.Repositories
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<UserResponseDTO>> GetFilteredUsersAsync(
+            long? churchId,
+            long? cellId,
+            int page = 1,
+            int pageSize = 50,
+            string? search = null)
+        {
+            var query = _context.Users
+                .AsNoTracking()
+                .AsQueryable();
+
+            if (churchId.HasValue)
+            {
+                query = query.Where(u =>
+                    u.Member != null &&
+                    u.Member.Family != null &&
+                    u.Member.Family.ChurchId == churchId.Value);
+            }
+            if (cellId.HasValue)
+            {
+                query = query.Where(u =>
+                    u.Member != null &&
+                    u.Member.Family != null &&
+                    u.Member.Family.CellId == cellId.Value);
+            }
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var normalizedSearch = search.Trim().ToLower();
+                query = query.Where(u =>
+                    u.Username.ToLower().Contains(normalizedSearch) ||
+                    (u.Member != null && u.Member.Name.ToLower().Contains(normalizedSearch)) ||
+                    (u.Member != null && u.Member.Family != null &&
+                        u.Member.Family.Church.Name.ToLower().Contains(normalizedSearch)) ||
+                    (u.Member != null && u.Member.Family != null &&
+                        u.Member.Family.Cell.Name.ToLower().Contains(normalizedSearch)));
+            }
+
+            return await query
+                .OrderBy(u => u.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(u => new UserResponseDTO
+                {
+                    Id = u.Id,
+                    MemberId = u.MemberId,
+                    MemberName = u.Member != null ? u.Member.Name : "",
+                    Username = u.Username,
+                    Scope = u.Scope,
+                    ChurchId = u.Member != null && u.Member.Family != null
+                        ? u.Member.Family.ChurchId
+                        : null,
+                    ChurchName = u.Member != null && u.Member.Family != null
+                        ? u.Member.Family.Church.Name
+                        : null,
+                    CellId = u.Member != null && u.Member.Family != null
+                        ? u.Member.Family.CellId
+                        : null,
+                    CellName = u.Member != null && u.Member.Family != null
+                        ? u.Member.Family.Cell.Name
+                        : null,
+                })
+                .ToListAsync();
+        }
+
         public async Task<UserResponseDTO> UpdateUserAsync(long userId, UserPatchDTO dto)
         {
             var user = await _context.Users

@@ -53,6 +53,25 @@ namespace ICR.API.Controllers
             return Ok(await _repository.GetAllUsersAsync());
         }
 
+        [HttpGet("filter")]
+        public async Task<ActionResult<IEnumerable<UserResponseDTO>>> GetFilteredUsers(
+            [FromQuery] long? churchId,
+            [FromQuery] long? cellId,
+            [FromQuery(Name = "pageNumber")] int page = 1,
+            [FromQuery(Name = "pageQuantity")] int pageQuantity = 50,
+            [FromQuery(Name = "querySearch")] string? search = null)
+        {
+            if (page < 1) page = 1;
+            if (pageQuantity < 1) pageQuantity = 50;
+
+            return Ok(await _repository.GetFilteredUsersAsync(
+                churchId,
+                cellId,
+                page,
+                pageQuantity,
+                search));
+        }
+
         [HttpPatch("users/{id:long}")]
         public async Task<ActionResult<UserResponseDTO>> UpdateUser(long id, UserPatchDTO dto)
         {

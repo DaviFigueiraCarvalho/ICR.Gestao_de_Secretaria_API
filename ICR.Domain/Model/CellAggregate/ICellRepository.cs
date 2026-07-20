@@ -13,7 +13,12 @@ namespace ICR.Domain.Model.CellAggregate
 
         Task<IEnumerable<CellResponseDTO>> GetAllAsync(int page = 1, int pageSize = 50, string? search = null);
 
-        Task<IEnumerable<CellResponseDTO>> GetFilteredAsync(long? federationId, long? churchId);
+        Task<IEnumerable<CellResponseDTO>> GetFilteredAsync(
+            long? federationId,
+            long? churchId,
+            int page = 1,
+            int pageSize = 50,
+            string? search = null);
 
         Task<IEnumerable<CellResponseDTO>> GetByChurchIdAsync(Member leader);
 

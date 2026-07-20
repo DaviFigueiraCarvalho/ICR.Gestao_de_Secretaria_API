@@ -21,6 +21,10 @@ namespace ICR.Domain.DTOs.UserRole
         public string MemberName { get; set; } = null!;
         public string Username { get; set; } = null!;
         public UserScope Scope { get; set; }
+        public long? ChurchId { get; set; }
+        public string? ChurchName { get; set; }
+        public long? CellId { get; set; }
+        public string? CellName { get; set; }
         // ResultMessage removed — use exceptions / ProblemDetails for errors
 
     }

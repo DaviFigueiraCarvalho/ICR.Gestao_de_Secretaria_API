@@ -33,9 +33,22 @@ namespace ICR.API.Controllers
         }
 
         [HttpGet("filter")]
-        public async Task<IActionResult> GetFiltered([FromQuery] long? federationId, [FromQuery] long? churchId)
+        public async Task<IActionResult> GetFiltered(
+            [FromQuery] long? federationId,
+            [FromQuery] long? churchId,
+            [FromQuery(Name = "pageNumber")] int page = 1,
+            [FromQuery(Name = "pageQuantity")] int pageQuantity = 50,
+            [FromQuery(Name = "querySearch")] string? search = null)
         {
-            var cells = await _repository.GetFilteredAsync(federationId, churchId);
+            if (page < 1) page = 1;
+            if (pageQuantity < 1) pageQuantity = 50;
+
+            var cells = await _repository.GetFilteredAsync(
+                federationId,
+                churchId,
+                page,
+                pageQuantity,
+                search);
             return Ok(cells);
         }
 
