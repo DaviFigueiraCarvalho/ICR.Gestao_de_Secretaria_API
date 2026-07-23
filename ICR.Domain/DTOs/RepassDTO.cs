@@ -30,4 +30,12 @@ namespace ICR.Domain.DTOs
         public decimal? Amount { get; set; }
 
     }
+
+    public class RepassSummaryDTO
+    {
+        public long ReferenceId { get; set; }
+        public int ChurchesUpToDate { get; set; }
+        public int PendingChurches { get; set; }
+        public decimal TotalRepassed { get; set; }
+    }
 }

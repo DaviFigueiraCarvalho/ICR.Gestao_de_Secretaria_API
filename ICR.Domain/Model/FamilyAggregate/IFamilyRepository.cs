@@ -18,7 +18,8 @@ namespace ICR.Domain.Model.FamilyAggregate
             long? cellId,
             int pageNumber = 1,
             int pageQuantity = 50,
-            string? search = null);
+            string? search = null,
+            long? federationId = null);
         Task<ResponseFamilyDTO> UpdateAsync(long id, FamilyPatchDTO familyUpdated);
 
         Task<ResponseFamilyDTO> DeleteAsync(long id);

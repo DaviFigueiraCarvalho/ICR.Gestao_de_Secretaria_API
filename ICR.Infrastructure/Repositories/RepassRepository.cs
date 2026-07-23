@@ -134,6 +134,33 @@ namespace ICR.Infra.Repositories
                 .ToListAsync();
         }
 
+        public async Task<RepassSummaryDTO> GetSummaryByReferenceIdAsync(long referenceId)
+        {
+            var activeChurchesCount = await _context.Churches
+                .AsNoTracking()
+                .CountAsync(church => church.IsActive);
+
+            // Há no máximo um repasse por igreja/referência no fluxo da tela. O
+            // agrupamento mantém o resumo correto mesmo se houver dados legados
+            // duplicados, considerando a maior contribuição da igreja.
+            var repassesByChurch = await _context.Repasses
+                .AsNoTracking()
+                .Where(repass => repass.ReferenceId == referenceId && repass.Church != null && repass.Church.IsActive)
+                .GroupBy(repass => repass.ChurchId)
+                .Select(group => new { Amount = group.Max(repass => repass.Amount) })
+                .ToListAsync();
+
+            var churchesUpToDate = repassesByChurch.Count(repass => repass.Amount > 0);
+
+            return new RepassSummaryDTO
+            {
+                ReferenceId = referenceId,
+                ChurchesUpToDate = churchesUpToDate,
+                PendingChurches = Math.Max(0, activeChurchesCount - churchesUpToDate),
+                TotalRepassed = repassesByChurch.Sum(repass => repass.Amount),
+            };
+        }
+
         public async Task<RepassResponseDTO> UpdateAsync(long id, RepassUpdateDTO dto)
         {
             var repass = await _context.Repasses

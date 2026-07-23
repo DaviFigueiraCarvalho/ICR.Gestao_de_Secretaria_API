@@ -59,6 +59,14 @@ namespace ICR.API.Controllers
             return Ok(ministers);
         }
 
+        // GET: api/ministers/pending-registrations
+        [HttpGet("pending-registrations")]
+        public async Task<ActionResult<IEnumerable<MinisterRegistrationPendingDTO>>> GetPendingRegistrations()
+        {
+            var members = await _repository.GetPendingRegistrationsAsync();
+            return Ok(members);
+        }
+
         // GET: api/ministers/church/{churchId}
         [HttpGet("church/{churchId:long}")]
         public async Task<ActionResult<IEnumerable<MinisterResponseDTO>>> GetByChurch(long churchId)

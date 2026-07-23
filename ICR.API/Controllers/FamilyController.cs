@@ -44,10 +44,11 @@ namespace ICR.API.Controllers
             return Ok(family);
         }
 
-        // GET api/families/filter?churchId=10&cellId=5&pageNumber=1&pageQuantity=50&querySearch=silva
+        // GET api/families/filter?churchId=10&federationId=2&cellId=5&pageNumber=1&pageQuantity=50&querySearch=silva
         [HttpGet("filter")]
         public async Task<IActionResult> GetFiltered(
             [FromQuery] long? churchId,
+            [FromQuery] long? federationId,
             [FromQuery] long? cellId,
             [FromQuery(Name = "pageNumber")] int page = 1,
             [FromQuery(Name = "pageQuantity")] int pageQuantity = 50,
@@ -61,7 +62,8 @@ namespace ICR.API.Controllers
                 cellId,
                 page,
                 pageQuantity,
-                search);
+                search,
+                federationId);
             return Ok(families);
         }
 

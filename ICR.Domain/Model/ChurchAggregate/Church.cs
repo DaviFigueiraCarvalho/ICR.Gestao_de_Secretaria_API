@@ -48,15 +48,10 @@ namespace ICR.Domain.Model.ChurchAggregate
 
         public void SetAddress(Address address)
         {
-            foreach (var prop in typeof(Address).GetProperties())
-            {
-                var value = prop.GetValue(address);
-                if (value == null || (value is string str && string.IsNullOrWhiteSpace(str)))
-                {
-                    throw new ArgumentException($"Address property {prop.Name} cannot be null or empty");
-                }
-            }
-            Address = address;
+            // Address valida os campos obrigatórios no seu construtor. Não é correto
+            // exigir todas as propriedades aqui: Id é técnico e vários campos do
+            // endereço (por exemplo, complemento e CEP) são opcionais.
+            Address = address ?? throw new ArgumentNullException(nameof(address));
         }
 
         public void SetFederationId(long federationId)

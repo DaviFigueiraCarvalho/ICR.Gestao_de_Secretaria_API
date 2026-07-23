@@ -100,6 +100,16 @@ namespace ICR.API.Controllers
             return Ok(result);
         }
 
+        // GET: api/repasses/reference/{referenceId}/summary
+        [HttpGet("reference/{referenceId:long}/summary")]
+        [Authorize]
+        [AuthorizeScope(UserModel.UserScope.NATIONAL)]
+        public async Task<ActionResult<RepassSummaryDTO>> GetSummaryByReference(long referenceId)
+        {
+            var result = await _repository.GetSummaryByReferenceIdAsync(referenceId);
+            return Ok(result);
+        }
+
         // PATCH: api/repasses/{id}
         [HttpPatch("{id:long}")]
         [Authorize]

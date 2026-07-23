@@ -1,6 +1,7 @@
 ﻿using ICR.Domain.DTOs;
 using ICR.Domain.Model;
 using ICR.Domain.Model.MinisterAggregate;
+using ICR.Domain.Model.MemberAggregate;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -178,6 +179,39 @@ namespace ICR.Infra.Data.Repositories
             return ministers.Select(m => MapToResponse(m));
         }
 
+        public async Task<IEnumerable<MinisterRegistrationPendingDTO>> GetPendingRegistrationsAsync()
+        {
+            // Carrega os vínculos sem filtros globais para que um cadastro já
+            // existente nunca volte a ser apresentado como pendência.
+            var registeredMemberIds = await _context.Ministers
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .Select(minister => minister.MemberId)
+                .Distinct()
+                .ToListAsync();
+
+            return await _context.Members
+                .AsNoTracking()
+                .Include(member => member.Family)
+                    .ThenInclude(family => family.Church)
+                .Where(member =>
+                    (member.Role == MemberRole.Pastor || member.Role == MemberRole.Presbitero) &&
+                    !registeredMemberIds.Contains(member.Id))
+                .OrderBy(member => member.Name)
+                .Select(member => new MinisterRegistrationPendingDTO
+                {
+                    MemberId = member.Id,
+                    MemberName = member.Name,
+                    ChurchName = member.Family != null && member.Family.Church != null
+                        ? member.Family.Church.Name
+                        : string.Empty,
+                    MemberRole = (int)member.Role,
+                    MemberRoleName = member.Role == MemberRole.Pastor ? "Pastor" : "Presbítero",
+                    Phone = PhoneResponseDTO.FromEntity(member.CellPhone),
+                })
+                .ToListAsync();
+        }
+
         public async Task<IEnumerable<MinisterInsuredListDTO>> GetInsuredAsync()
         {
             var query = BaseQuery()
@@ -233,6 +267,7 @@ namespace ICR.Infra.Data.Repositories
             return ministers.Select(m => new MinisterBirthdayDTO
             {
                 Name = m.Member!.Name,
+                ChurchName = m.Member.Family?.Church?.Name ?? string.Empty,
                 Type = "BIRTHDAY",
                 Phone = PhoneResponseDTO.FromEntity(m.Member.CellPhone),
                 Birthday = m.Member.BirthDate
@@ -259,6 +294,7 @@ namespace ICR.Infra.Data.Repositories
             return ministers.Select(m => new MinisterBirthdayDTO
             {
                 Name = m.Member!.Name,
+                ChurchName = m.Member.Family?.Church?.Name ?? string.Empty,
                 Type = "WEDDING",
                 Phone = PhoneResponseDTO.FromEntity(m.Member.CellPhone),
                 MemberWifeName = m.Member.Family!.Woman?.Name,

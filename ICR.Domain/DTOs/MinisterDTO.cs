@@ -7,6 +7,16 @@ using static AddressDTO;
 
 namespace ICR.Domain.DTOs
 {
+    public class MinisterRegistrationPendingDTO
+    {
+        public long MemberId { get; set; }
+        public string MemberName { get; set; } = string.Empty;
+        public string ChurchName { get; set; } = string.Empty;
+        public int MemberRole { get; set; }
+        public string MemberRoleName { get; set; } = string.Empty;
+        public PhoneResponseDTO? Phone { get; set; }
+    }
+
     public class MinisterDTO
     {
         public long MemberId { get; set; }
@@ -53,6 +63,7 @@ namespace ICR.Domain.DTOs
     public class MinisterBirthdayDTO
     {
         public string Name { get; set; } = null!;
+        public string ChurchName { get; set; } = string.Empty;
         public string Type { get; set; } = null!;
         public PhoneResponseDTO? Phone { get; set; }
         public string? MemberWifeName { get; set; }

@@ -61,8 +61,9 @@ namespace ICR.Domain.Model
                         $"Número de telefone inválido para {Country.Name}",
                         nameof(phoneNumber));
 
-                // Extrai apenas os dígitos
-                Number = PhoneUtil.Format(parsed, PhoneNumberFormat.E164).Replace("+", "").Replace(" ", "-").Trim('-');
+                // Mantém apenas o número nacional. O código internacional fica em E164Format,
+                // evitando que ele seja reenviado como parte do número ao editar o cadastro.
+                Number = PhoneUtil.GetNationalSignificantNumber(parsed);
 
                 // Gera os diferentes formatos
                 DisplayFormat = PhoneUtil.Format(parsed, PhoneNumberFormat.NATIONAL);

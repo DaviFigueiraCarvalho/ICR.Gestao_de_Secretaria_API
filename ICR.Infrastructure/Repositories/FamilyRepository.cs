@@ -149,7 +149,8 @@ namespace ICR.Infra.Data.Repositories
             long? cellId,
             int pageNumber = 1,
             int pageQuantity = 50,
-            string? search = null)
+            string? search = null,
+            long? federationId = null)
         {
             var query = _context.Families
                 .Include(f => f.Church)
@@ -161,6 +162,10 @@ namespace ICR.Infra.Data.Repositories
             if (churchId.HasValue)
             {
                 query = query.Where(f => f.ChurchId == churchId.Value);
+            }
+            if (federationId.HasValue)
+            {
+                query = query.Where(f => f.Church.FederationId == federationId.Value);
             }
             if (cellId.HasValue)
             {
