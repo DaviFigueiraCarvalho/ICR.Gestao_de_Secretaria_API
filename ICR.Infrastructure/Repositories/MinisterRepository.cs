@@ -269,6 +269,8 @@ namespace ICR.Infra.Data.Repositories
                 Name = m.Member!.Name,
                 ChurchName = m.Member.Family?.Church?.Name ?? string.Empty,
                 Type = "BIRTHDAY",
+                MemberRole = (int)m.Member.Role,
+                MemberRoleName = m.Member.Role == MemberRole.Pastor ? "Pastor" : "Presbítero",
                 Phone = PhoneResponseDTO.FromEntity(m.Member.CellPhone),
                 Birthday = m.Member.BirthDate
             }).ToList();
@@ -296,6 +298,8 @@ namespace ICR.Infra.Data.Repositories
                 Name = m.Member!.Name,
                 ChurchName = m.Member.Family?.Church?.Name ?? string.Empty,
                 Type = "WEDDING",
+                MemberRole = (int)m.Member.Role,
+                MemberRoleName = m.Member.Role == MemberRole.Pastor ? "Pastor" : "Presbítero",
                 Phone = PhoneResponseDTO.FromEntity(m.Member.CellPhone),
                 MemberWifeName = m.Member.Family!.Woman?.Name,
                 Birthday = m.Member.Family.WeddingDate!.Value

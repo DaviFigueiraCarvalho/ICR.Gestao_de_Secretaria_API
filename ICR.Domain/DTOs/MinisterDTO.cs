@@ -65,6 +65,8 @@ namespace ICR.Domain.DTOs
         public string Name { get; set; } = null!;
         public string ChurchName { get; set; } = string.Empty;
         public string Type { get; set; } = null!;
+        public int MemberRole { get; set; }
+        public string MemberRoleName { get; set; } = null!;
         public PhoneResponseDTO? Phone { get; set; }
         public string? MemberWifeName { get; set; }
         public DateOnly Birthday { get; set; }
