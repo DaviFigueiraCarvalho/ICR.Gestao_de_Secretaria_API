@@ -33,6 +33,7 @@ namespace ICR.API.Controllers
         }
 
         [HttpGet("filter")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetFiltered(
             [FromQuery] long? federationId,
             [FromQuery] long? churchId,
@@ -49,7 +50,7 @@ namespace ICR.API.Controllers
                 page,
                 pageQuantity,
                 search);
-            return Ok(cells);
+            return Ok(cells.Select(c => new { c.Id, c.Name, c.TypeName, c.ChurchId, c.ChurchName }));
         }
 
         [HttpGet("{id:long}")]

@@ -5,6 +5,7 @@ using ICR.Domain.Model.UserRoleAgreggate;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using UserModel = ICR.Domain.Model.UserRoleAgreggate.User;
 
@@ -23,9 +24,14 @@ namespace ICR.API.Controllers
             _repository = repository;
         }
 
+        // Projeção pública: sem dados do ministro
+        private static object ToPublic(ChurchResponseDto c) =>
+            new { c.Id, c.Name, c.Address, c.FederationId, c.FederationName };
+
         // GET: api/churches?pageNumber=1&pageQuantity=10
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ChurchResponseDto>>> GetAll(
+        [AllowAnonymous]
+        public async Task<IActionResult> GetAll(
             [FromQuery(Name = "pageNumber")] int page = 1,
             [FromQuery(Name = "pageQuantity")] int pageQuantity = 50,
             [FromQuery(Name = "querySearch")] string? search = null)
@@ -34,7 +40,7 @@ namespace ICR.API.Controllers
             if (pageQuantity < 1) pageQuantity = 50;
 
             var churches = await _repository.GetAllChurchesAsync(page, pageQuantity, search);
-            return Ok(churches);
+            return Ok(churches.Select(ToPublic));
         }
 
         // GET: api/churches/{id}
@@ -50,7 +56,8 @@ namespace ICR.API.Controllers
 
         // GET: api/churches/federation/{federationId}
         [HttpGet("federation/{federationId:long}")]
-        public async Task<ActionResult<IEnumerable<ChurchResponseDto>>> GetByFederation(
+        [AllowAnonymous]
+        public async Task<IActionResult> GetByFederation(
             long federationId,
             [FromQuery(Name = "pageNumber")] int page = 1,
             [FromQuery(Name = "pageQuantity")] int pageQuantity = 50,
@@ -64,7 +71,7 @@ namespace ICR.API.Controllers
                 page,
                 pageQuantity,
                 search);
-            return Ok(churches);
+            return Ok(churches.Select(ToPublic));
         }
 
         // POST: api/churches

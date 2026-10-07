@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using UserModel = ICR.Domain.Model.UserRoleAgreggate.User;
 
@@ -35,7 +36,8 @@ namespace ICR.API.Controllers
 
         // GET: api/federations
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<FederationResponseDTO>>> GetAll(
+        [AllowAnonymous]
+        public async Task<IActionResult> GetAll(
             [FromQuery(Name = "pageNumber")] int page = 1,
             [FromQuery(Name = "pageQuantity")] int pageQuantity = 50,
             [FromQuery] string? search = null)
@@ -44,7 +46,7 @@ namespace ICR.API.Controllers
             if (pageQuantity < 1) pageQuantity = 50;
 
             var federations = await _repository.GetAllFederationsAsync(page, pageQuantity, search);
-            return Ok(federations);
+            return Ok(federations.Select(f => new { f.Id, f.Name }));
         }
 
         // GET: api/federations/{id}
